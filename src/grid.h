@@ -38,6 +38,8 @@ class grid
   void printNums(ostream& stream);
   double getLoadShedPenalty(){ return loadShedPenalty; }
 
+  friend ostream& operator<<(ostream& os, const grid& gr);
+
  private:
   vector<bus> _buses;
   vector<branch> _branches;

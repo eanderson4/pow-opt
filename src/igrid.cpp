@@ -13,12 +13,12 @@ rgrid *  igrid::solveModel( isolve * is){
   
   if (cplex.solve()){
       float tot= float(clock() - tstart) / CLOCKS_PER_SEC;
-      cerr<<"MODEL solved in "<<tot<<endl;
+      cout<<"MODEL solved in "<<tot<<endl;
       rg->getSolveInfo(&cplex,tot);
       getBaseResults(&cplex, rg);
       if(have_loadshed) getIshed().getLoadShed(&cplex, rg);
       
-      cerr<<"OBJECTIVE: "<<cplex.getObjValue()<<endl;
+      cout<<"OBJECTIVE: "<<cplex.getObjValue()<<endl;
       double genCost = getIcost().getCost(_gr,rg->getG());
       rg->setGenCost(genCost);
       
@@ -51,6 +51,7 @@ int igrid::addCost(){
 void igrid::modGrid( del_g mod ){
   
   //  make modification
+  stringstream ss;
   int nB = _gr->numBranches();
 
   if(mod.haveTopo()){
@@ -63,6 +64,12 @@ void igrid::modGrid( del_g mod ){
 	getBranchFlow()[i].setBounds(-IloInfinity,IloInfinity );
 	getPhaseAngle()[i].setBounds(-IloInfinity,IloInfinity );
 	cout<<"f=0, phase angles relaxed"<<endl;
+	ss.str("");
+	ss<<"f"<<i<<"[0,0]";
+	getF()[i].setName( ss.str().c_str() );
+	cout<<getF()[i]<<endl;
+	cout<<getBranchFlow()[i]<<endl;
+	cout<<getPhaseAngle()[i]<<endl;
       }
     }
     

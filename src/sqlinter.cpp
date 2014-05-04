@@ -7,22 +7,22 @@ sqlInter::sqlInter() {
   map_gridTables["gencost"]=tab_gencost;
   map_gridTables["general"]=tab_general;
 
-  cerr<<"map_gridTables contains "
+  cout<<"map_gridTables contains "
       << map_gridTables.size()
       << " entries." <<endl;
 }
 
 int sqlInter::openDb(string name) {
   _name=name.c_str();
-  cerr<<"Attepting to open "<<_name<<endl;
+  cout<<"Attepting to open "<<_name<<endl;
   int rc =sqlite3_open_v2( _name, &db, SQLITE_OPEN_READWRITE, NULL );
   if( rc != SQLITE_OK ){
-    cerr<< "sqlite3 error: "<<sqlite3_errmsg(db)<<endl;
+    cout<< "sqlite3 error: "<<sqlite3_errmsg(db)<<endl;
     sqlite3_close(db);
     return 0;
   }
   else{
-    cerr<<"DB opened\n";
+    cout<<"DB opened\n";
     return 1;
   }
 }
@@ -62,7 +62,7 @@ int sqlInter::loadDb(string table,grid & gr) {
   sqlite3_stmt *stmt;
   grid_tables gt = map_gridTables[table];
   string str = getStr(gt);
-  cerr<<"SQL: "<<str<<endl;
+  cout<<"SQL: "<<str<<endl;
   int result = sqlite3_prepare(db, str.c_str(), str.length()+1, &stmt, NULL);
   if (result != SQLITE_OK) {
     cerr<<"Failed to prepare database: "<<sqlite3_errstr(result)<<endl;

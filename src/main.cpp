@@ -31,26 +31,91 @@ int main(int argc, char* argv[]){
       
       del_g del;
       del.baseTopo(gr);
-      del.setOutage(15);
       
       ig->modGrid( del );     
      
       rg = ig->solveModel( );
       rg->displayOperatingPos( gr );
-      
-      
+     
+
+      cout<<rg->getF()[322]<<endl;
+      cout<<gr->getBranch(322).getFrom()<<endl;
+      cout<<gr->getBranch(322).getTo()<<endl;
+      /*
+      cout<<ig->getNodalBalance()[139]<<endl;
+      cout<<ig->getNodalBalance()[140]<<endl;
+      cout<<ig->getNodalBalance()[141]<<endl;
+      cout<<rg->getF()[241]<<endl;
+      cout<<ig->getNodalBalance()[275]<<endl;
+      cout<<ig->getBranchFlow()[19]<<endl;
+      cout<<ig->getNodalBalance()[277]<<endl;
+      cout<<ig->getNodalBalance()[278]<<endl;
+      */
+
       int nB=gr->numBuses();
       int nR=gr->numBranches();
       int nG=gr->numGens();
+      
+      cerr<<"{\n"
+	  <<"\t\"dataset\": { \n"
+	  <<"\t\t\"nodes\": [ \n";
       for(int i =0; i<nB; i++){
-	cout<<gr->getBus(i)<<endl;
+	bus b = gr->getBus(i);
+	double ni=0; //net inject
+	cerr<<"\t\t\t { \"name\": \""<<b.getNum()<<"\",\n"
+	    <<"\t\t\t   \"index\": "<<i<<",\n"
+	    <<"\t\t\t   \"demand\": "<<b.getP()<<",\n";
+	ni=ni+b.getP();
+
+	for(int j =0; j<nG; j++){
+	  gen g =gr->getGen(j); 
+	  int bus = g.getBus();
+	  if(bus-1==i){
+	    double p = rg->getG()[j];
+	    if( p > 0.001 ){
+	      cerr <<"\t\t\t   \"p\": "<<p<<",\n";
+	      ni=ni-p;
+
+	    }
+	  }
+	}
+	cerr <<"\t\t\t   \"ni\": "<<ni<<" ";
+	if(i!=nB-1) cerr<<"},"<<endl;
+	else  cerr<<"} \n"
+		 <<"\t\t],"<<endl;
+
       }
+      cerr<<"\t\t \"edges\": [ \n";
       for(int i =0; i<nR; i++){
-	cout<<gr->getBranch(i)<<endl;
+	branch b = gr->getBranch(i);
+	int from= gr->getBusNum(b.getFrom());
+	int to= gr->getBusNum(b.getTo());
+	double flow=double(rg->getF()[i]);
+	cerr<<"\t\t\t { \"source\": "<<from<<", \"target\": "<<to<<","<<endl;
+	cerr<<"\t\t\t   \"index\": "<<i<<",\n";
+	cerr<<"\t\t\t   \"flow\": "<<flow;
+	if (i!=nR-1) cerr<<" },"<<endl;
+	else cerr<<" }"<<endl;
       }
+      /*      cerr<<"\t\t ],\n"
+	  <<"\t\t \"gens\": [ \n";
       for(int i =0; i<nG; i++){
-	cout<<gr->getGen(i)<<endl;
-      }
+	gen g =gr->getGen(i); 
+	int bus = g.getBus();
+	double p = g.getP();
+	if( p > 0.001 ){
+	  cerr<<"\t\t\t { \"bus\": "<<bus<<",\n"
+	      <<"\t\t\t   \"p\": "<<p;
+	  if (i!=nG-1) cerr<<" },"<<endl;
+	  else cerr<<" }"<<endl;
+	}
+	}*/
+      cerr<<"\t\t ]\n"
+	  <<"\t} \n"
+	  <<"}"<<endl;
+      
+
+
 
     }
     catch (exception& e) {

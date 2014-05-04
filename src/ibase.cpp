@@ -28,10 +28,17 @@ int ibase::buildModel(grid * gr ) {
       ss<< "nb" << i;
       _nodalBalance[i].setName( ss.str().c_str() );
 
-      if (type==3) _theta[i].setBounds(0,0);
-      else _theta[i].setBounds(-360,360);
       ss.str("");
       ss<<"theta"<<i;
+      if (type==3) {
+	_theta[i].setBounds(0,0);
+	ss<<"[0,0]";
+      }
+      else {
+	_theta[i].setBounds(-360,360);
+	ss<<"[-360,360]";
+      }
+
       _theta[i].setName( ss.str().c_str() );
 
       	//_nodalBalance[i].setBounds(-IloInfinity,IloInfinity);
@@ -56,7 +63,7 @@ int ibase::buildModel(grid * gr ) {
 
       _f[k].setBounds(-limit,limit);
       ss.str("");
-      ss<<"f"<<k;
+      ss<<"f"<<k<<"["<<-limit<<","<<limit<<"]";
       _f[k].setName( ss.str().c_str() );
 
 
