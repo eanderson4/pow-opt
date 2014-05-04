@@ -14,6 +14,7 @@ To run
 Rename and adjust Makefile.generic to include cplex libraries
 
 ./make depend
+
 ./make
 
 pow case/30.db
