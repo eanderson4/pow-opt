@@ -1,0 +1,49 @@
+# A Makefile for Eric's Concert code to buidl multistage problems
+
+#This is for Jeff (on opt machines) Linux 64bit
+
+HOMEDIR=/mnt/ws/home/eanderson/compwork/comp
+CPLEX_STUDIO=${HOMEDIR}/CPLEX_Studio
+CPLEX_ARCH=x86-64_sles10_4.1
+
+CPLEX_INC_DIR=${CPLEX_STUDIO}/cplex/include
+CONCERT_INC_DIR=${CPLEX_STUDIO}/concert/include
+
+CPLEX_LIB_DIR=${CPLEX_STUDIO}/cplex/lib/${CPLEX_ARCH}/static_pic
+CONCERT_LIB_DIR=${CPLEX_STUDIO}/concert/lib/${CPLEX_ARCH}/static_pic
+SQL_LIB_DIR=${HOMEDIR}/sqlite/
+
+CPLEX_INCS = -I${CPLEX_INC_DIR} -I${CONCERT_INC_DIR} 
+CPLEX_LIBS = -L$(CPLEX_LIB_DIR) -lilocplex -lcplex -L$(CONCERT_LIB_DIR) -lconcert -lm -pthread -lpthread -ldl
+
+CXX	= g++
+CXXFLAGS := -g -m64 -Wall -Wno-deprecated -Wunused-variable -fPIC\
+        -fexceptions -DIL_STD
+
+PROJ_INC = -I${HOMEDIR}/src/
+SQL_INC = -I${HOMEDIR}/sqlite/
+
+INCS = ${CPLEX_INCS} ${PROJ_INC} ${SQL_INC}
+LIBS = ${CPLEX_LIBS}
+
+SRCS = $(wildcard src/*.cpp)
+
+OBJS = ${SRCS:.cpp=.o}
+SQLOBJ = sqlite/sqlite3.o
+
+.cpp.o:
+	g++ ${CXXFLAGS} ${INCS} -c $< -o $@
+
+pow: ${OBJS}
+	g++ ${CXXFLAGS} ${INCS} ${OBJS} ${SQLOBJ} ${LIBS}  -o $@ 
+
+depend:
+	$(CXX) -MM ${CXXFLAGS} ${INCS} ${SRCS} > prog.d
+
+clean:
+	rm -f ${OBJS}
+	rm -f *~
+	rm -f src/*~
+	rm -f case*.in
+
+include prog.d
