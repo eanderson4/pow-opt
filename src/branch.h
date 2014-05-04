@@ -2,6 +2,7 @@
 #define BRANCH_H
 
 #include <iostream>
+using namespace std;
 
 class branch {
 
@@ -20,6 +21,8 @@ class branch {
   double getRateA(){ return _rate_a; }
   double getAngMax(){ return _ang_max; }
   double getAngMin(){ return _ang_min; }
+
+  friend ostream& operator<<(ostream& os, const branch& b);
 
  private:
   int _num;

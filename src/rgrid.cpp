@@ -37,8 +37,13 @@ void rgrid::outputInfo(ostream & out){
 
 
 void rgrid::displayOperatingPos(grid * gr){
-  displayBranchPos(gr);
-  displayGenPos(gr);
+  if(status){
+    displayBranchPos(gr);
+    displayGenPos(gr);
+  }
+  else{
+    cerr<<"No solve info"<<endl;
+  }
 }
 
 void rgrid::displayGenPos(grid * gr){

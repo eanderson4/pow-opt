@@ -31,15 +31,26 @@ int main(int argc, char* argv[]){
       
       del_g del;
       del.baseTopo(gr);
-      del.setOutage(25);
-      del.setOutage(5);
-      del.setOutage(7);
+      del.setOutage(15);
       
       ig->modGrid( del );     
      
       rg = ig->solveModel( );
       rg->displayOperatingPos( gr );
       
+      
+      int nB=gr->numBuses();
+      int nR=gr->numBranches();
+      int nG=gr->numGens();
+      for(int i =0; i<nB; i++){
+	cout<<gr->getBus(i)<<endl;
+      }
+      for(int i =0; i<nR; i++){
+	cout<<gr->getBranch(i)<<endl;
+      }
+      for(int i =0; i<nG; i++){
+	cout<<gr->getGen(i)<<endl;
+      }
 
     }
     catch (exception& e) {

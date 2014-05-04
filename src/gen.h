@@ -1,6 +1,9 @@
 #ifndef GEN_H
 #define GEN_H
 
+#include <iostream>
+using namespace std;
+
 class gen {
 
  public:
@@ -24,6 +27,8 @@ class gen {
   double getC1(){ return _c1; }
   double getC0(){ return _c0; }
   double getStatus(){ return _status; }
+
+  friend ostream& operator<<(ostream& os, const gen& g);
 
  private:
   int _num;
