@@ -38,9 +38,6 @@ int main(int argc, char* argv[]){
       rg->displayOperatingPos( gr );
      
 
-      cout<<rg->getF()[322]<<endl;
-      cout<<gr->getBranch(322).getFrom()<<endl;
-      cout<<gr->getBranch(322).getTo()<<endl;
       /*
       cout<<ig->getNodalBalance()[139]<<endl;
       cout<<ig->getNodalBalance()[140]<<endl;
@@ -55,7 +52,10 @@ int main(int argc, char* argv[]){
       int nB=gr->numBuses();
       int nR=gr->numBranches();
       int nG=gr->numGens();
-      
+
+
+
+      //Outputing resolts to JSON format
       cerr<<"{\n"
 	  <<"\t\"dataset\": { \n"
 	  <<"\t\t\"nodes\": [ \n";
@@ -90,14 +90,16 @@ int main(int argc, char* argv[]){
 	branch b = gr->getBranch(i);
 	int from= gr->getBusNum(b.getFrom());
 	int to= gr->getBusNum(b.getTo());
+	double X=gr->getBranch(i).getX();
 	double flow=double(rg->getF()[i]);
 	cerr<<"\t\t\t { \"source\": "<<from<<", \"target\": "<<to<<","<<endl;
 	cerr<<"\t\t\t   \"index\": "<<i<<",\n";
+	cerr<<"\t\t\t   \"X\": "<<X<<",\n";
 	cerr<<"\t\t\t   \"flow\": "<<flow;
 	if (i!=nR-1) cerr<<" },"<<endl;
 	else cerr<<" }"<<endl;
       }
-      /*      cerr<<"\t\t ],\n"
+           cerr<<"\t\t ],\n"
 	  <<"\t\t \"gens\": [ \n";
       for(int i =0; i<nG; i++){
 	gen g =gr->getGen(i); 
@@ -109,7 +111,7 @@ int main(int argc, char* argv[]){
 	  if (i!=nG-1) cerr<<" },"<<endl;
 	  else cerr<<" }"<<endl;
 	}
-	}*/
+	}
       cerr<<"\t\t ]\n"
 	  <<"\t} \n"
 	  <<"}"<<endl;
