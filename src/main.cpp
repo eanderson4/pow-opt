@@ -18,7 +18,7 @@ int main(int argc, char* argv[]){
   string db_name;
 
   ranvar rv(time(NULL));
-  rv.createRV(3720,1,.05);
+  rv.createRV(3720,1.1,.1);
 
   cerr<<"value"<<endl;
   //  cerr<<rv<<endl;
