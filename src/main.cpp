@@ -4,8 +4,11 @@
 #include "grid.h"
 #include "igrid.h"
 #include "rgrid.h"
+#include "rv.h"
 
 using namespace std;
+
+
 
 int main(int argc, char* argv[]){
 
@@ -14,6 +17,34 @@ int main(int argc, char* argv[]){
 
   string db_name;
 
+  ranvar rv(time(NULL));
+  rv.createRV(3720,1,.05);
+
+  cerr<<"value"<<endl;
+  //  cerr<<rv<<endl;
+
+  double L=.9;
+  double p=.15;
+  double pc=.5;
+  double Uc=L + pc*(1-L)/p;
+  double a=-p*L/(1-L);
+  double b=p/(1-L);
+
+  for(int i=0; i<rv.getNum(); i++){
+    double r=rv.getValue(i);
+    double g;
+
+    if(r<=L)   g=0;
+    else if (r<=Uc){
+      g= a + b*r;
+    }
+    else g=1;
+    cerr<<g<<endl;
+
+  }
+  
+  
+  
   if(argc>1){
     try {
       db_name = argv[1];
