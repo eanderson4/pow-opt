@@ -1,6 +1,6 @@
 #include "rv.h"
 
-void ranvar::createRV(int N,double mean, double var){
+void ranvar::createRV(int N,double mean, double stdv){
 
   //Draw 0-1
   double zero_one = (rand() % RAND_MAX);
@@ -9,7 +9,7 @@ void ranvar::createRV(int N,double mean, double var){
   //Gaussian
   std::default_random_engine generator;
   generator.seed(_seed);
-  std::normal_distribution<double> distribution(mean,var);
+  std::normal_distribution<double> distribution(mean,stdv);
 
   for(int i =0; i< N; i++){
     random_variable.push_back(distribution(generator));

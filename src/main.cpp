@@ -11,17 +11,28 @@ using namespace std;
 
 
 int main(int argc, char* argv[]){
+  if(argc<=3){
+    return 1;
+  }
 
-  sqlInter db;
-  grid * gr = new grid;
+  int samples=atoi( argv[1] );
+  double mean=atof( argv[2] );
+  double variance=atof( argv[3] );
+  double stdv=sqrt(variance);
+  
+  cerr<<"Samples: "<<samples<<endl;
+  cerr<<"Mean: "<<mean<<endl;
+  cerr<<"Var: "<<variance<<endl;
+  
 
-  string db_name;
+  ranvar rv(21563);
+  rv.createRV(samples,mean,stdv);
 
-  ranvar rv(time(NULL));
-  rv.createRV(3720,1.1,.1);
-
-  cerr<<"value"<<endl;
+  //  cerr<<"flow,fail"<<endl;
   //  cerr<<rv<<endl;
+
+  double totalProb=0;
+  double probInt=1/double(samples);
 
   double L=.9;
   double p=.15;
@@ -39,54 +50,59 @@ int main(int argc, char* argv[]){
       g= a + b*r;
     }
     else g=1;
-    cerr<<g<<endl;
+    //    cerr<<r<<","<<g<<endl;
+
+    totalProb=totalProb+probInt*g;
 
   }
+  cout<<"Total Prob: "<<totalProb<<endl;
+  cerr<<"Total Prob: "<<totalProb<<endl;
   
   
+  /*
+  sqlInter db;
+  grid * gr = new grid;
+
+  string db_name;
+
+  db_name = argv[1];
+  db.openDb(db_name);
+  db.load(*gr);
+  gr->buildMap();	
+  gr->printNums(cout);      	
   
-  if(argc>1){
-    try {
-      db_name = argv[1];
-      db.openDb(db_name);
-      db.load(*gr);
-      gr->buildMap();	
-      gr->printNums(cout);      	
+  igrid * ig = new igrid( gr);
+  ig->addCost();
+  
+  rgrid * rg = ig->solveModel();
+  rg->displayOperatingPos( gr );
+  
+  
+  del_g del;
+  del.baseTopo(gr);
       
-      igrid * ig = new igrid( gr);
-      ig->addCost();
+  ig->modGrid( del );     
+  
+  rg = ig->solveModel( );
+  rg->displayOperatingPos( gr );
+  
 
-      rgrid * rg = ig->solveModel();
-      rg->displayOperatingPos( gr );
+  cout<<ig->getNodalBalance()[139]<<endl;
+  cout<<ig->getNodalBalance()[140]<<endl;
+  cout<<ig->getNodalBalance()[141]<<endl;
+  cout<<rg->getF()[241]<<endl;
+  cout<<ig->getNodalBalance()[275]<<endl;
+  cout<<ig->getBranchFlow()[19]<<endl;
+  cout<<ig->getNodalBalance()[277]<<endl;
+  cout<<ig->getNodalBalance()[278]<<endl;
+  
+  int nB=gr->numBuses();
+  int nR=gr->numBranches();
+  int nG=gr->numGens();
 
-      
-      del_g del;
-      del.baseTopo(gr);
-      
-      ig->modGrid( del );     
-     
-      rg = ig->solveModel( );
-      rg->displayOperatingPos( gr );
-     
-
-      /*
-      cout<<ig->getNodalBalance()[139]<<endl;
-      cout<<ig->getNodalBalance()[140]<<endl;
-      cout<<ig->getNodalBalance()[141]<<endl;
-      cout<<rg->getF()[241]<<endl;
-      cout<<ig->getNodalBalance()[275]<<endl;
-      cout<<ig->getBranchFlow()[19]<<endl;
-      cout<<ig->getNodalBalance()[277]<<endl;
-      cout<<ig->getNodalBalance()[278]<<endl;
-      */
-
-      int nB=gr->numBuses();
-      int nR=gr->numBranches();
-      int nG=gr->numGens();
-
-
-
-      //Outputing resolts to JSON format
+  
+  
+  //Outputing resolts to JSON format
       cerr<<"{\n"
 	  <<"\t\"dataset\": { \n"
 	  <<"\t\t\"nodes\": [ \n";
@@ -157,7 +173,7 @@ int main(int argc, char* argv[]){
   }
   
   delete gr;
-
+  */
   return 0;
 }
    

@@ -18,7 +18,7 @@ class ranvar
  ranvar(int seed=372):_seed(seed) { }
   ~ranvar() {}
 
-  void createRV(int N,double mean, double var);
+  void createRV(int N,double mean, double stdv);
   int getNum(){ return random_variable.size(); }
   double getValue(int N){ return random_variable[N]; }
 
