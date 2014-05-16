@@ -20,9 +20,9 @@ int main(int argc, char* argv[]){
   double variance=atof( argv[3] );
   double stdv=sqrt(variance);
   
-  cerr<<"Samples: "<<samples<<endl;
-  cerr<<"Mean: "<<mean<<endl;
-  cerr<<"Var: "<<variance<<endl;
+  cout<<"Samples: "<<samples<<endl;
+  cout<<"Mean: "<<mean<<endl;
+  cout<<"Var: "<<variance<<endl;
   
 
   ranvar rv(21563);
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]){
 
   }
   cout<<"Total Prob: "<<totalProb<<endl;
-  cerr<<"Total Prob: "<<totalProb<<endl;
+    cerr<<"Total Prob: "<<totalProb<<endl;
   
   
   /*

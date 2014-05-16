@@ -1,0 +1,16 @@
+#!/bin/bash
+
+SAMPLES=13720
+
+
+for mean in 0 .5 .8 .9 .95 1 1.1 1.2
+do
+    echo "var prob" > output
+    for v in {0..400};
+    do  
+	num=$( eval calc $v/4000 );
+	echo $num,$var
+	pow $SAMPLES $mean $num | tail -1 | awk -F' ' '{print $3}' | sed "s/^/$num\t/"  >> output;
+    done
+    cp output ../../light/cc/fail_mean$mean.dat
+done

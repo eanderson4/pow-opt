@@ -1,0 +1,18 @@
+#!/bin/bash
+
+SAMPLES=2527
+
+countu=0;
+for u in 0 .5 .8 .9 1 1.1 1.2;
+do
+    countvar=0;
+    for var in 0 .001 .005 .01 .025 .05 .1;
+    do  
+	echo $u,$var
+	echo $countu,$countvar
+	pow $SAMPLES $u $var 2> output
+	cp output ../eanderson4.github.io/data/fail$countu$countvar.csv
+	countvar=$(($countvar+1));
+    done
+    countu=$(($countu+1));
+done

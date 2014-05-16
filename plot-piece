@@ -3,7 +3,7 @@
 SAMPLES=13720
 
 
-for var in 0 .025 .05 .1 .15 .25 .4
+for var in 0 .001 .005 .01 .05 .1 .15
 do
     echo "mean prob" > output
     for u in {0..400};
