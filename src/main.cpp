@@ -94,6 +94,8 @@ int main(int argc, char* argv[]){
   cout<<"\nTotal: "<<t_p<<endl;
 
   cout<<"\n\nError: "<<t_p - totalProb<<endl;
+
+  cout<<"\nTotal Prob: "<<t_p<<endl;
   
 
 
