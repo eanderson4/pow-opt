@@ -4,8 +4,10 @@
 
 #include <iostream>
 #include <stdlib.h>
+#include <cmath>
 #include <random>
 #include <vector>
+
 
 using namespace std;
 
@@ -21,6 +23,9 @@ class ranvar
   void createRV(int N,double mean, double stdv);
   int getNum(){ return random_variable.size(); }
   double getValue(int N){ return random_variable[N]; }
+  double phi(double x){ return 1/sqrt(2*M_PI)*exp(-.5*pow(x,2)); }
+  double PHI(double x);
+  void testPhi();
 
   friend ostream& operator<<(ostream& os, const ranvar& rv);
 

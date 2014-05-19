@@ -17,6 +17,49 @@ void ranvar::createRV(int N,double mean, double stdv){
   
 }
 
+double ranvar::PHI(double x){
+  if(x >= std::numeric_limits<double>::max()) return 1;
+  else if (x <= std::numeric_limits<double>::min()) return 0;
+  else return 0.5 * erfc(-x * M_SQRT1_2);
+}
+
+void ranvar::testPhi()
+{
+  //CREDIT TO http://www.johndcook.com/cpp_phi.html
+  // Select a few input values
+  double x[] =
+    {
+      -3,
+      -1,
+      0.0,
+      0.5,
+      2.1
+    };
+  
+  // Output computed by Mathematica
+  // y = Phi[x]
+  double y[] =
+    {
+      0.00134989803163,
+      0.158655253931,
+      0.5,
+      0.691462461274,
+      0.982135579437
+    };
+  
+  int numTests = sizeof(x)/sizeof(double);
+  
+  double maxError = 0.0;
+  for (int i = 0; i < numTests; ++i)
+    {
+      double error = fabs(y[i] - PHI(x[i]));
+      if (error > maxError)
+	maxError = error;
+    }
+  
+  std::cout << "Maximum error: " << maxError << "\n";
+} 
+
 ostream& operator<<(ostream& os, const ranvar& rv)
 {
 
