@@ -24,8 +24,9 @@ int main(int argc, char* argv[]){
   cout<<"Mean: "<<mean<<endl;
   cout<<"Var: "<<variance<<endl;
   
+  cerr<<argv[4]<<endl;
 
-  ranvar rv(21563);
+  ranvar rv(atoi(argv[4]));
   rv.createRV(samples,mean,stdv);
 
   //  cerr<<"flow,fail"<<endl;
@@ -46,7 +47,7 @@ int main(int argc, char* argv[]){
     double g;
 
     if(r<=L)   g=0;
-    else if (r<=Uc){
+    else if (r<Uc){
       g= a + b*r;
     }
     else g=1;
@@ -56,7 +57,7 @@ int main(int argc, char* argv[]){
 
   }
   cout<<"Total Prob: "<<totalProb<<endl;
-  cerr<<"Total Prob: "<<totalProb<<endl;
+  //  cerr<<"Total Prob: "<<totalProb<<endl;
   
   
 
@@ -71,7 +72,12 @@ int main(int argc, char* argv[]){
   double alpha_high=(high - mu)/sigma;
   double p_iL = rv.PHI(alpha_low);
   double p_LU = rv.PHI(alpha_high)-rv.PHI(alpha_low);
-  double ef_LU = mu+sigma*((rv.phi(alpha_low)-rv.phi(alpha_high))/(rv.PHI(alpha_high)-rv.PHI(alpha_low)));
+  double ef_LU;
+  if(p_LU==0) ef_LU = 0; 
+  else ef_LU = mu+sigma*((rv.phi(alpha_low)-rv.phi(alpha_high))/(rv.PHI(alpha_high)-rv.PHI(alpha_low)));
+  cout<<rv.phi(alpha_low)<<" "<<rv.phi(alpha_high)<<endl;
+  cout<<rv.PHI(alpha_low)<<" "<<rv.PHI(alpha_high)<<endl;
+  cout<<rv.PHI(alpha_high)-rv.PHI(alpha_low)<<endl;
   double p_Ui = 1-rv.PHI(alpha_high);
   
   double t_p = a*p_LU + b*ef_LU*p_LU + p_Ui;
@@ -93,13 +99,11 @@ int main(int argc, char* argv[]){
 
   cout<<"\nTotal: "<<t_p<<endl;
 
-  cout<<"\n\nError: "<<t_p - totalProb<<endl;
-
-  cout<<"\nTotal Prob: "<<t_p<<endl;
+  cout<<"\nTotal Error: "<<t_p - totalProb<<endl;
   
+ 
 
-
-  //  rv.testPhi();
+  //   rv.testPhi();
 
 
 

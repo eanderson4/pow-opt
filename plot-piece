@@ -1,16 +1,18 @@
 #!/bin/bash
 
-SAMPLES=13720
+SAMPLES=20000
 
+count=1252
 
 for var in 0 .001 .005 .01 .05 .1 .15
 do
-    echo "mean prob" > output
+    echo "mean error" > output
     for u in {0..400};
     do  
 	num=$( eval calc $u/200 );
 	echo $num,$var
-	pow $SAMPLES $num $var | tail -1 | awk -F' ' '{print $3}' | sed "s/^/$num\t/"  >> output;
+	pow $SAMPLES $num $var $count | tail -1 | awk -F' ' '{print $3}' | sed "s/^/$num\t/"  >> output;
+	let count=count+633;
     done
-    cp output ../../light/cc/fail$var.dat
+    cp output ../../light/cc/error$var.dat
 done

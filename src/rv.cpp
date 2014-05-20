@@ -17,10 +17,15 @@ void ranvar::createRV(int N,double mean, double stdv){
   
 }
 
+double ranvar::phi(double x){ 
+  if(x >= std::numeric_limits<double>::max()) return 0;
+  else return 1/sqrt(2*M_PI)*exp(-.5*pow(x,2)); 
+}
+
 double ranvar::PHI(double x){
   if(x >= std::numeric_limits<double>::max()) return 1;
-  else if (x <= std::numeric_limits<double>::min()) return 0;
-  else return 0.5 * erfc(-x * M_SQRT1_2);
+  if(x <= std::numeric_limits<double>::lowest()) return 0;
+  else   return 0.5 * erfc(-x * M_SQRT1_2);
 }
 
 void ranvar::testPhi()

@@ -17,13 +17,14 @@ class ranvar
 {
 
  public:
- ranvar(int seed=372):_seed(seed) { }
+ ranvar(int seed=372):_seed(seed) { if(seed==372) seed=time(NULL);
+    cout<<seed<<endl;}
   ~ranvar() {}
 
   void createRV(int N,double mean, double stdv);
   int getNum(){ return random_variable.size(); }
   double getValue(int N){ return random_variable[N]; }
-  double phi(double x){ return 1/sqrt(2*M_PI)*exp(-.5*pow(x,2)); }
+  double phi(double x);
   double PHI(double x);
   void testPhi();
 
