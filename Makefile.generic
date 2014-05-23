@@ -1,9 +1,9 @@
-# A Makefile for Eric's Concert code to buidl multistage problems
+# A Makefile for base power system files, needs CPLEX/CONCERT!!!!!!!!!
 
-#This is for Jeff (on opt machines) Linux 64bit
+#This is for main comp
 
-HOMEDIR=/mnt/ws/home/eanderson/compwork/comp
-CPLEX_STUDIO=${HOMEDIR}/CPLEX_Studio
+HOMEDIR=/home/eric/git/pow-opt
+CPLEX_STUDIO=/home/eric/CPLEX_Studio
 CPLEX_ARCH=x86-64_sles10_4.1
 
 CPLEX_INC_DIR=${CPLEX_STUDIO}/cplex/include
@@ -12,12 +12,12 @@ CONCERT_INC_DIR=${CPLEX_STUDIO}/concert/include
 CPLEX_LIB_DIR=${CPLEX_STUDIO}/cplex/lib/${CPLEX_ARCH}/static_pic
 CONCERT_LIB_DIR=${CPLEX_STUDIO}/concert/lib/${CPLEX_ARCH}/static_pic
 
-CPLEX_INCS = -I${CPLEX_INC_DIR} -I${CONCERT_INC_DIR} 
-CPLEX_LIBS = -L$(CPLEX_LIB_DIR) -lilocplex -lcplex -L$(CONCERT_LIB_DIR) -lconcert -lm -pthread -lpthread -ldl -lsqlite3
+CPLEX_INCS = -I${CPLEX_INC_DIR} -I${CONCERT_INC_DIR}
+CPLEX_LIBS = -L$(CPLEX_LIB_DIR) -lilocplex -lcplex -L$(CONCERT_LIB_DIR) -lconcert -lm -O2 -larmadillo -llapack -lblas -pthread -lpthread -ldl -lsqlite3
 
 CXX	= g++
 CXXFLAGS := -g -m64 -Wall -Wno-deprecated -Wunused-variable -fPIC\
-        -fexceptions -DIL_STD
+        -fexceptions -DIL_STD -std=c++11
 
 PROJ_INC = -I${HOMEDIR}/src/
 
