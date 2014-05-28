@@ -8,9 +8,8 @@
 #include "branch.h"
 #include "gen.h"
 
+
 using namespace std;
-
-
 
 class grid
 {
@@ -23,10 +22,12 @@ class grid
   ~grid() {}
 
   void setCapacity(int n, double U){    _branches[n].setRateA(U);  }
+  void addPd(int n, double pd){ _buses[n].addP(pd); }
   void addBus(bus b){    _buses.push_back(b);  }
   void addBranch(branch b){    _branches.push_back(b);  }
   void addGen(gen g){    _gens.push_back(g);  }
   void addGenCost(int num, int model, double startup, double shutdown, int ncost, double c2, double c1, double c0);
+  //  void modGrid(del_g mod);
   branch getBranch(int num){    return _branches[num];  }
   bus getBus(int num){    return _buses[num];  }
   gen getGen(int num){    return _gens[num];  }
@@ -37,6 +38,7 @@ class grid
   void buildMap();
   void printNums(ostream& stream);
   double getLoadShedPenalty(){ return loadShedPenalty; }
+  double getTotalDemand();
 
   friend ostream& operator<<(ostream& os, const grid& gr);
 

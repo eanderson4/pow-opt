@@ -115,6 +115,30 @@ void ibase::getBaseResults(IloCplex * cplex, rgrid * rg){
   
 }
 
+void islack::buildSlack(grid * gr, IloModel * mod, IloNumVarArray g){
+  
+  IloEnv env=mod->getEnv();
+  int nG=gr->numGens();
+  
+  _mismatch = IloSum(_g_nom) - gr->getTotalDemand();
+
+  cout<<"mismatch: "<<_mismatch<<endl;
+  
+  _slackDistribute = IloRangeArray(env, nG, 0, 0);
+
+  for(int i=0;i<nG;i++){
+    IloNum gset=_g_nom[i]-_slack[i]*_mismatch;
+    g[i].setBounds(gset,gset);
+  }
+  double td=gr->getTotalDemand();
+  _totalDemand = IloRange(env,td,td,"totaldemand");
+  _totalDemand.setExpr( IloSum(g) );
+  mod->add(_totalDemand);
+  
+
+
+}
+
 
 int icost::buildCost(grid * gr, IloModel * mod, IloNumVarArray g){
   int ng = gr->numGens();

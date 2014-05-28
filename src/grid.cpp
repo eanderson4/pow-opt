@@ -3,7 +3,13 @@
 map<int, int> grid::map_busNum;
 
 
-
+double grid::getTotalDemand(){
+  double d=0;
+  for(int i=0;i<numBuses();i++){
+    d=d+_buses[i].getP();
+  }
+  return d;
+}
 
 void grid::addGenCost(int num, int model, double startup, double shutdown, int ncost, double c2, double c1, double c0){
     _gens[num-1].addCost(model,startup,shutdown,ncost,c2,c1,c0);
@@ -27,8 +33,27 @@ void grid::printNums(ostream& stream){
     stream<<"Branches: "<<_branches.size()<<endl;
     stream<<"Generators: "<<_gens.size()<<endl;
 }
-
-
+/*
+void grid::modGrid(del_g mod){
+  
+  if(mod.haveTopo()){
+    int nB=_gr->numBranches();
+    for(int i=0; i<nB; i++){
+      if(mod.getStatus(i)==false){
+	// line i is outaged
+	cout<<"Line "<<i<<" - ";
+	gr->getBranch()[i].setStatus(0);	
+      }
+    }
+  }
+  if(mod.haveDemand()){
+    int nB=_gr->numBuses();
+    for(int i=0;i<nB; i++){
+      gr->getBus()[i].addP( mod.addDemand(i) );
+    }
+  }
+  
+  }*/
 ostream& operator<<(ostream& os, const grid& gr)
 {
 

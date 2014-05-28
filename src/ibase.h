@@ -46,6 +46,29 @@ class ibase {
 
 };
 
+class islack {
+
+ public:
+  islack(){}
+ islack(IloNumArray g_nom,IloNumArray slack):_g_nom(g_nom),_slack(slack){}
+
+  void buildSlack(grid * gf, IloModel * mod, IloNumVarArray g);
+
+  IloNumArray getGNom(){ return _g_nom; }
+  IloNumArray getSlack(){ return _slack; }
+  IloNum getMismatch(){ return _mismatch; }
+  IloRangeArray getSlackDistribute(){ return _slackDistribute; }
+  
+
+ private:
+  IloNumArray _g_nom;
+  IloNumArray _slack;
+
+  IloNum _mismatch;
+  IloRangeArray _slackDistribute;
+  IloRange _totalDemand;
+
+};
 
 class icost {
   

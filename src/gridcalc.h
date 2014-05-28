@@ -19,8 +19,12 @@ class gridcalc
   gridcalc(grid * gr);
   ~gridcalc() {}
 
+  vec getDelF(){ return _del_f; }
+
  private:
   grid * _gr;
+
+  vec _del_f;
 
 };
 

@@ -13,6 +13,8 @@ class rgrid : public rbase {
   ~rgrid(){  }
   
   double getObjective(){ return objective; }
+  IloCplex::CplexStatus getStatus(){ return status; }
+
   void getSolveInfo(IloCplex * cplex, double rt);
   void setGenCost(double genCost);
   void outputInfo(ostream & out);
@@ -21,6 +23,7 @@ class rgrid : public rbase {
   void displayBranchPos(grid * gr);
   void displayGenPos(grid * gr);
   void setLoadShed(double ls){ _loadshed=ls; }
+
 
  private:
 

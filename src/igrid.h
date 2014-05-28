@@ -18,6 +18,7 @@ class igrid : public ibase {
 
   virtual rgrid * solveModel( isolve * is=NULL);
   int addCost();
+  void addSlack(IloNumArray _g_nom, IloNumArray slack);
   void allowLoadShed();
   void modGrid( del_g mod );
 
@@ -33,10 +34,14 @@ class igrid : public ibase {
   grid * _gr;
 
   icost _ic;
+  islack _islk;
   ished _ils;
+  
+  del_g _mod;
 
   bool have_cost;
   bool have_loadshed;
+  bool have_slack;
 
 };
 

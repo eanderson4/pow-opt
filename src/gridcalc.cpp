@@ -9,20 +9,14 @@ gridcalc::gridcalc(grid * gr) {
 
   int Nb=gr->numBuses();
   int Nl=gr->numBranches();
-  int Nk=gr->numGens();
-  double v[2*Nl];
-  double bff[2*Nl];
-  int c[2*Nl];
-  int r[2*Nl];
 
   cout<<*gr<<endl;
-  cout<<Nl<<endl;
 
   mat C(Nl,Nb);
   mat Bff(Nl,Nl);
-  //  C.fill(0);
   int slack;
 
+  cout<<"Line: To bus - From bus  (indicies)"<<endl;
   for(int i =0; i<Nl; i++){
     branch br = gr->getBranch(i);
     int from = br.getFrom();
@@ -49,23 +43,23 @@ gridcalc::gridcalc(grid * gr) {
   }
   
   
-  cout<<C<<endl;
+  cout<<"C: "<<sp_mat(C)<<endl;
 
   mat Bf(Nl,Nb);
   mat Bbus(Nb,Nb);
 
   Bf=Bff*C;
   Bbus=trans(C)*Bf;
-
-  cout<<Bf<<endl;
-  cout<<Bbus<<endl;
+  
+  cout<<"Bf: "<<sp_mat(Bf)<<endl;
+  cout<<"Bbus: "<<sp_mat(Bbus)<<endl;
 
   for(int i=0;i<Nb;i++){
     bus bi = gr->getBus(i);
     int type=bi.getType();
     if(type==3) slack=i;
   }
-  cout<<"slack: "<<slack<<endl;
+  cout<<"Base Slack Bus: "<<slack<<endl;
  
 
   mat H(Nl,Nb-1);
@@ -74,18 +68,12 @@ gridcalc::gridcalc(grid * gr) {
   Hp = Bf.submat(0,1,Nl-1,Nb-1)*inv(Bbus.submat(1,1,Nb-1,Nb-1));
   H = Hp;
   H.insert_cols(0,1);
-
+  cout<<"H calculated using inverse of Bbus matrix"<<endl;
 
   mat del(Nb,1,fill::zeros);
-  //  del.fill(0);
-  del(4,0)=10;
+  del(4,0)=5;
+  del(6,0)=7;
   
-
-  cout<<H<<endl;
-  
-  cout<<H*del<<endl;
-
-  cout<<sum(H*del)<<endl;
 
   srand(time(NULL));
   mat slackdist(Nb,1,fill::zeros);
@@ -113,17 +101,14 @@ gridcalc::gridcalc(grid * gr) {
     slackdist(buscon,0)=normalized;
   }    
   
-
-  
-
-  cout<<slackdist<<endl;
-
-  
+  cout<<"Distribute slack from base bus to slack distribution"<<endl;
+  slackdist.t().print("Slack: ");
 
   mat Hw(H);
   mat vt(Nl,1);
   vt=H*slackdist;
-  cout<<vt<<endl;
+  vt.t().print("Vt: ");
+  cout<<"Vt: Cols "<<vt.n_cols<<", Rows "<<vt.n_rows<<endl;
   for(int k=0;k<Nb;k++){
     for(int i=0;i<Nl;i++){
       if(abs(vt(i,0))>=0.0000005){
@@ -132,7 +117,9 @@ gridcalc::gridcalc(grid * gr) {
       }
     }
   }
-  for(int i=0;i<Nb;i++){
+
+  //WRONG
+  /*  for(int i=0;i<Nb;i++){
     if(abs(vt(i,0)*del(i,0))>=0.000007){
       cout<<i<<": "<<vt(i,0)*del(i,0)<<endl;
       cout<<vt(i,0)<<"=";
@@ -142,9 +129,21 @@ gridcalc::gridcalc(grid * gr) {
 	cout<<H(i,buscon)<<"*"<<slackdist(buscon,0)<<endl;
       }
     }
-  }
-  cout<<Hw*del<<endl;
-  cout<<sum(Hw*del)<<endl;
+    } */
+  //END WRONG
 
 
+  vec del_f = Hw*del;
+
+  del_f.t().print("delta f: ");
+  _del_f = del_f;
+
+  cout<<sum(del_f)<<endl;
+
+  cout<<12*sum(vt)<<endl;
+  cout<<(5*sum(H.col(4))+7*sum(H.col(6)))<<endl;
+
+  cout<<(5*sum(H.col(4) - vt) + 7*sum(H.col(6)-vt))<<endl;
+
+  
 }

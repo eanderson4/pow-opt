@@ -17,7 +17,8 @@ rgrid *  igrid::solveModel( isolve * is){
       rg->getSolveInfo(&cplex,tot);
       getBaseResults(&cplex, rg);
       if(have_loadshed) getIshed().getLoadShed(&cplex, rg);
-      
+
+      cout<<"STATUS: "<<rg->getStatus()<<endl;
       cout<<"OBJECTIVE: "<<cplex.getObjValue()<<endl;
       double genCost = getIcost().getCost(_gr,rg->getG());
       rg->setGenCost(genCost);
@@ -47,9 +48,18 @@ int igrid::addCost(){
   return have_cost; 
 }
 
+void igrid::addSlack(IloNumArray g_nom, IloNumArray slack){
+  _islk = islack(g_nom,slack);
+  
+  _islk.buildSlack(_gr,getModel(),getG());
+
+  have_slack=true;
+}
+
 
 void igrid::modGrid( del_g mod ){
-  
+  _mod=mod;
+
   //  make modification
   stringstream ss;
   int nB = _gr->numBranches();
@@ -74,6 +84,40 @@ void igrid::modGrid( del_g mod ){
     }
     
   }
+
+  if(mod.haveDemand()){
+    for(int i=0; i<nB; i++){
+      double del_demand = mod.getDemand(i);
+      if(del_demand != 0){
+	IloRange nb = getNodalBalance()[i];
+	nb.setExpr(nb.getExpr() + del_demand);
+      }
+    }
+  }
+
+  //MODIFYING GRID TOO
+
+  if(mod.haveTopo()){
+    int nB=_gr->numBranches();
+    for(int i=0; i<nB; i++){
+      if(mod.getStatus(i)==false){
+	// line i is outaged
+	cout<<"Line "<<i<<" - ";
+	_gr->getBranch(i).setStatus(0);	
+      }
+    }
+  }
+  if(mod.haveDemand()){
+    cout<<"Modify Demand (add)"<<endl;
+    int nB=_gr->numBuses();
+    for(int i=0;i<nB; i++){
+      if(mod.getDemand(i)>= 1){
+	cout<<i<<": "<<_gr->getBus(i).getP()<<" + "<<mod.getDemand(i)<<endl;
+	_gr->addPd(i,mod.getDemand(i));
+      }
+    }
+  }
+
 
 
 }

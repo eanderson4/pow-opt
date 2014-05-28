@@ -10,6 +10,9 @@ class bus {
    bus() {}
  bus(int num, int type, double pd, double qd, double gs, double bs, int area, double vm, double va, double basekv, int zone, double vmax, double vmin) : _num( num ), _type( type ), _pd( pd ), _qd( qd ), _gs( gs ), _bs( bs ), _area( area ), _vm( vm ), _va( va ), _basekv( basekv ), _zone( zone ), _vmax( vmax ), _vmin( vmin ) {} 
 
+   void addP(double ap){ _pd=_pd+ap; }
+   void setP(double pd){ _pd=pd; }
+   
   int getNum(){ return _num; }
   int getType(){ return _type; }
   double getP(){    return _pd;  }
@@ -32,6 +35,8 @@ class bus {
   int _zone;
   double _vmax;
   double _vmin;
+
+  double _p2;
 
 };
 

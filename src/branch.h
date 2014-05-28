@@ -11,6 +11,7 @@ class branch {
  branch(int num, int fbus, int tbus, double br_r, double br_x, double br_b, double rate_a, double rate_b, double rate_c, double tap, double shift, int br_status, double ang_min, double ang_max) : _num( num ), _fbus( fbus ), _tbus( tbus ), _br_r( br_r ), _br_x( br_x ), _br_b( br_b ), _rate_a( rate_a ), _rate_b( rate_b ), _rate_c( rate_c ), _tap( tap ), _shift( shift ), _br_status( br_status ), _ang_min( ang_min ), _ang_max( ang_max ) {}
 
   void setRateA(double U){ _rate_a = U; }
+  void setStatus(int status){ _br_status=status; }
 
   int getFrom(){ return _fbus; }
   int getTo(){ return _tbus; }
@@ -21,6 +22,7 @@ class branch {
   double getRateA(){ return _rate_a; }
   double getAngMax(){ return _ang_max; }
   double getAngMin(){ return _ang_min; }
+  double getStatus(){ return _br_status; }
 
   friend ostream& operator<<(ostream& os, const branch& b);
 
