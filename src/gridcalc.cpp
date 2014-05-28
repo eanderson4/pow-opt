@@ -66,15 +66,19 @@ gridcalc::gridcalc(grid * gr) {
     if(type==3) slack=i;
   }
   cout<<"slack: "<<slack<<endl;
-  
-  
+ 
+
   mat H(Nl,Nb-1);
+  mat Hp(Nl,Nb-1);
 
-  H = Bf.submat(0,1,Nl-1,Nb-1)*inv(Bbus.submat(1,1,Nb-1,Nb-1));
+  Hp = Bf.submat(0,1,Nl-1,Nb-1)*inv(Bbus.submat(1,1,Nb-1,Nb-1));
+  H = Hp;
+  H.insert_cols(0,1);
 
-  mat del(Nb-1,1);
-  del.fill(0);
-  del(3,0)=10;
+
+  mat del(Nb,1,fill::zeros);
+  //  del.fill(0);
+  del(4,0)=10;
   
 
   cout<<H<<endl;
@@ -82,6 +86,65 @@ gridcalc::gridcalc(grid * gr) {
   cout<<H*del<<endl;
 
   cout<<sum(H*del)<<endl;
+
+  srand(time(NULL));
+  mat slackdist(Nb,1,fill::zeros);
+
+  int Ng = gr->numGens();
+  double total=0;
+  for(int i=0;i<Ng;i++){
+    gen g = gr->getGen(i);
+    int buscon=gr->getBusNum(g.getBus());
+    double r = ((double) rand() / (RAND_MAX));
+    
+    if(i==1) r=1;
+    else r=0; 
+
+    slackdist(buscon,0)=r;
+    
+    total=total+r;
+  }
+
+
+  for(int i=0;i<Ng;i++){
+    gen g = gr->getGen(i);
+    int buscon=gr->getBusNum(g.getBus());
+    double normalized = slackdist(buscon,0)/total;
+    slackdist(buscon,0)=normalized;
+  }    
+  
+
+  
+
+  cout<<slackdist<<endl;
+
+  
+
+  mat Hw(H);
+  mat vt(Nl,1);
+  vt=H*slackdist;
+  cout<<vt<<endl;
+  for(int k=0;k<Nb;k++){
+    for(int i=0;i<Nl;i++){
+      if(abs(vt(i,0))>=0.0000005){
+	//	cout<<H(i,k)<<" - "<<vt(i,0)<<endl;
+	Hw(i,k)=H(i,k)-vt(i,0);
+      }
+    }
+  }
+  for(int i=0;i<Nb;i++){
+    if(abs(vt(i,0)*del(i,0))>=0.000007){
+      cout<<i<<": "<<vt(i,0)*del(i,0)<<endl;
+      cout<<vt(i,0)<<"=";
+      for(int j=0;j<Ng;j++){
+	gen g = gr->getGen(j);
+	int buscon=gr->getBusNum(g.getBus());
+	cout<<H(i,buscon)<<"*"<<slackdist(buscon,0)<<endl;
+      }
+    }
+  }
+  cout<<Hw*del<<endl;
+  cout<<sum(Hw*del)<<endl;
 
 
 }
