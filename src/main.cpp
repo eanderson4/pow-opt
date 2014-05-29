@@ -9,13 +9,13 @@ using namespace std;
 
 int main(int argc, char* argv[]){
 
-  sqlInter db;
-  grid * gr = new grid;
-
-  string db_name;
-
   if(argc>1){
     try {
+      sqlInter db;
+      grid * gr = new grid;
+      
+      string db_name;
+
       db_name = argv[1];
       db.openDb(db_name);
       db.load(*gr);
@@ -36,14 +36,19 @@ int main(int argc, char* argv[]){
      
       rg = ig->solveModel( );
       rg->displayOperatingPos( gr );
-     
 
+      delete gr;     
+    }
     catch (exception& e) {
       cerr << e.what() << "\n";
     }
   }
+  else
+    cout<<"Command: pow case/30.db\n"
+	<<"\trun power flow for case30"<<endl;
   
-  delete gr;
+  
+
 
   return 0;
 }
