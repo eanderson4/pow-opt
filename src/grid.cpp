@@ -33,27 +33,6 @@ void grid::printNums(ostream& stream){
     stream<<"Branches: "<<_branches.size()<<endl;
     stream<<"Generators: "<<_gens.size()<<endl;
 }
-/*
-void grid::modGrid(del_g mod){
-  
-  if(mod.haveTopo()){
-    int nB=_gr->numBranches();
-    for(int i=0; i<nB; i++){
-      if(mod.getStatus(i)==false){
-	// line i is outaged
-	cout<<"Line "<<i<<" - ";
-	gr->getBranch()[i].setStatus(0);	
-      }
-    }
-  }
-  if(mod.haveDemand()){
-    int nB=_gr->numBuses();
-    for(int i=0;i<nB; i++){
-      gr->getBus()[i].addP( mod.addDemand(i) );
-    }
-  }
-  
-  }*/
 ostream& operator<<(ostream& os, const grid& gr)
 {
 

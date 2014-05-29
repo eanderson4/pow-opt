@@ -66,9 +66,13 @@ int main(int argc, char* argv[]){
     cout<<" "<<(rg->getF()[i] - rg2->getF()[i])<<"   ";
 
   cout<<"\n\n\n";
-  for(int i=0;i<gr->numBranches();i++)
+  double totalerror;
+  for(int i=0;i<gr->numBranches();i++){
     cout<<" "<<(rg->getF()[i] - rg2->getF()[i] - del_f(i))<<"   ";
+    totalerror=totalerror+(rg->getF()[i] - rg2->getF()[i] - del_f(i));
+  }
   cout<<"\n";
+  cout<<"TE: "<<totalerror<<endl;
 
   return 0;
 }
