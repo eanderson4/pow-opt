@@ -17,8 +17,7 @@ class ranvar
 {
 
  public:
- ranvar(int seed=372):_seed(seed) { if(seed==372) seed=time(NULL);
-    cout<<seed<<endl;}
+ ranvar(int seed=-372):_seed(seed) { if(seed==-372) seed=time(NULL); }
   ~ranvar() {}
 
   void createRV(int N,double mean, double stdv);
@@ -27,6 +26,10 @@ class ranvar
   double phi(double x);
   double PHI(double x);
   void testPhi();
+  void testRV();
+  
+  double simProb(double L, double p, double pc);
+  double anaProb(double L, double p, double pc);
 
   friend ostream& operator<<(ostream& os, const ranvar& rv);
 
@@ -34,6 +37,10 @@ class ranvar
 
   vector<double> random_variable;
   int _seed;
+
+  int _N;
+  double _mean;
+  double _stdv;
   
 };
 
