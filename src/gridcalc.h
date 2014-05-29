@@ -21,6 +21,7 @@ class gridcalc
   ~gridcalc() {}
 
   vec getDelF(vec delg, vec slack);
+  void testSlack();
 
  private:
   grid * _gr;

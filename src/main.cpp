@@ -4,13 +4,17 @@
 #include "igrid.h"
 #include "grid.h"
 #include "gridcalc.h"
+#include "rv.h"
 
 using namespace std;
 
 
 
 int main(int argc, char* argv[]){
+
   if(argc<=1){
+    cout<<"cmd: pow case/30.db\n"
+	<<"\trun main for case30"<<endl;
     return 1;
   }
 
@@ -24,8 +28,9 @@ int main(int argc, char* argv[]){
   gr->buildMap();
   gr->printNums(cout);
 
+  cout<<*gr<<endl;
+
   gridcalc gc(gr);
-  //  vec del_f = gc.getDelF();
 
   int Nb=gr->numBuses();
   vec delg(Nb,fill::zeros);
@@ -51,7 +56,6 @@ int main(int argc, char* argv[]){
   cout<<"G: "<<g_nom<<endl;
   
 
-  //gr->modGrid(dg);
   ig.modGrid(dg);
     
   IloNumArray slack(IloEnv(),Nb);
@@ -68,18 +72,21 @@ int main(int argc, char* argv[]){
   cout<<"Total Demand: "<<gr->getTotalDemand()<<endl;
   cout<<"Total Gen: "<<IloSum(rg2->getG())<<endl;
   
-  cout<<"delF: "<<endl;
+  cout<<"delF (sim): "<<endl;
   for(int i=0;i<gr->numBranches();i++)
     cout<<" "<<(rg->getF()[i] - rg2->getF()[i])<<"   ";
 
-  cout<<"\n\n\n";
+  cout<<"\ndelF (sim) - delF (shift factor)"<<endl;
   double totalerror=0;
   for(int i=0;i<gr->numBranches();i++){
     cout<<" "<<(rg->getF()[i] - rg2->getF()[i] - del_f(i))<<"   ";
     totalerror=totalerror+(rg->getF()[i] - rg2->getF()[i] - del_f(i));
   }
   cout<<"\n";
-  cout<<"TE: "<<totalerror<<endl;
+  cout<<"Total Error: "<<totalerror<<endl;
+
+  ranvar rv;
+  rv.testRV();  
 
   return 0;
 }

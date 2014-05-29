@@ -10,8 +10,6 @@ gridcalc::gridcalc(grid * gr) {
   int Nb=gr->numBuses();
   int Nl=gr->numBranches();
 
-  cout<<*gr<<endl;
-
   mat C(Nl,Nb);
   mat Bff(Nl,Nl);
   int slack;
@@ -35,11 +33,8 @@ gridcalc::gridcalc(grid * gr) {
     if (tap == 0) btmp = 1/x;
     else btmp = 1/(x*tap);
     Bff(i,i)=btmp;
-    
-
 
     //IGNORING PHASE SHIFT FOR NOW
-
   }
   
   
@@ -71,82 +66,7 @@ gridcalc::gridcalc(grid * gr) {
   cout<<"H calculated using inverse of Bbus matrix"<<endl;
   _H=H;
 
-  mat del(Nb,1,fill::zeros);
-  del(4,0)=5;
-  del(6,0)=7;
-  
-
-  srand(time(NULL));
-  mat slackdist(Nb,1,fill::zeros);
-
-  int Ng = gr->numGens();
-  double total=0;
-  for(int i=0;i<Ng;i++){
-    gen g = gr->getGen(i);
-    int buscon=gr->getBusNum(g.getBus());
-    double r = ((double) rand() / (RAND_MAX));
-    
-    if(i==1) r=1;
-    else r=0; 
-
-    slackdist(buscon,0)=r;
-    
-    total=total+r;
-  }
-
-
-  for(int i=0;i<Ng;i++){
-    gen g = gr->getGen(i);
-    int buscon=gr->getBusNum(g.getBus());
-    double normalized = slackdist(buscon,0)/total;
-    slackdist(buscon,0)=normalized;
-  }    
-  
-  cout<<"Distribute slack from base bus to slack distribution"<<endl;
-  slackdist.t().print("Slack: ");
-
-  mat Hw(H);
-  mat vt(Nl,1);
-  vt=H*slackdist;
-  vt.t().print("Vt: ");
-  cout<<"Vt: Cols "<<vt.n_cols<<", Rows "<<vt.n_rows<<endl;
-  for(int k=0;k<Nb;k++){
-    for(int i=0;i<Nl;i++){
-      if(abs(vt(i,0))>=0.0000005){
-	//	cout<<H(i,k)<<" - "<<vt(i,0)<<endl;
-	Hw(i,k)=H(i,k)-vt(i,0);
-      }
-    }
-  }
-
-  //WRONG
-  /*  for(int i=0;i<Nb;i++){
-    if(abs(vt(i,0)*del(i,0))>=0.000007){
-      cout<<i<<": "<<vt(i,0)*del(i,0)<<endl;
-      cout<<vt(i,0)<<"=";
-      for(int j=0;j<Ng;j++){
-	gen g = gr->getGen(j);
-	int buscon=gr->getBusNum(g.getBus());
-	cout<<H(i,buscon)<<"*"<<slackdist(buscon,0)<<endl;
-      }
-    }
-    } */
-  //END WRONG
-
-  vec del_f = Hw*del;
-
-  del_f.t().print("delta f: ");
-
-  cout<<sum(del_f)<<endl;
-
-  cout<<12*sum(vt)<<endl;
-  cout<<(5*sum(H.col(4))+7*sum(H.col(6)))<<endl;
-
-  cout<<(5*sum(H.col(4) - vt) + 7*sum(H.col(6)-vt))<<endl;
-
-  
 }
-
 
 vec gridcalc::getDelF(vec delg, vec slack) {
   int Nb=_gr->numBuses();
@@ -168,4 +88,86 @@ vec gridcalc::getDelF(vec delg, vec slack) {
 
   return del_f;
 
+}
+
+void gridcalc::testSlack(){
+  int Nb=_gr->numBuses();
+  int Nl=_gr->numBranches();
+  int Ng = _gr->numGens();
+
+
+  mat del(Nb,1,fill::zeros);
+  del(4,0)=5;
+  del(6,0)=7;
+  
+
+  srand(time(NULL));
+  mat slackdist(Nb,1,fill::zeros);
+
+
+  double total=0;
+  for(int i=0;i<Ng;i++){
+    gen g = _gr->getGen(i);
+    int buscon=_gr->getBusNum(g.getBus());
+    double r = ((double) rand() / (RAND_MAX));
+    
+    if(i==1) r=1;
+    else r=0; 
+
+    slackdist(buscon,0)=r;
+    
+    total=total+r;
+  }
+
+
+  for(int i=0;i<Ng;i++){
+    gen g = _gr->getGen(i);
+    int buscon=_gr->getBusNum(g.getBus());
+    double normalized = slackdist(buscon,0)/total;
+    slackdist(buscon,0)=normalized;
+  }    
+  
+  cout<<"Distribute slack from base bus to slack distribution"<<endl;
+  slackdist.t().print("Slack: ");
+
+  mat Hw(_H);
+  mat vt(Nl,1);
+  vt=_H*slackdist;
+  vt.t().print("Vt: ");
+  cout<<"Vt: Cols "<<vt.n_cols<<", Rows "<<vt.n_rows<<endl;
+  for(int k=0;k<Nb;k++){
+    for(int i=0;i<Nl;i++){
+      if(abs(vt(i,0))>=0.0000005){
+	//	cout<<H(i,k)<<" - "<<vt(i,0)<<endl;
+	Hw(i,k)=_H(i,k)-vt(i,0);
+      }
+    }
+  }
+
+  //WRONG
+  /*  for(int i=0;i<Nb;i++){
+    if(abs(vt(i,0)*del(i,0))>=0.000007){
+      cout<<i<<": "<<vt(i,0)*del(i,0)<<endl;
+      cout<<vt(i,0)<<"=";
+      for(int j=0;j<Ng;j++){
+	gen g = _gr->getGen(j);
+	int buscon=_gr->getBusNum(g.getBus());
+	cout<<H(i,buscon)<<"*"<<slackdist(buscon,0)<<endl; USEFUL INFORMATION
+      }
+    }
+    } */
+  //END WRONG
+
+  vec del_f = Hw*del;
+
+  del_f.t().print("delta f (shift factor): ");
+
+  cout<<sum(del_f)<<endl;
+
+  cout<<12*sum(vt)<<endl;
+  cout<<(5*sum(_H.col(4))+7*sum(_H.col(6)))<<endl;
+
+  cout<<(5*sum(_H.col(4) - vt) + 7*sum(_H.col(6)-vt))<<endl;
+
+  
 }
