@@ -4,6 +4,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include "grid.h"
+#include "del_g.h"
 
 #define ARMA_DONT_USE_WRAPPER
 #include <armadillo>
@@ -19,12 +20,13 @@ class gridcalc
   gridcalc(grid * gr);
   ~gridcalc() {}
 
-  vec getDelF(){ return _del_f; }
+  vec getDelF(vec delg, vec slack);
 
  private:
   grid * _gr;
 
-  vec _del_f;
+  mat _H;
+  
 
 };
 

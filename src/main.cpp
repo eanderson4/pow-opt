@@ -10,7 +10,7 @@ using namespace std;
 
 
 int main(int argc, char* argv[]){
-  if(argc<1){
+  if(argc<=1){
     return 1;
   }
 
@@ -25,12 +25,20 @@ int main(int argc, char* argv[]){
   gr->printNums(cout);
 
   gridcalc gc(gr);
-  vec del_f = gc.getDelF();
+  //  vec del_f = gc.getDelF();
 
+  int Nb=gr->numBuses();
+  vec delg(Nb,fill::zeros);
+  vec slackdist(Nb,fill::zeros);
+  delg(4)=5; delg(6)=7;
+  slackdist(1)=1;
+
+  vec del_f = gc.getDelF(delg,slackdist);
+  
   del_g dg(gr);
   dg.addDemand(4,5);
   dg.addDemand(6,7);
-  
+
   igrid ig(gr);
   ig.addCost();
   rgrid * rg;
@@ -46,7 +54,6 @@ int main(int argc, char* argv[]){
   //gr->modGrid(dg);
   ig.modGrid(dg);
     
-  int Nb=gr->numBuses();
   IloNumArray slack(IloEnv(),Nb);
   for(int i=0;i<Nb;i++) slack[i]=0;
   slack[1]=1;
@@ -66,7 +73,7 @@ int main(int argc, char* argv[]){
     cout<<" "<<(rg->getF()[i] - rg2->getF()[i])<<"   ";
 
   cout<<"\n\n\n";
-  double totalerror;
+  double totalerror=0;
   for(int i=0;i<gr->numBranches();i++){
     cout<<" "<<(rg->getF()[i] - rg2->getF()[i] - del_f(i))<<"   ";
     totalerror=totalerror+(rg->getF()[i] - rg2->getF()[i] - del_f(i));

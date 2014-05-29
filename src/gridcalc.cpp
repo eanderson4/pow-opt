@@ -69,6 +69,7 @@ gridcalc::gridcalc(grid * gr) {
   H = Hp;
   H.insert_cols(0,1);
   cout<<"H calculated using inverse of Bbus matrix"<<endl;
+  _H=H;
 
   mat del(Nb,1,fill::zeros);
   del(4,0)=5;
@@ -132,11 +133,9 @@ gridcalc::gridcalc(grid * gr) {
     } */
   //END WRONG
 
-
   vec del_f = Hw*del;
 
   del_f.t().print("delta f: ");
-  _del_f = del_f;
 
   cout<<sum(del_f)<<endl;
 
@@ -146,4 +145,27 @@ gridcalc::gridcalc(grid * gr) {
   cout<<(5*sum(H.col(4) - vt) + 7*sum(H.col(6)-vt))<<endl;
 
   
+}
+
+
+vec gridcalc::getDelF(vec delg, vec slack) {
+  int Nb=_gr->numBuses();
+  int Nl=_gr->numBranches();
+  mat Hw(_H);
+  vec vt(Nl);
+  vt=_H*slack;
+  vt.t().print("Vt: ");
+  cout<<"Vt: Cols "<<vt.n_cols<<", Rows "<<vt.n_rows<<endl;
+  for(int k=0;k<Nb;k++){
+    for(int i=0;i<Nl;i++){
+      if(abs(vt(i,0))>=0.0000005){
+	//	cout<<H(i,k)<<" - "<<vt(i,0)<<endl;
+	Hw(i,k)=_H(i,k)-vt(i,0);
+      }
+    }
+  }
+  vec del_f = Hw*delg;
+
+  return del_f;
+
 }
