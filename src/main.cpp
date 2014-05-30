@@ -16,24 +16,22 @@ int main(int argc, char* argv[]){
     return 1;
   }
 
+  //Load Grid
   sqlInter db;
   grid * gr = new grid;
   string db_name;
-
   db_name = argv[1];
   db.openDb(db_name);
   db.load(*gr);
  
+  //Display Grid Info
   gr->buildMap();
   gr->printNums(cout);
-
   cout<<*gr<<endl;
-  gridcalc gc(gr);
 
-
+  //Declare Parameters
   int Nb = gr->numBuses();
   int Nbr = gr->numBranches();
-
   int samples=750;
   vector<ranvar> rv_bus;
   int num=5;
@@ -59,6 +57,7 @@ int main(int argc, char* argv[]){
   
 
   //Solve Base System
+  gridcalc gc(gr);
   igrid ig(gr);
   ig.addCost();
   isolve is;
@@ -78,7 +77,6 @@ int main(int argc, char* argv[]){
   double p=.15;
   double pc=.5;
   
-  rgrid * rg;
   //Run against samples and collect data
   double samplemean=0;
   double samplestdv=0;
@@ -96,6 +94,7 @@ int main(int argc, char* argv[]){
   vec fanalstdv(Nbr,fill::zeros);
   vec fmeanerror;
   vec fstdverror(Nbr,fill::zeros);
+  rgrid * rg;
   for(int n=0;n<samples;n++){
     del_g dg(gr);
     double total=0;
