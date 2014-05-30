@@ -8,71 +8,6 @@
 
 using namespace std;
 
-void test(grid * gr){
-  gridcalc gc(gr);
-
-  del_g dg(gr);
-  dg.addDemand(4,5);
-  dg.addDemand(6,7);
-  
-  cout<<"dg: "<<gc.getDelG(dg).t()<<endl;
-
-
-  int Nb=gr->numBuses();
-  vec delg(Nb,fill::zeros);
-  vec slackdist(Nb,fill::zeros);
-  delg(4)=5; delg(6)=7;
-  slackdist(1)=1;
-
-  vec del_f = gc.getDelF(delg,slackdist);
-
-
-  igrid ig(gr);
-  ig.addCost();
-  rgrid * rg;
-  rgrid * rg2;
-
-  rg = ig.solveModel();
-  IloNumArray g_nom=rg->getG();
-  cout<<"Before"<<endl;
-  cout<<"F: "<<rg->getF()<<endl;
-  cout<<"G: "<<g_nom<<endl;
-  
-
-  ig.modGrid(dg);
-    
-  IloNumArray slack(IloEnv(),Nb);
-  for(int i=0;i<Nb;i++) slack[i]=0;
-  slack[1]=1;
-  
-  ig.addSlack(g_nom,slack);
-
-  rg2 = ig.solveModel();
-  cout<<"After"<<endl;
-  cout<<"F: "<<rg2->getF()<<endl;
-  cout<<"G: "<<rg2->getG()<<endl;
-
-  cout<<"Total Demand: "<<gr->getTotalDemand()<<endl;
-  cout<<"Total Gen: "<<IloSum(rg2->getG())<<endl;
-  
-  cout<<"delF (sim): "<<endl;
-  for(int i=0;i<gr->numBranches();i++)
-    cout<<" "<<(rg->getF()[i] - rg2->getF()[i])<<"   ";
-
-  cout<<"\ndelF (sim) - delF (shift factor)"<<endl;
-  double totalerror=0;
-  for(int i=0;i<gr->numBranches();i++){
-    cout<<" "<<(rg->getF()[i] - rg2->getF()[i] - del_f(i))<<"   ";
-    totalerror=totalerror+(rg->getF()[i] - rg2->getF()[i] - del_f(i));
-  }
-  cout<<"\n";
-  cout<<"Total Error: "<<totalerror<<endl;
-
-  ranvar rv;
-  rv.testRV();  
-
-}
-
 int main(int argc, char* argv[]){
 
   if(argc<=1){
@@ -99,7 +34,7 @@ int main(int argc, char* argv[]){
   int Nb = gr->numBuses();
   int Nbr = gr->numBranches();
 
-  int samples=5750;
+  int samples=750;
   vector<ranvar> rv_bus;
   int num=5;
   int index[5] = { 1, 3, 6, 20, 28 };
@@ -252,44 +187,5 @@ int main(int argc, char* argv[]){
   cout<<"we error(sim - ana) : sum()="<<rerror<<endl;
   weerror.t().print();
 
-  
   return 0;
 }
-
-//Analytic stdv not work
-/*
-  for(int i=0;i<Nbr;i++){
-    for(int k=0;k<num;k++){
-      fanalstdv(i)=pow(gc.getHw(gc.convert(slack))(i,index[k]),2)*pow(stdv[k],2);
-      fanalstdv(i)=sqrt(fanalstdv(i));
-    }
-  }
-*/ 
-    //    cout<<"del_f sim:\n"<<f.col(n) - fbase<<endl;
-    //    cout<<"del_f ana:\n"<<gc.getDelF(gc.getDelG(dg),gc.convert(slack))<<endl;
-    //    cout<<"del_f error (sim - ana)"<<f.col(n) - fbase + gc.getDelF(gc.getDelG(dg),gc.convert(slack))<<endl;
-    //    cout<<"n: "<<n<<"\n"<<dg<<endl;    
-    /*    if(j==2){
-  double U = .35*gr->getBranch(2).getRateA();
-  cout<<"Line 3 wierd"<<endl;
-  cout<<U<<endl;
-  we.row(2).print();
-  cout<<fmean(2)/U<<" "<<gc.convert(rbase->getF())(2)/U<<endl;
-  cout<<fstdv(2)/pow(U,1)<<" "<<fanalstdv(2)/pow(U,1)<<endl;
-  cout<<wemean(2)<<" - "<<weanal(2)<<endl;
-  cout<<sum(we.row(2))/samples<<endl;
-  cout<<rv.g(abs(fmean(2)/U),L,p,pc)<<endl;
-  double mn=0;
-  double sd=0;
-  for(int i=0;i<samples;i++){
-    mn=mn+f(2,i)/U;
-    cout<<f(2,i)/U<<" ";
-  }						
-  mn=mn/samples;
-  for(int i=0;i<samples;i++){
-    sd=sd+pow(f(2,i)/U- mn,2);
-  }
-  sd=sqrt(sd/(samples-1));
-  cout<<mn<<", "<<sd<<endl;
-  
-      }*/

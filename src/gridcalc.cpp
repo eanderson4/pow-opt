@@ -210,3 +210,68 @@ void gridcalc::testSlack(){
 
   
 }
+
+
+void gridcalc::test(){
+
+  del_g dg(_gr);
+  dg.addDemand(4,5);
+  dg.addDemand(6,7);
+  
+  cout<<"dg: "<< getDelG(dg).t()<<endl;
+
+  int Nb=_gr->numBuses();
+  vec delg(Nb,fill::zeros);
+  vec slackdist(Nb,fill::zeros);
+  delg(4)=5; delg(6)=7;
+  slackdist(1)=1;
+
+  vec del_f =  getDelF(delg,slackdist);
+
+
+  igrid ig(_gr);
+  ig.addCost();
+  rgrid * rg;
+  rgrid * rg2;
+
+  rg = ig.solveModel();
+  IloNumArray g_nom=rg->getG();
+  cout<<"Before"<<endl;
+  cout<<"F: "<<rg->getF()<<endl;
+  cout<<"G: "<<g_nom<<endl;
+  
+
+    
+  IloNumArray slack(IloEnv(),Nb);
+  for(int i=0;i<Nb;i++) slack[i]=0;
+  slack[1]=1;
+  
+  ig.addSlack(g_nom,slack);
+
+  ig.modGrid(dg);
+
+  rg2 = ig.solveModel();
+  cout<<"After"<<endl;
+  cout<<"F: "<<rg2->getF()<<endl;
+  cout<<"G: "<<rg2->getG()<<endl;
+
+  cout<<"Total Demand: "<<_gr->getTotalDemand()<<endl;
+  cout<<"Total Gen: "<<IloSum(rg2->getG())<<endl;
+  
+  cout<<"delF (sim): "<<endl;
+  for(int i=0;i<_gr->numBranches();i++)
+    cout<<" "<<(rg->getF()[i] - rg2->getF()[i])<<"   ";
+
+  cout<<"\ndelF (sim) - delF (shift factor)"<<endl;
+  double totalerror=0;
+  for(int i=0;i<_gr->numBranches();i++){
+    cout<<" "<<(rg->getF()[i] - rg2->getF()[i] - del_f(i))<<"   ";
+    totalerror=totalerror+(rg->getF()[i] - rg2->getF()[i] - del_f(i));
+  }
+  cout<<"\n";
+  cout<<"Total Error: "<<totalerror<<endl;
+
+  ranvar rv;
+  rv.testRV();  
+
+}

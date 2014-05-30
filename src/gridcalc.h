@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <ilcplex/ilocplex.h>
 #include "grid.h"
+#include "igrid.h"
+#include "rgrid.h"
+#include "rv.h"
 #include "del_g.h"
 
 #define ARMA_DONT_USE_WRAPPER
@@ -27,6 +30,7 @@ class gridcalc
   mat getHw(vec slack);
   vec convert(IloNumArray na);
   void testSlack();
+  void test();
 
  private:
   grid * _gr;
