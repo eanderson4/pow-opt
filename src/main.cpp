@@ -99,7 +99,7 @@ int main(int argc, char* argv[]){
   int Nb = gr->numBuses();
   int Nbr = gr->numBranches();
 
-  int samples=750;
+  int samples=5750;
   vector<ranvar> rv_bus;
   int num=5;
   int index[5] = { 1, 3, 6, 20, 28 };
@@ -111,7 +111,7 @@ int main(int argc, char* argv[]){
   //Sample for random variables
   cout<<"\nCreate samples for random del_g"<<endl;
   for(int i=0;i<num;i++){
-    ranvar r(1052*i);
+    ranvar r(time(NULL)*i);
     r.createRV(samples,mean[i],stdv[i]);
     cout<<i<<":\t"<<mean[i]<<", "<<stdv[i]<<endl;
     cout<<"\t"<<r.sampleMean()<<", "<<r.sampleStDv()<<endl;
@@ -147,11 +147,16 @@ int main(int argc, char* argv[]){
   //Run against samples and collect data
   double samplemean=0;
   double samplestdv=0;
+  double rsim=0;
+  double ranal=0;
+  double rerror;
   mat f(Nbr,samples);
   mat we(Nbr,samples);
   vec fbase = gc.convert(rbase->getF());
   vec fmean(Nbr,fill::zeros);
   vec wemean(Nbr,fill::zeros);
+  vec weanal(Nbr,fill::zeros);
+  vec weerror(Nbr,fill::zeros);
   vec fstdv(Nbr,fill::zeros);
   vec fanalstdv(Nbr,fill::zeros);
   vec fmeanerror;
@@ -170,7 +175,8 @@ int main(int argc, char* argv[]){
     ig.removeDemand(dg);
     f.col(n) = gc.convert(rg->getF());
     for(int j=0;j<Nbr;j++){
-      we(j,n)=rv.g(f(j,n),L,p,pc);
+      double U=.35*gr->getBranch(j).getRateA();
+      we(j,n)=rv.g(abs(f(j,n))/U,L,p,pc);
     }
   }
   samplemean=samplemean/samples;
@@ -206,6 +212,16 @@ int main(int argc, char* argv[]){
 
   fstdverror=fstdv-fanalstdv;
 
+  //Calculate analytic probabilities
+  for(int j=0;j<Nbr;j++){
+    double U=.35*gr->getBranch(j).getRateA();
+    weanal(j)=rv.anaProb(L,p,pc,abs(fmean(j))/U,fstdv(j)/pow(U,1));
+  }
+  ranal=sum(weanal);
+  rsim=sum(wemean);
+  weerror=wemean-weanal;
+  rerror=rsim-ranal;
+
 
   cout<<"\n\nReport\n"<<endl;
   
@@ -229,11 +245,14 @@ int main(int argc, char* argv[]){
   cout<<fstdverror.t()<<endl;
 
   cout<<"Risk Analysis"<<endl;
-  cout<<"we (simulation)"<<endl;
-  wemean.print();
-  cout<<"we (analytic)"<<endl;
-  
+  cout<<"we (simulation) : sum()="<<rsim<<endl;
+  wemean.t().print();
+  cout<<"we (analytic) : sum()="<<ranal<<endl;
+  weanal.t().print();
+  cout<<"we error(sim - ana) : sum()="<<rerror<<endl;
+  weerror.t().print();
 
+  
   return 0;
 }
 
@@ -250,3 +269,27 @@ int main(int argc, char* argv[]){
     //    cout<<"del_f ana:\n"<<gc.getDelF(gc.getDelG(dg),gc.convert(slack))<<endl;
     //    cout<<"del_f error (sim - ana)"<<f.col(n) - fbase + gc.getDelF(gc.getDelG(dg),gc.convert(slack))<<endl;
     //    cout<<"n: "<<n<<"\n"<<dg<<endl;    
+    /*    if(j==2){
+  double U = .35*gr->getBranch(2).getRateA();
+  cout<<"Line 3 wierd"<<endl;
+  cout<<U<<endl;
+  we.row(2).print();
+  cout<<fmean(2)/U<<" "<<gc.convert(rbase->getF())(2)/U<<endl;
+  cout<<fstdv(2)/pow(U,1)<<" "<<fanalstdv(2)/pow(U,1)<<endl;
+  cout<<wemean(2)<<" - "<<weanal(2)<<endl;
+  cout<<sum(we.row(2))/samples<<endl;
+  cout<<rv.g(abs(fmean(2)/U),L,p,pc)<<endl;
+  double mn=0;
+  double sd=0;
+  for(int i=0;i<samples;i++){
+    mn=mn+f(2,i)/U;
+    cout<<f(2,i)/U<<" ";
+  }						
+  mn=mn/samples;
+  for(int i=0;i<samples;i++){
+    sd=sd+pow(f(2,i)/U- mn,2);
+  }
+  sd=sqrt(sd/(samples-1));
+  cout<<mn<<", "<<sd<<endl;
+  
+      }*/

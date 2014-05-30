@@ -1,6 +1,7 @@
 #include "rv.h"
 
-double ranvar::g(double f, double L, double p, double pc){
+double ranvar::g(double fnormalized, double L, double p, double pc){
+  double f=fnormalized;
   double prob=0;
   double Uc=L + pc*(1-L)/p;
   double a=-p*L/(1-L);
@@ -60,7 +61,7 @@ double ranvar::anaProb(double L, double p, double pc, double mean, double stdv){
   double t_p = a*p_LU + b*ef_LU*p_LU + p_Ui;
 
 
-  if(1==1){
+  if(1==0){
   cout<<"\nAnalytic Prob"<<endl;
   cout<<"\nmu: "<<mu<<endl;
   cout<<"sigma: "<<sigma<<endl;
