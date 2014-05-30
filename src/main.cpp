@@ -136,14 +136,22 @@ int main(int argc, char* argv[]){
   slack[1]=1;
   ig.addSlack(g_nom,slack);
 
+
+  //Set Probability info
+  ranvar rv;
+  double L=.9;
+  double p=.15;
+  double pc=.5;
   
   rgrid * rg;
   //Run against samples and collect data
   double samplemean=0;
   double samplestdv=0;
   mat f(Nbr,samples);
+  mat we(Nbr,samples);
   vec fbase = gc.convert(rbase->getF());
   vec fmean(Nbr,fill::zeros);
+  vec wemean(Nbr,fill::zeros);
   vec fstdv(Nbr,fill::zeros);
   vec fanalstdv(Nbr,fill::zeros);
   vec fmeanerror;
@@ -161,6 +169,9 @@ int main(int argc, char* argv[]){
     cout<<rg->getG()<<endl;
     ig.removeDemand(dg);
     f.col(n) = gc.convert(rg->getF());
+    for(int j=0;j<Nbr;j++){
+      we(j,n)=rv.g(f(j,n),L,p,pc);
+    }
   }
   samplemean=samplemean/samples;
   //Calculate StDv
@@ -176,6 +187,7 @@ int main(int argc, char* argv[]){
   //Calculate Branch Flow Statistics
   for(int i=0;i<Nbr;i++){
     fmean(i)=sum(f.row(i))/samples;
+    wemean(i)=sum(we.row(i))/samples;
   }
   for(int i=0;i<Nbr;i++){
     fstdv(i)=sum(pow(f.row(i) - fmean(i),2));
@@ -216,6 +228,11 @@ int main(int argc, char* argv[]){
   cout<<"f stdv error: sum()="<<sum(fstdverror)<<endl;
   cout<<fstdverror.t()<<endl;
 
+  cout<<"Risk Analysis"<<endl;
+  cout<<"we (simulation)"<<endl;
+  wemean.print();
+  cout<<"we (analytic)"<<endl;
+  
 
   return 0;
 }

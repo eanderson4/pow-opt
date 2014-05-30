@@ -1,5 +1,18 @@
 #include "rv.h"
 
+double ranvar::g(double f, double L, double p, double pc){
+  double prob=0;
+  double Uc=L + pc*(1-L)/p;
+  double a=-p*L/(1-L);
+  double b=p/(1-L);
+
+  if(f<=L) prob=0;
+  else if (f<Uc) prob=a+b*f;
+  else prob=1;
+
+  return prob;
+}
+
 double ranvar::simProb(double L, double p, double pc){
   double totalProb=0;
   double probInt=1/double(_N);

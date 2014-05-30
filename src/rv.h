@@ -30,6 +30,7 @@ class ranvar
   void testPhi();
   void testRV();
   
+  double g(double f, double L, double p, double pc);
   double simProb(double L, double p, double pc);
   double anaProb(double L, double p, double pc){ return anaProb(L,p,pc,_mean,_stdv);}
   double anaProb(double L, double p, double pc, double mean, double stdv);
