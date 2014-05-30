@@ -70,6 +70,29 @@ double ranvar::anaProb(double L, double p, double pc, double mean, double stdv){
 
 }
 
+double ranvar::sampleMean(){
+  double mean=0;
+  for(int i=0;i<getNum();i++){
+    mean=mean+getValue(i);    
+  }
+  mean=mean/getNum();
+  
+  return mean;
+}
+
+double ranvar::sampleStDv(){
+  double mean=sampleMean();
+
+  double s2=0;
+  for(int i=0;i<getNum();i++){
+    s2=s2+pow((getValue(i)-mean),2);
+  }
+  s2=s2/(getNum()-1);
+  s2=sqrt(s2);
+  
+  return s2;
+}
+
 void ranvar::createRV(int N,double mean, double stdv){
   _N=N;_mean=mean;_stdv=stdv;
   //Draw 0-1

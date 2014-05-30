@@ -21,6 +21,7 @@ class igrid : public ibase {
   void addSlack(IloNumArray _g_nom, IloNumArray slack);
   void allowLoadShed();
   void modGrid( del_g mod );
+  void removeDemand( del_g mod );
 
   double getCost(IloNumArray g){ return _ic.getCost(_gr,g);  }
   grid * getGrid(){ return _gr; }

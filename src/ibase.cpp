@@ -124,7 +124,6 @@ void islack::buildSlack(grid * gr, IloModel * mod, IloNumVarArray g){
 
   cout<<"mismatch: "<<_mismatch<<endl;
   
-  _slackDistribute = IloRangeArray(env, nG, 0, 0);
 
   for(int i=0;i<nG;i++){
     IloNum gset=_g_nom[i]-_slack[i]*_mismatch;
@@ -136,6 +135,24 @@ void islack::buildSlack(grid * gr, IloModel * mod, IloNumVarArray g){
   mod->add(_totalDemand);
   
 
+
+}
+
+void islack::fixMismatch(grid * gr, IloNumVarArray g){
+  int nG=gr->numGens();
+  double td=gr->getTotalDemand();
+
+  _mismatch = IloSum(_g_nom) - td;
+
+  cout<<"mismatch: "<<_mismatch<<endl;
+  
+
+  for(int i=0;i<nG;i++){
+    IloNum gset=_g_nom[i]-_slack[i]*_mismatch;
+    g[i].setBounds(gset,gset);
+  }
+  _totalDemand.setBounds(td,td);
+  cout<<_totalDemand<<endl;
 
 }
 

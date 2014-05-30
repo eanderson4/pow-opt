@@ -86,7 +86,7 @@ void igrid::modGrid( del_g mod ){
   }
 
   if(mod.haveDemand()){
-    for(int i=0; i<nB; i++){
+    for(int i=0; i<_gr->numBuses(); i++){
       double del_demand = mod.getDemand(i);
       if(del_demand != 0){
 	IloRange nb = getNodalBalance()[i];
@@ -111,7 +111,7 @@ void igrid::modGrid( del_g mod ){
     cout<<"Modify Demand (add)"<<endl;
     int nB=_gr->numBuses();
     for(int i=0;i<nB; i++){
-      if(mod.getDemand(i)>= 1){
+      if(mod.getDemand(i) != 0){
 	cout<<i<<": "<<_gr->getBus(i).getP()<<" + "<<mod.getDemand(i)<<endl;
 	_gr->addPd(i,mod.getDemand(i));
       }
@@ -119,6 +119,35 @@ void igrid::modGrid( del_g mod ){
   }
 
 
+  if(have_slack){
+    cout<<"fix Mismatch"<<endl;
+    cout<<_gr->getTotalDemand()<<endl;
+    _islk.fixMismatch(_gr, getG());
+  }
+
 
 }
 
+
+void igrid::removeDemand(del_g mod){
+  int nB=_gr->numBuses();
+  //IMPLEMENTATION
+  for(int i=0; i<nB; i++){
+    double del_demand = mod.getDemand(i);
+    if(del_demand != 0){
+      IloRange nb = getNodalBalance()[i];
+      nb.setExpr(nb.getExpr() - del_demand);
+    }
+  }
+  
+  //GRID
+  //  cout<<"Modify Demand (remove)"<<endl;
+  for(int i=0;i<nB; i++){
+    if(mod.getDemand(i) != 0){
+      //      cout<<i<<": "<<_gr->getBus(i).getP()<<" + "<<mod.getDemand(i)<<endl;
+      _gr->addPd(i,-mod.getDemand(i));
+    }
+  }
+  
+  
+}

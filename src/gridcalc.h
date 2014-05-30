@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <stdlib.h>
+#include <ilcplex/ilocplex.h>
 #include "grid.h"
 #include "del_g.h"
 
@@ -20,7 +21,11 @@ class gridcalc
   gridcalc(grid * gr);
   ~gridcalc() {}
 
+  vec getDelG(del_g dg);
   vec getDelF(vec delg, vec slack);
+  mat getH(){ return _H; };
+  mat getHw(vec slack);
+  vec convert(IloNumArray na);
   void testSlack();
 
  private:

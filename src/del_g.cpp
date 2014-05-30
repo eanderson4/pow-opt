@@ -1,14 +1,6 @@
 #include "del_g.h"
 
 void del_g::addDemand(int num, double demand){
-  if(!have_demand){ 
-    int nB=_gr->numBranches();
-    for(int i=0; i<nB;i++){
-      del_demand.push_back(0); //not ideal
-    }
-    have_demand=true;
-  }
-  
   del_demand[num]=demand;
 }
     
@@ -29,4 +21,16 @@ void del_g::baseTopo(grid * gr){
   }
 
   have_topo=true;
+}
+
+
+ostream& operator<<(ostream& os, const del_g& dg)
+{
+  for(int i=0; i<dg._gr->numBuses(); i++){
+      if(dg.del_demand[i]!=0){
+	os<<i<<": "<<dg.del_demand[i]<<endl;
+      }
+  }
+
+  return os;
 }

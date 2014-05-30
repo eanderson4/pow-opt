@@ -68,14 +68,34 @@ gridcalc::gridcalc(grid * gr) {
 
 }
 
+vec gridcalc::getDelG(del_g dg){
+  int Nb=_gr->numBuses();
+  vec delg(Nb,fill::zeros);
+
+  for(int i=0;i<Nb;i++){
+    delg(i)=dg.getDemand(i);
+  }
+
+  return delg;
+}
+
+vec gridcalc::convert(IloNumArray in){
+  int N = in.getSize();
+  vec out(N);
+  for(int i=0;i<N;i++){
+    out(i)=in[i];
+  }
+  return out;
+}
+
 vec gridcalc::getDelF(vec delg, vec slack) {
   int Nb=_gr->numBuses();
   int Nl=_gr->numBranches();
   mat Hw(_H);
   vec vt(Nl);
   vt=_H*slack;
-  vt.t().print("Vt: ");
-  cout<<"Vt: Cols "<<vt.n_cols<<", Rows "<<vt.n_rows<<endl;
+  //  vt.t().print("Vt: ");
+  //  cout<<"Vt: Cols "<<vt.n_cols<<", Rows "<<vt.n_rows<<endl;
   for(int k=0;k<Nb;k++){
     for(int i=0;i<Nl;i++){
       if(abs(vt(i,0))>=0.0000005){
@@ -88,6 +108,25 @@ vec gridcalc::getDelF(vec delg, vec slack) {
 
   return del_f;
 
+}
+
+mat gridcalc::getHw(vec slack){
+ int Nb=_gr->numBuses();
+  int Nl=_gr->numBranches();
+  mat Hw(_H);
+  vec vt(Nl);
+  vt=_H*slack;
+  //  vt.t().print("Vt: ");
+  //  cout<<"Vt: Cols "<<vt.n_cols<<", Rows "<<vt.n_rows<<endl;
+  for(int k=0;k<Nb;k++){
+    for(int i=0;i<Nl;i++){
+      if(abs(vt(i,0))>=0.0000005){
+	//	cout<<H(i,k)<<" - "<<vt(i,0)<<endl;
+	Hw(i,k)=_H(i,k)-vt(i,0);
+      }
+    }
+  }
+  return Hw;
 }
 
 void gridcalc::testSlack(){

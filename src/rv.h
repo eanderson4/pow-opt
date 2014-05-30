@@ -25,6 +25,8 @@ class ranvar
   double getValue(int N){ return random_variable[N]; }
   double phi(double x);
   double PHI(double x);
+  double sampleMean();
+  double sampleStDv();
   void testPhi();
   void testRV();
   
