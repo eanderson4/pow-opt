@@ -92,8 +92,13 @@ int main(int argc, char* argv[]){
   vec weerror(Nbr,fill::zeros);
   vec fstdv(Nbr,fill::zeros);
   vec fanalstdv(Nbr,fill::zeros);
+  vec fanalmean(Nbr,fill::zeros);
   vec fmeanerror;
   vec fstdverror(Nbr,fill::zeros);
+  vec fnormsim;
+  vec fnormanal;
+  vec fnormstdvsim;
+  vec fnormstdvanal;
   rgrid * rg;
   for(int n=0;n<samples;n++){
     del_g dg(gr);
@@ -135,7 +140,7 @@ int main(int argc, char* argv[]){
   }
 
   //Analytic Branch Flow Statistics
-  fmeanerror= fmean - gc.convert(rbase->getF());
+  fanalmean=gc.convert(rbase->getF());
   mat Hw = gc.getHw(gc.convert(slack));
   
   for(int i=0;i<num;i++){
@@ -144,7 +149,6 @@ int main(int argc, char* argv[]){
   fanalstdv=sqrt(fanalstdv);
   fanalstdv.print("sigma: ");
 
-  fstdverror=fstdv-fanalstdv;
 
   //Calculate analytic probabilities
   for(int j=0;j<Nbr;j++){
@@ -156,6 +160,19 @@ int main(int argc, char* argv[]){
   weerror=wemean-weanal;
   rerror=rsim-ranal;
 
+  fnormsim=fmean;
+  fnormanal=fanalmean;
+  fnormstdvsim=fstdv;
+  fnormstdvanal=fanalstdv;
+  for(int i=0;i<Nbr;i++){
+    double U=.35*gr->getBranch(i).getRateA();
+    fnormsim(i)=fnormsim(i)/U;
+    fnormanal(i)=fnormanal(i)/U;
+    fnormstdvsim(i)=fnormstdvsim(i)/U;
+    fnormstdvanal(i)=fnormstdvanal(i)/U;
+  }
+  fmeanerror=fnormsim - fnormanal;
+  fstdverror=fnormstdvsim - fnormstdvanal;
 
   cout<<"\n\nReport\n"<<endl;
   
@@ -165,12 +182,12 @@ int main(int argc, char* argv[]){
 
   cout<<"\nBranch Flow Statistics"<<endl;
   cout<<"Simulated"<<endl;
-  fmean.t().print("Fmean: ");
-  fstdv.t().print("Fstdv: ");
+  fnormsim.t().print("Fmean: ");
+  fnormstdvsim.t().print("Fstdv: ");
 
   cout<<"Analytic"<<endl;
-  cout<<"Fmean: "<<rbase->getF()<<endl;
-  cout<<"Fstdv: "<<fanalstdv.t()<<endl;
+  cout<<"Fmean: "<<fnormanal.t()<<endl;
+  cout<<"Fstdv: "<<fnormstdvanal.t()<<endl;
 
   cout<<"Error (Simulated - Analytic)"<<endl;
   cout<<"f mean error: sum()="<<sum(fmeanerror)<<endl;
