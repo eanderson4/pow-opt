@@ -32,7 +32,7 @@ int main(int argc, char* argv[]){
   //Declare Parameters
   int Nb = gr->numBuses();
   int Nbr = gr->numBranches();
-  int samples=750;
+  int samples=5750;
   vector<ranvar> rv_bus;
   int num=5;
   int index[5] = { 1, 3, 6, 20, 28 };
@@ -67,6 +67,9 @@ int main(int argc, char* argv[]){
 
   //Set Slack
   IloNumArray slack(IloEnv(),Nb);
+  for(int i=0;i<Nb;i++){
+    slack[i]=0;
+  }
   slack[1]=1;
   ig.addSlack(g_nom,slack);
 
@@ -100,6 +103,7 @@ int main(int argc, char* argv[]){
   vec fnormstdvsim;
   vec fnormstdvanal;
   rgrid * rg;
+  mat Hw = gc.getHw(gc.convert(slack));
   for(int n=0;n<samples;n++){
     del_g dg(gr);
     double total=0;
@@ -141,7 +145,6 @@ int main(int argc, char* argv[]){
 
   //Analytic Branch Flow Statistics
   fanalmean=gc.convert(rbase->getF());
-  mat Hw = gc.getHw(gc.convert(slack));
   
   for(int i=0;i<num;i++){
     fanalstdv=fanalstdv + pow(stdv[i]*Hw.col(index[i]),2);
@@ -153,7 +156,7 @@ int main(int argc, char* argv[]){
   //Calculate analytic probabilities
   for(int j=0;j<Nbr;j++){
     double U=.35*gr->getBranch(j).getRateA();
-    weanal(j)=rv.anaProb(L,p,pc,abs(fmean(j))/U,fstdv(j)/pow(U,1));
+    weanal(j)=rv.anaProb(L,p,pc,abs(fanalmean(j))/U,fanalstdv(j)/pow(U,1));
   }
   ranal=sum(weanal);
   rsim=sum(wemean);

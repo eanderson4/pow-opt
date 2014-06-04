@@ -10,11 +10,11 @@ gridcalc::gridcalc(grid * gr) {
   int Nb=gr->numBuses();
   int Nl=gr->numBranches();
 
-  mat C(Nl,Nb);
-  mat Bff(Nl,Nl);
+  mat C(Nl,Nb,fill::zeros);
+  mat Bff(Nl,Nl,fill::zeros);
   int slack;
 
-  cout<<"Line: To bus - From bus  (indicies)"<<endl;
+  //  cout<<"Line: To bus - From bus  (indicies)"<<endl;
   for(int i =0; i<Nl; i++){
     branch br = gr->getBranch(i);
     int from = br.getFrom();
@@ -22,7 +22,7 @@ gridcalc::gridcalc(grid * gr) {
     int to = br.getTo();
     int tn = gr->getBusNum(to);
     
-    cout<<i<<": "<<from<<" - "<<to<<endl;;
+    //    cout<<i<<": "<<from<<" - "<<to<<endl;;
 
     C(i,fn)=1;
     C(i,tn)=-1;
@@ -37,8 +37,7 @@ gridcalc::gridcalc(grid * gr) {
     //IGNORING PHASE SHIFT FOR NOW
   }
   
-  
-  cout<<"C: "<<sp_mat(C)<<endl;
+  //cout<<"C: "<<sp_mat(C.col(3))<<endl;
 
   mat Bf(Nl,Nb);
   mat Bbus(Nb,Nb);
@@ -46,15 +45,15 @@ gridcalc::gridcalc(grid * gr) {
   Bf=Bff*C;
   Bbus=trans(C)*Bf;
   
-  cout<<"Bf: "<<sp_mat(Bf)<<endl;
-  cout<<"Bbus: "<<sp_mat(Bbus)<<endl;
+  //  cout<<"Bf: "<<sp_mat(Bf.col(3))<<endl;
+  //  cout<<"Bbus: "<<sp_mat(Bbus)<<endl;
 
   for(int i=0;i<Nb;i++){
     bus bi = gr->getBus(i);
     int type=bi.getType();
     if(type==3) slack=i;
   }
-  cout<<"Base Slack Bus: "<<slack<<endl;
+  //  cout<<"Base Slack Bus: "<<slack<<endl;
  
 
   mat H(Nl,Nb-1);
@@ -65,7 +64,6 @@ gridcalc::gridcalc(grid * gr) {
   H.insert_cols(0,1);
   cout<<"H calculated using inverse of Bbus matrix"<<endl;
   _H=H;
-
 }
 
 vec gridcalc::getDelG(del_g dg){
@@ -89,22 +87,7 @@ vec gridcalc::convert(IloNumArray in){
 }
 
 vec gridcalc::getDelF(vec delg, vec slack) {
-  int Nb=_gr->numBuses();
-  int Nl=_gr->numBranches();
-  mat Hw(_H);
-  vec vt(Nl);
-  vt=_H*slack;
-  //  vt.t().print("Vt: ");
-  //  cout<<"Vt: Cols "<<vt.n_cols<<", Rows "<<vt.n_rows<<endl;
-  for(int k=0;k<Nb;k++){
-    for(int i=0;i<Nl;i++){
-      if(abs(vt(i,0))>=0.0000005){
-	//	cout<<H(i,k)<<" - "<<vt(i,0)<<endl;
-	Hw(i,k)=_H(i,k)-vt(i,0);
-      }
-    }
-  }
-  vec del_f = Hw*delg;
+  vec del_f = getHw(slack)*delg;
 
   return del_f;
 
