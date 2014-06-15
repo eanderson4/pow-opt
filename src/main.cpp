@@ -210,5 +210,32 @@ int main(int argc, char* argv[]){
   cout<<"we error(sim - ana) : sum()="<<rerror<<endl;
   weerror.t().print();
 
+  cout<<"\n\n\n"
+      <<"Hessian of w"<<endl;
+
+  double eps=.001;
+  double epssig=.00001;
+  double mustar=.93;
+  double sigstar=.01;
+  double wmuup=rv.anaProb(L,p,pc,mustar+eps,sigstar);
+  double wmudown=rv.anaProb(L,p,pc,mustar-eps,sigstar);
+  double wsigmaup=rv.anaProb(L,p,pc,mustar,sigstar+epssig);
+  double wsigmadown=rv.anaProb(L,p,pc,mustar,sigstar-epssig);
+  double mufinitederiv=(wmuup-wmudown)/2/eps;
+  double sigmafinitederiv=(wsigmaup-wsigmadown)/2/(epssig);
+  double muanalderiv=rv.deriveMu(L,p,pc,mustar,sigstar);
+  double sigmaanalderiv=rv.deriveSigma(L,p,pc,mustar,sigstar);
+
+
+  cout<<"\nCheck Functions"<<endl;
+  cout<<"Mu: "<<mustar<<", Sigma: "<<sigstar<<endl;
+  cout<<"\n partial w / partial mu"<<endl;
+  cout<<"Finite Difference: "<<mufinitederiv<<endl;
+  cout<<"Analytic: "<<muanalderiv<<endl;
+  cout<<"\n partial w / partial sigma"<<endl;
+  cout<<"Finite Difference: "<<sigmafinitederiv<<endl;
+  cout<<"Analytic: "<<sigmaanalderiv<<endl;
+
+
   return 0;
 }
