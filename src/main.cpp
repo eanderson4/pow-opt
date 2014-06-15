@@ -32,7 +32,7 @@ int main(int argc, char* argv[]){
   //Declare Parameters
   int Nb = gr->numBuses();
   int Nbr = gr->numBranches();
-  int samples=5750;
+  int samples=75;
   vector<ranvar> rv_bus;
   int num=5;
   int index[5] = { 1, 3, 6, 20, 28 };
@@ -107,14 +107,17 @@ int main(int argc, char* argv[]){
   for(int n=0;n<samples;n++){
     del_g dg(gr);
     double total=0;
+    //Adjust Demand
     for(int i=0;i<num;i++){
       dg.addDemand( index[i], rv_bus[i].getValue(n) );      
       total=total+rv_bus[i].getValue(n);
     }    
     samplemean=samplemean+total;
+    //Modify Implementation and Solve
     ig.modGrid(dg);
     rg=ig.solveModel(&is);
     cout<<rg->getG()<<endl;
+    //Undo Modifications and store solve information
     ig.removeDemand(dg);
     f.col(n) = gc.convert(rg->getF());
     for(int j=0;j<Nbr;j++){
@@ -177,6 +180,7 @@ int main(int argc, char* argv[]){
   fmeanerror=fnormsim - fnormanal;
   fstdverror=fnormstdvsim - fnormstdvanal;
 
+  //Report Results
   cout<<"\n\nReport\n"<<endl;
   
   cout<<"del (total - sample) = error"<<endl;
