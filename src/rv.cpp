@@ -60,10 +60,89 @@ double ranvar::deriveMu(double L, double p, double pc, double mean, double stdv)
   double three=phi(alpha_high)/sigma;
 
   double derive=one+two+three;
+  
+  //Ignoring right side truncation
+  derive = a*phi(alpha_low)/sigma +b + b*mu*phi(alpha_low)/sigma - b*PHI(alpha_low) + b*alpha_low*phi(alpha_low);
+
+  derive=b*(1-PHI(alpha_low));
 
   return derive;
 
 }
+double ranvar::d2Mu(double L, double p, double pc, double mean, double stdv){
+  double Uc=L + pc*(1-L)/p;
+  double a=-p*L/(1-L);
+  double b=p/(1-L);
+
+  double mu = mean;
+  double sigma = stdv;
+
+  double alpha_low=(L - mu)/sigma;
+  
+  double phi_low=phi(alpha_low);
+  
+  double derive;
+
+  //Ignoring right side truncation
+  derive = a*alpha_low*phi_low/sigma/sigma
+    + b*mu*alpha_low*phi_low/sigma/sigma 
+    + b*phi_low/sigma
+    + b*alpha_low*alpha_low*phi_low/sigma;
+
+  derive = b*phi_low/sigma;
+
+  return derive;
+
+}
+double ranvar::d2Sigma(double L, double p, double pc, double mean, double stdv){
+  double Uc=L + pc*(1-L)/p;
+  double a=-p*L/(1-L);
+  double b=p/(1-L);
+
+  double mu = mean;
+  double sigma = stdv;
+
+  double alpha_low=(L - mu)/sigma;
+  
+  double phi_low=phi(alpha_low);
+  
+  double derive;
+
+  //Ignoring right side truncation
+  derive = (a+b*mu)*alpha_low*phi_low*(alpha_low*alpha_low - 2)/sigma/sigma
+    + b*alpha_low*alpha_low*phi_low*(alpha_low*alpha_low-2)/sigma
+    + b*alpha_low*alpha_low*phi_low/sigma;
+
+  derive=b*phi_low/sigma*pow(alpha_low,2);
+  
+  return derive;
+
+}
+double ranvar::dSigmaMu(double L, double p, double pc, double mean, double stdv){
+  double Uc=L + pc*(1-L)/p;
+  double a=-p*L/(1-L);
+  double b=p/(1-L);
+
+  double mu = mean;
+  double sigma = stdv;
+
+  double alpha_low=(L - mu)/sigma;
+  
+  double phi_low=phi(alpha_low);
+  
+  double derive,dcheck;
+
+  //Ignoring right side truncation
+  dcheck = (a + b*mu)*phi_low*(alpha_low*alpha_low-1)/sigma/sigma
+    + b*alpha_low*alpha_low*alpha_low*phi_low/sigma;
+
+  derive=b*phi_low*alpha_low/sigma;
+
+  cout<<"alpha_low: "<<alpha_low<<endl;
+  return derive;
+
+}
+
 
 double ranvar::deriveSigma(double L, double p, double pc, double mean, double stdv){
   double Uc=L + pc*(1-L)/p;
@@ -87,6 +166,10 @@ double ranvar::deriveSigma(double L, double p, double pc, double mean, double st
   double three=alpha_high*phi(alpha_high)/sigma;
 
   double derive=one+two+three;
+
+  derive=a*alpha_low*phi(alpha_low)/sigma + b*mu*alpha_low*phi(alpha_low)/sigma + b*alpha_low*alpha_low*phi(alpha_low) +  b*phi(alpha_low);
+
+  derive=b*phi(alpha_low);
 
   return derive;
 

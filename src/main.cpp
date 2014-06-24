@@ -211,21 +211,36 @@ int main(int argc, char* argv[]){
   weerror.t().print();
 
   cout<<"\n\n\n"
-      <<"Hessian of w"<<endl;
+      <<"Hessian Calculations for w"<<endl;
 
-  double eps=.001;
+  p=.01;
+  double eps=.0001;
   double epssig=.00001;
-  double mustar=.93;
-  double sigstar=.01;
+  double mustar=atof(argv[2]);
+  double sigstar=atof(argv[3]);
+  double w=rv.anaProb(L,p,pc,mustar,sigstar);
   double wmuup=rv.anaProb(L,p,pc,mustar+eps,sigstar);
   double wmudown=rv.anaProb(L,p,pc,mustar-eps,sigstar);
   double wsigmaup=rv.anaProb(L,p,pc,mustar,sigstar+epssig);
   double wsigmadown=rv.anaProb(L,p,pc,mustar,sigstar-epssig);
+  double w1=rv.anaProb(L,p,pc,mustar+eps,sigstar+epssig);
+  double w2=rv.anaProb(L,p,pc,mustar+eps,sigstar-epssig);
+  double w3=rv.anaProb(L,p,pc,mustar-eps,sigstar+epssig);
+  double w4=rv.anaProb(L,p,pc,mustar-eps,sigstar-epssig);
   double mufinitederiv=(wmuup-wmudown)/2/eps;
   double sigmafinitederiv=(wsigmaup-wsigmadown)/2/(epssig);
   double muanalderiv=rv.deriveMu(L,p,pc,mustar,sigstar);
   double sigmaanalderiv=rv.deriveSigma(L,p,pc,mustar,sigstar);
-
+  double mufinitederiv2=(wmuup-2*w +wmudown)/eps/eps;
+  double muanalderiv2=rv.d2Mu(L,p,pc,mustar,sigstar);
+  double sigmafinitederiv2=(wsigmaup-2*w +wsigmadown)/epssig/epssig;
+  double sigmaanalderiv2=rv.d2Sigma(L,p,pc,mustar,sigstar);
+  double analderivesigmamu=rv.dSigmaMu(L,p,pc,mustar,sigstar);
+  double finitederivesigmamu=(w1-w2-w3+w4)/4/eps/epssig;
+  double d2mu=muanalderiv2;
+  double d2sig=sigmaanalderiv2;
+  double dsigmu=analderivesigmamu;
+  double determinant=d2mu*d2sig-dsigmu*dsigmu;
 
   cout<<"\nCheck Functions"<<endl;
   cout<<"Mu: "<<mustar<<", Sigma: "<<sigstar<<endl;
@@ -235,7 +250,49 @@ int main(int argc, char* argv[]){
   cout<<"\n partial w / partial sigma"<<endl;
   cout<<"Finite Difference: "<<sigmafinitederiv<<endl;
   cout<<"Analytic: "<<sigmaanalderiv<<endl;
+  cout<<"\n partial2 w / partial mu2"<<endl;
+  cout<<"Finite Difference: "<<mufinitederiv2<<endl;
+  cout<<"Analytic: "<<muanalderiv2<<endl;
+  cout<<"\n partial2 w / partial sigma2"<<endl;
+  cout<<"Finite Difference: "<<sigmafinitederiv2<<endl;
+  cout<<"Analytic: "<<sigmaanalderiv2<<endl;
+  cout<<"\n partial2 w / partial sigma partial mu"<<endl;
+  cout<<"Finite Difference: "<<finitederivesigmamu<<endl;
+  cout<<"Analytic: "<<analderivesigmamu<<endl;
 
+  cout<<"\n\n\tHessian"<<endl;
+  cout<<setprecision(4)<<fixed;
+  cout<<"\t"<<d2mu<<"\t"<<dsigmu<<endl;
+  cout<<"\t"<<dsigmu<<"\t"<<d2sig<<endl;
+  
+  cout<<"\nDeterminant"<<endl;
+  cout<<determinant<<endl;
 
+  double a,b,c;
+  a=1;
+  b=-(d2mu+d2sig);
+  c=d2mu*d2sig - dsigmu*dsigmu;
+  double lambda1,lambda2;
+  lambda1 = (-b + sqrt( b*b - 4*a*c ))/2/a;
+  lambda2 = (-b - sqrt( b*b - 4*a*c ))/2/a;
+  
+  cout<<"Eigenvalues"<<endl;
+  cout<<lambda1<<endl;
+  cout<<lambda2<<endl;
+
+  cout<<"\n";
+  mat H(2,2);
+  H(0,0)=d2mu;
+  H(1,0)=dsigmu;
+  H(0,1)=dsigmu;
+  H(1,1)=d2sig;
+  H.print("Hessian");
+
+  vec eigval;
+  mat eigvec;
+  eig_sym(eigval,eigvec,H);
+  eigval.print("eig val");
+  eigvec.print("eig vec");
+  
   return 0;
 }

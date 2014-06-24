@@ -35,7 +35,12 @@ class ranvar
   double anaProb(double L, double p, double pc){ return anaProb(L,p,pc,_mean,_stdv);}
   double anaProb(double L, double p, double pc, double mean, double stdv);
   double deriveMu(double L, double p, double pc, double mean, double stdv);
-  double deriveSigma(double L, double p, double pc, double mean, double stdv);
+double deriveSigma(double L, double p, double pc, double mean, double stdv);
+  double d2Mu(double L, double p, double pc, double mean, double stdv);
+  double d2Sigma(double L, double p, double pc, double mean, double stdv);
+  double dSigmaMu(double L, double p, double pc, double mean, double stdv);
+
+  
 
 
   friend ostream& operator<<(ostream& os, const ranvar& rv);
