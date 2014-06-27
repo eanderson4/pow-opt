@@ -10,11 +10,11 @@ class del_g
 {
  public:
   del_g(): have_demand(false), have_topo(false), have_cap(false){ }
- del_g(grid * gr): _gr(gr), have_demand(true), have_topo(false), have_cap(false){ del_demand.resize(gr->numBuses(),0); }
+ del_g(grid * gr): _gr(gr), have_demand(true), have_topo(false), have_cap(false){ del_demand.resize(gr->numBuses(),0); baseTopo(gr); }
   ~del_g(){}
   
   void addDemand(int num,double demand);
-  void setOutage(int num);
+  void setStatus(int num,bool status);
   void baseTopo(grid * gr);
 
   bool haveTopo(){ return have_topo; }

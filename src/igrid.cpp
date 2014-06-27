@@ -13,19 +13,21 @@ rgrid *  igrid::solveModel( isolve * is){
   
   if (cplex.solve()){
       float tot= float(clock() - tstart) / CLOCKS_PER_SEC;
+      cout<<"\n - Solve info -"<<endl;
       cout<<"MODEL solved in "<<tot<<endl;
       rg->getSolveInfo(&cplex,tot);
       getBaseResults(&cplex, rg);
       if(have_loadshed) getIshed().getLoadShed(&cplex, rg);
 
       cout<<"STATUS: "<<rg->getStatus()<<endl;
-      cout<<"OBJECTIVE: "<<cplex.getObjValue()<<endl;
+      cout<<"OBJECTIVE: "<<cplex.getObjValue()<<"\n"<<endl;
       double genCost = getIcost().getCost(_gr,rg->getG());
       rg->setGenCost(genCost);
       
   }
   else{
     cerr<<"Not solved"<<endl;
+    cerr<<cplex.getStatus()<<endl;
   }
   cplex.end();
   
@@ -127,6 +129,80 @@ void igrid::modGrid( del_g mod ){
 
 
 }
+
+void igrid::unmodGrid( del_g mod ){
+  _mod=mod;
+
+  //  make modification
+  stringstream ss;
+  int nB = _gr->numBranches();
+
+  if(mod.haveTopo()){
+    
+    for(int i=0; i<nB; i++){
+      if(mod.getStatus(i)==false){
+	// line i was outaged repair
+	cout<<"Line "<<i<<" - ";
+	double U = _gr->getBranch(i).getRateA();
+	getF()[i].setBounds(-U,U);
+	getBranchFlow()[i].setBounds(0,0);
+	getPhaseAngle()[i].setBounds(-360,360 );
+	cout<<"f unbounded, phase angles tight"<<endl;
+	ss.str("");
+	ss<<"f"<<i<<"["<<-U<<","<<U<<"]";
+	getF()[i].setName( ss.str().c_str() );
+	cout<<getF()[i]<<endl;
+	cout<<getBranchFlow()[i]<<endl;
+	cout<<getPhaseAngle()[i]<<endl;
+      }
+    }
+    
+  }
+
+  if(mod.haveDemand()){
+    for(int i=0; i<_gr->numBuses(); i++){
+      double del_demand = mod.getDemand(i);
+      if(del_demand != 0){
+	IloRange nb = getNodalBalance()[i];
+	nb.setExpr(nb.getExpr() - del_demand);
+      }
+    }
+  }
+
+  //MODIFYING GRID TOO
+
+  if(mod.haveTopo()){
+    int nB=_gr->numBranches();
+    for(int i=0; i<nB; i++){
+      if(mod.getStatus(i)==false){
+	// line i was outaged, repair
+	cout<<"Line "<<i<<" - ";
+	_gr->getBranch(i).setStatus(1);	
+      }
+    }
+  }
+  if(mod.haveDemand()){
+    cout<<"Modify Demand (remove)"<<endl;
+    int nB=_gr->numBuses();
+    for(int i=0;i<nB; i++){
+      if(mod.getDemand(i) != 0){
+	cout<<i<<": "<<_gr->getBus(i).getP()<<" - "<<mod.getDemand(i)<<endl;
+	_gr->addPd(i,-mod.getDemand(i));
+      }
+    }
+  }
+
+
+  if(have_slack){
+    cout<<"fix Mismatch"<<endl;
+    cout<<_gr->getTotalDemand()<<endl;
+    _islk.fixMismatch(_gr, getG());
+  }
+
+
+}
+
+
 
 
 void igrid::removeDemand(del_g mod){

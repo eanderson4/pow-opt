@@ -12,7 +12,6 @@ gridcalc::gridcalc(grid * gr) {
 
   mat C(Nl,Nb,fill::zeros);
   mat Bff(Nl,Nl,fill::zeros);
-  int slack;
 
   //  cout<<"Line: To bus - From bus  (indicies)"<<endl;
   for(int i =0; i<Nl; i++){
@@ -36,7 +35,7 @@ gridcalc::gridcalc(grid * gr) {
 
     //IGNORING PHASE SHIFT FOR NOW
   }
-  
+  _C=C;
   //cout<<"C: "<<sp_mat(C.col(3))<<endl;
 
   mat Bf(Nl,Nb);
@@ -47,14 +46,6 @@ gridcalc::gridcalc(grid * gr) {
   
   //  cout<<"Bf: "<<sp_mat(Bf.col(3))<<endl;
   //  cout<<"Bbus: "<<sp_mat(Bbus)<<endl;
-
-  for(int i=0;i<Nb;i++){
-    bus bi = gr->getBus(i);
-    int type=bi.getType();
-    if(type==3) slack=i;
-  }
-  //  cout<<"Base Slack Bus: "<<slack<<endl;
- 
 
   mat H(Nl,Nb-1);
   mat Hp(Nl,Nb-1);
@@ -112,6 +103,20 @@ mat gridcalc::getHw(vec slack){
   return Hw;
 }
 
+mat gridcalc::getL(mat Hw){
+  mat H = Hw*trans(_C);
+  mat L = H;
+  
+  int Nl=_gr->numBranches();
+  for(int i=0;i<Nl;i++){
+    for(int j=0;j<Nl;j++){
+      if(i!=j)      L(i,j)=H(i,j)/(1-H(j,j));
+      else L(i,j)=-1;
+    }
+  }
+
+  return L;  
+}
 void gridcalc::testSlack(){
   int Nb=_gr->numBuses();
   int Nl=_gr->numBranches();

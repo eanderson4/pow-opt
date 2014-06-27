@@ -6,12 +6,12 @@ void del_g::addDemand(int num, double demand){
     
     
 
-void del_g::setOutage(int num){ 
+void del_g::setStatus(int num, bool status){ 
   if(!have_topo){
     cerr<<"Set base topology before allowing changes to it"<<endl;
     return;
   }
-  del_topo[num]=false; 
+  del_topo[num]=status; 
 }
 void del_g::baseTopo(grid * gr){
   int nB = gr->numBranches();
@@ -30,6 +30,11 @@ ostream& operator<<(ostream& os, const del_g& dg)
       if(dg.del_demand[i]!=0){
 	os<<i<<": "<<dg.del_demand[i]<<endl;
       }
+  }
+  for(int j=0; j<dg._gr->numBranches(); j++){
+    if(!dg.del_topo[j]){
+      os<<"Line "<<j<<" is out"<<endl;
+    }
   }
 
   return os;
