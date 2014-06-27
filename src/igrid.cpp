@@ -122,8 +122,8 @@ void igrid::modGrid( del_g mod ){
 
 
   if(have_slack){
-    cout<<"fix Mismatch"<<endl;
-    cout<<_gr->getTotalDemand()<<endl;
+    cout<<"Fix Mismatch"<<endl;
+    cout<<"Total Demand: "<<_gr->getTotalDemand()<<endl;
     _islk.fixMismatch(_gr, getG());
   }
 

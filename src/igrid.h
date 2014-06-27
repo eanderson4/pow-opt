@@ -9,7 +9,7 @@ class igrid : public ibase {
 
  public:
 
- igrid(grid * gr ) : ibase ( ), have_cost(false),have_loadshed(false){
+ igrid(grid * gr ) : ibase ( ), have_cost(false),have_loadshed(false),have_slack(false){
     _gr = gr;
     if(buildModel( gr  )) cout<<"IloModel Built\n";
     else cout<<"Could not build IloModel\n";

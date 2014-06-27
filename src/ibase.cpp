@@ -142,7 +142,7 @@ void islack::buildSlack(grid * gr, IloModel * mod, IloNumVarArray g){
 void islack::fixMismatch(grid * gr, IloNumVarArray g){
   int nG=gr->numGens();
   double td=gr->getTotalDemand();
-
+  cout<<_g_nom<<endl;
   _mismatch = IloSum(_g_nom) - td;
 
   cout<<"mismatch: "<<_mismatch<<endl;

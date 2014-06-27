@@ -31,8 +31,6 @@ class gridcalc
   mat getHw(vec slack);      //with arbitray slack distribution
   mat getL(mat Hw);          //Line outage distribution factor
   vec convert(IloNumArray na);
-  void testSlack();
-  void test();
 
  private:
   grid * _gr;

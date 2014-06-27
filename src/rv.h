@@ -27,8 +27,7 @@ class ranvar
   double PHI(double x);
   double sampleMean();
   double sampleStDv();
-  void testPhi();
-  void testRV();
+  double testPhi();
   
   double g(double fnormalized, double L, double p, double pc);
   double simProb(double L, double p, double pc);

@@ -70,7 +70,6 @@ double ranvar::deriveMu(double L, double p, double pc, double mean, double stdv)
 
 }
 double ranvar::d2Mu(double L, double p, double pc, double mean, double stdv){
-  double Uc=L + pc*(1-L)/p;
   double a=-p*L/(1-L);
   double b=p/(1-L);
 
@@ -95,7 +94,6 @@ double ranvar::d2Mu(double L, double p, double pc, double mean, double stdv){
 
 }
 double ranvar::d2Sigma(double L, double p, double pc, double mean, double stdv){
-  double Uc=L + pc*(1-L)/p;
   double a=-p*L/(1-L);
   double b=p/(1-L);
 
@@ -119,7 +117,7 @@ double ranvar::d2Sigma(double L, double p, double pc, double mean, double stdv){
 
 }
 double ranvar::dSigmaMu(double L, double p, double pc, double mean, double stdv){
-  double Uc=L + pc*(1-L)/p;
+
   double a=-p*L/(1-L);
   double b=p/(1-L);
 
@@ -137,6 +135,7 @@ double ranvar::dSigmaMu(double L, double p, double pc, double mean, double stdv)
     + b*alpha_low*alpha_low*alpha_low*phi_low/sigma;
 
   derive=b*phi_low*alpha_low/sigma;
+  cout<<"Error: "<<dcheck-derive<<endl;
 
   cout<<"alpha_low: "<<alpha_low<<endl;
   return derive;
@@ -269,42 +268,7 @@ double ranvar::PHI(double x){
   else   return 0.5 * erfc(-x * M_SQRT1_2);
 }
 
-void ranvar::testRV(){
-  //Test purposes
-  cout<<"Max error in gaussian CDF function"<<endl;
-  testPhi();
-
-  cout<<"Run simulation and compare to analytic"<<endl;
-  cout<<"\nSimulation Prob\n"<<endl;
-  int samples=53700;
-  double mean=.9;
-  double variance=.1;
-  double stdv=sqrt(variance);
-  
-  cout<<"Samples: "<<samples<<endl;
-  cout<<"Mean: "<<mean<<endl;
-  cout<<"Var: "<<variance<<endl;
-  
-
-  createRV(samples,mean,stdv);
-
-  double L=.9;
-  double p=.15;
-  double pc=.5;
-  double totalProb=simProb(L,p,pc);
-  cout<<"Sim Prob: "<<totalProb<<endl;
-
-  //Analytic
-
-  double t_p = anaProb(L,p,pc);
-  cout<<"Analytic Prob: "<<t_p<<endl;
-  cout<<"\nTotal Error: "<<t_p - totalProb<<endl;
-  
-
-
-}
-
-void ranvar::testPhi()
+double ranvar::testPhi()
 {
   //CREDIT TO http://www.johndcook.com/cpp_phi.html
   // Select a few input values
@@ -339,6 +303,7 @@ void ranvar::testPhi()
     }
   
   std::cout << "Maximum error: " << maxError << "\n";
+  return maxError;
 } 
 
 ostream& operator<<(ostream& os, const ranvar& rv)
