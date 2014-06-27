@@ -14,7 +14,8 @@ void test::run(){
     PTDF(etol);
     RSLACK(etol);
     LODF(etol);
-    RANDOM(etol);
+    //    RANDOM( .1 );
+    HESSIAN( etol*100 );
   }  
   catch (IloException& e){
     cerr<<"Concert exception caught: "<<e<<endl; fail=true;
@@ -31,6 +32,88 @@ void test::run(){
   else cout<<"FAILED FAILED FAILED FAILED FAILEDFAILED FAILED FAILED FAILED FAILED FAILED FAILED FAILED"<<endl;
 }
 
+
+void test::HESSIAN(double etol){
+  ranvar rv;
+  cout<<"\n\n\n"
+      <<"Hessian of w"<<endl;
+
+  double L=.90;
+  double p=.15;
+  double pc=.4;
+
+  double eps=.0001;
+  double epssig=.000001;
+  double mustar=.93;
+  double sigstar=.01;
+  double wmuup=rv.anaProb(L,p,pc,mustar+eps,sigstar);
+  double wmu=rv.anaProb(L,p,pc,mustar,sigstar);
+  double wmudown=rv.anaProb(L,p,pc,mustar-eps,sigstar);
+  double wsigmaup=rv.anaProb(L,p,pc,mustar,sigstar+epssig);
+  double wsigma=rv.anaProb(L,p,pc,mustar,sigstar);
+  double wsigmadown=rv.anaProb(L,p,pc,mustar,sigstar-epssig);
+  double wupup=rv.anaProb(L,p,pc,mustar+eps,sigstar+epssig);
+  double wdownup=rv.anaProb(L,p,pc,mustar-eps,sigstar+epssig);
+  double wupdown=rv.anaProb(L,p,pc,mustar+eps,sigstar-epssig);
+  double wdowndown=rv.anaProb(L,p,pc,mustar-eps,sigstar-epssig);
+  
+  double mufinitederiv=(wmuup-wmudown)/2/eps;
+  double sigmafinitederiv=(wsigmaup-wsigmadown)/2/(epssig);
+  double mufinited2=(wmuup-2*wmu+wmudown)/eps/eps;
+  double sigmafinited2=(wsigmaup-2*wsigma+wsigmadown)/epssig/epssig;
+  double musigmad=(wupup-wupdown-wdownup+wdowndown)/4/eps/epssig;
+  double sigmamuderiv=(wupup-wmuup-wsigmaup+2*wsigma-wmudown-wsigmadown+wdowndown)/2/eps/epssig;
+  
+
+	       
+  double muanalderiv=rv.deriveMu(L,p,pc,mustar,sigstar);
+  double sigmaanalderiv=rv.deriveSigma(L,p,pc,mustar,sigstar);
+  double md2=rv.d2Mu(L,p,pc,mustar,sigstar);
+  double sd2=rv.d2Sigma(L,p,pc,mustar,sigstar);
+  double smd=rv.dSigmaMu(L,p,pc,mustar,sigstar);
+
+  double emud=abs(mufinitederiv-muanalderiv);
+  double esigmad=abs(sigmafinitederiv-sigmaanalderiv);
+  double emd2=abs(mufinited2-md2);
+  double esd2=abs(sigmafinited2-sd2);
+  double esmd=abs(musigmad-smd);
+
+  cout<<"\nCheck Functions"<<endl;
+  cout<<"Mu: "<<mustar<<", Sigma: "<<sigstar<<endl;
+  cout<<"\n partial w / partial mu"<<endl;
+  cout<<"Finite Difference: "<<mufinitederiv<<endl;
+  cout<<"Analytic: "<<muanalderiv<<endl;
+  cout<<"\n partial w / partial sigma"<<endl;
+  cout<<"Finite Difference: "<<sigmafinitederiv<<endl;
+  cout<<"Analytic: "<<sigmaanalderiv<<endl;
+
+   cout<<"\n partial2 w / partial mu2"<<endl;
+  cout<<"Finite Difference: "<<mufinited2<<endl;
+  cout<<"Analytic: "<<md2<<endl;
+  cout<<"\n partial2 w / partial sigma2"<<endl;
+  cout<<"Finite Difference: "<<sigmafinited2<<endl;
+  cout<<"Analytic: "<<sd2<<endl;
+  cout<<"\n partial2 w / partial mu sigma"<<endl;
+  cout<<"Finite Difference: "<<musigmad<<endl;
+  cout<<"Analytic: "<<sigmamuderiv<<endl;
+  cout<<"Errors:\n";
+  cout<<emud<<endl;
+  cout<<esigmad<<endl;
+  cout<<emd2<<endl;
+  cout<<esd2<<endl;
+  cout<<esmd<<endl;
+
+  cout<<"\n\nHessian"<<endl;
+  cout<<"\t"<<md2<<"\t"<<smd<<endl;
+  cout<<"\t"<<smd<<"\t"<<sd2<<endl;
+
+  if(emud>=etol) throw errtol;
+  if(esigmad>=etol) throw errtol;
+  if(emd2>=etol) throw errtol;
+  if(esd2>=etol) throw errtol;
+  if(esmd>=etol) throw errtol;
+  
+}
 
 void test::RANDOM(double etol){
   grid * gr=_gr;
@@ -211,9 +294,9 @@ void test::RANDOM(double etol){
   cout<<"we error(sim - ana) : sum()="<<rerror<<endl;
   weerror.t().print();
 
-  if(sum(abs(fmeanerror))>=.1) throw errtol;
-  if(sum(abs(fstdverror))>=.1) throw errtol;
-  if(abs(rerror)>=.01) throw errtol;
+  if(sum(abs(fmeanerror))>=etol) throw errtol;
+  if(sum(abs(fstdverror))>=etol) throw errtol;
+  if(abs(rerror)>=etol/10) throw errtol;
   
 }
 
