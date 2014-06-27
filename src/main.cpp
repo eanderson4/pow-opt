@@ -6,7 +6,6 @@
 using namespace std;
 
 
-
 int main(int argc, char* argv[]){
 
   if(argc<=1){
@@ -29,6 +28,10 @@ int main(int argc, char* argv[]){
 
   test t(gr);
   t.run();
+  
+  cout<<"\n\n\n"<<endl;
+
+  //N-1 calculations
 
   return 0;
 }
