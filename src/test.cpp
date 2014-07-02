@@ -14,7 +14,7 @@ void test::run(){
     PTDF(etol);
     RSLACK(etol);
     LODF(etol);
-    //    RANDOM( .1 );
+    RANDOM( .1 );
     HESSIAN( etol*100 );
   }  
   catch (IloException& e){
@@ -29,7 +29,7 @@ void test::run(){
   
   cout<<"\n\n\nTest Over"<<endl;
   if(!fail) cout<<"No Problems"<<endl;
-  else cout<<"FAILED FAILED FAILED FAILED FAILEDFAILED FAILED FAILED FAILED FAILED FAILED FAILED FAILED"<<endl;
+  else cout<<"FAILED FAILED FAILED FAILED FAILED FAILED FAILED FAILED FAILED FAILED FAILED FAILED FAILED"<<endl;
 }
 
 
