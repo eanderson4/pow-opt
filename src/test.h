@@ -18,6 +18,7 @@ class test {
   void RV(double etol);
   void RANDOM(double etol);
   void HESSIAN(double etol);
+  void COVAR(double etol);
 
   class errortol: public exception 
   {
