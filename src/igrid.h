@@ -28,6 +28,8 @@ class igrid : public ibase {
   grid * getGrid(){ return _gr; }
   icost getIcost(){ return _ic; }
   ished getIshed(){ return _ils; }
+  
+  bool isLoadShed(){ return have_loadshed; }
 
   void relayInfo(rgrid * rg);  
 

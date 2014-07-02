@@ -117,3 +117,15 @@ mat gridcalc::getL(mat Hw){
 
   return L;  
 }
+
+vec gridcalc::risk(vec f,vec varf,double L, double p, double pc){
+  int N=f.n_elem;
+  vec z(N,fill::zeros);
+  ranvar rv;
+  for(int i=0;i<N;i++){
+    double U = _gr->getBranch(i).getRateA();
+    z(i)=rv.anaProb(L,p,pc,abs(f(i))/U,sqrt(varf(i))/U);
+  }
+
+  return z;
+}

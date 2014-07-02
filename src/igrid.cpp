@@ -34,6 +34,7 @@ rgrid *  igrid::solveModel( isolve * is){
   return rg;
 }
 
+
 void igrid::allowLoadShed(){
   have_loadshed = _ils.buildLoadShed(_gr,getModel(),getNodalBalance());
   if(have_loadshed) cout<<"Built load shed variables"<<endl;
