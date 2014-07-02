@@ -151,56 +151,8 @@ int main(int argc, char* argv[]){
   cout<<ravg<<"\t+-"<<rstdv<<"\t( "<<rstdv/sqrt(samples)<<" )"<<endl;
 
   return 0;
+
+
 }
-
-
-
-
-  /*
-  cout<<"\n\nCheck stats"<<endl;
-  
-    rsv_delx.mean().print("delx mean: ");
-  rsv_delx.cov().print("delx cov: ");
-  rsv_y.var().print("y var: ");
-
-
-    
-  double delta=.01;
-  double Up=10000;
-  double a=.15;
-
-  double mean=.9;
-  double sigma=.3;
-
-  double total=0;
-  double expect=0;
-
-  for(int i=1;i*delta<Up;i++){
-    double z=i*delta;
-
-    double alpha_plus = (sqrt(z/a) - mean)/sigma;
-    double dalpha = 1/2/sigma/sqrt(a*z);
-
-    double expr=rv.phi(alpha_plus)*dalpha;
-    
-    total = total + expr*delta;
-    expect=expect+ z*expr*delta;
-    
-    }
-
-  double check = rv.PHI(-mean/sigma);
-  
-  cout<<total<<" - "<<check<<endl;
-  cout<<"mu: "<<expect<<endl;
-
-  //N-1 calculations
-  int s=100000;
-  vec rn(s,fill::randn);
-  for(int i=0;i<s;i++){
-    rn(i)=rn(i)*rn(i);
-  }
-  double test = sum(rn)/s;
-  cout<<test<<endl;
-  */
 
    
