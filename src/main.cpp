@@ -78,7 +78,7 @@ int main(int argc, char* argv[]){
   rbase->displayOperatingPos(gr);
 
   try{
-    double eps=.075;
+    double eps=.16;
     ijcc ij(gr, SIGy,L,p,pc,eps);
     ij.addCost();
     rgrid * rjcc = ij.solveModel(&is);
@@ -101,6 +101,10 @@ int main(int argc, char* argv[]){
     z1.t().print("z1: ");
     z2.t().print("z2: ");
     cout<<r0<<" - "<<r1<<" - "<<r2<<endl;
+    double o0=rbase->getObjective();
+    double o1=rjcc->getObjective();
+    double o2=rjcc2->getObjective();
+    cout<<o0<<" - "<<o1<<" - "<<o2<<endl;
 
   }
   catch(IloException& e){
