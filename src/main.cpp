@@ -18,7 +18,7 @@ int main(int argc, char* argv[]){
   sqlInter db;
   grid * gr = new grid;
   string db_name;
-
+  
   db_name = argv[1];
   db.openDb(db_name);
   db.load(*gr);
@@ -26,10 +26,14 @@ int main(int argc, char* argv[]){
   gr->printNums(cout);
 
   cout<<*gr<<endl;
+  
+  grid gr2 = *gr;
 
-  //  test t(gr);
-  //  t.run();
-  //  cout<<"\n\n\n"<<endl;
+    test t(&gr2);
+    t.run();
+    cout<<"\n\n\n"<<endl;
+
+    //    return 0;
 
   double multi=.75;
   int Nl = gr->numBranches();
@@ -78,7 +82,7 @@ int main(int argc, char* argv[]){
   rbase->displayOperatingPos(gr);
 
   try{
-    double eps=.16;
+    double eps=.1;
     ijcc ij(gr, SIGy,L,p,pc,eps);
     ij.addCost();
     rgrid * rjcc = ij.solveModel(&is);
@@ -106,9 +110,22 @@ int main(int argc, char* argv[]){
     double o2=rjcc2->getObjective();
     cout<<o0<<" - "<<o1<<" - "<<o2<<endl;
 
+    vec g0=gc.convert(rbase->getG());
+    for(int i=0;i<Nl;i++){
+      vec fn = gc.getN1(i,f0,g0,Hw);
+      //      cout<<"-"<<i<<"-"<<endl;
+      //      fn.t().print("f: ");
+    }
+
   }
   catch(IloException& e){
-       cerr<<"Concert exception: "<<e<<endl; 
+    cerr<<"Concert exception: "<<e<<endl; 
+  }
+  catch(exception& e){
+    cerr<<"Exception: "<<e.what()<<endl; 
+  }
+  catch(...){
+    cerr<<"Unknown Error "<<endl;
   }
   
 

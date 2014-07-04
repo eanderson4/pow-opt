@@ -1,9 +1,9 @@
-#include "ijcc.h"
+#include "in1.h"
 
-rgrid *  ijcc::solveModel( isolve * is){
+rgrid *  in1::solveModel( isolve * is){
 
   rgrid * rg = new rgrid();
-  
+  /*  
   time_t tstart;
   tstart = clock();
     
@@ -88,32 +88,18 @@ rgrid *  ijcc::solveModel( isolve * is){
   else{
     cerr<<"Not solved"<<endl;
     cerr<<cplex.getStatus()<<endl;
-  }
+    }
   cplex.end();
-  
+  */  
   return rg;
 }
 
-void ijcc::lineLimitStatus(bool status){
-  int Nl = getGrid()->numBranches();
-  
-  for(int i=0;i<Nl;i++){
-    if(!status)    getF()[i].setBounds(-IloInfinity,IloInfinity);
-    else{
-      double U = getGrid()->getBranch(i).getRateA();
-      getF()[i].setBounds(-U,U);
-    }
-  }
 
-
-}
-
-
-void ijcc::setup(){
-  cout<<"Setup joint chance constraint"<<endl;
+void in1::setup(){
+  cout<<"Setup N-1 joint chance constraint"<<endl;
   stringstream ss;
 
-  IloEnv env = getEnv();
+  /*  IloEnv env = getEnv();
   int Nl = getGrid()->numBranches();
   _z = IloNumVarArray(env,Nl,0,IloInfinity);
   _fplus = IloNumVarArray(env,Nl,0,IloInfinity);
@@ -147,4 +133,5 @@ void ijcc::setup(){
   getModel()->add(_fup);
   getModel()->add(_fdown);
   getModel()->add(_riskConstraint);
+  */
 }

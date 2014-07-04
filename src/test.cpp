@@ -10,13 +10,13 @@ void test::run(){
   cout<<*_gr<<endl;
  
   try {
-    RV(etol);
-    PTDF(etol);
-    RSLACK(etol);
-    LODF(etol);
+    //    RV(etol);
+    //    PTDF(etol);
+    //    RSLACK(etol);
+        LODF(etol);
     //   RANDOM( .1 );
-    HESSIAN( etol*100 );
-    COVAR( etol*100 );
+    //    HESSIAN( etol*100 );
+    //COVAR( etol*100 );
   }  
   catch (IloException& e){
     cerr<<"Concert exception caught: "<<e<<endl; fail=true;
@@ -37,7 +37,7 @@ void test::COVAR(double etol){
   grid * gr = _gr;
   int Nb = gr->numBuses();
   int Nl = gr->numBranches();
-  int samples=175000;
+  int samples=77500;
   int num=5;
   int index[5] = { 1, 3, 6, 20, 28 };
   double stdv[5] = {3,.5,5,3.75,.3};
@@ -83,7 +83,7 @@ void test::COVAR(double etol){
   vec slack(Nb,fill::zeros);
   slack[1]=1;
   mat Hw = gc.getHw(slack);
-
+  mat Ln = gc.getL(Hw);
   //Analytic Branch Flow Statistics
   mat SIGy(Nl,Nl,fill::zeros);
   SIGy = Hw*Cm*SIG*(Hw*Cm).t();
@@ -91,11 +91,16 @@ void test::COVAR(double etol){
     for(int i=0;i<num;i++){
       fstdv=fstdv + pow(stdv[i]*Hw.col(index[i]),2);
     }
-    //    fstdv=sqrt(fstdv);
-    fstdv.print("var: ");
-    SIGy.diag().print("diag s: ");
-    (fstdv-SIGy.diag()).print("error: ");
-
+    //    fstdv=sqrt(fstdv);  //DOESNT INCLUDE COVARIANCE CALCULATION
+    //    fstdv.print("var: ");
+    //SIGy.diag().print("diag s: ");
+    //(fstdv-SIGy.diag()).print("error: ");
+    vec mean5 = fbase + Ln.col(5)*fbase(5);
+    vec sig5 = SIGy.diag();
+    for( int i=0;i<Nl;i++){
+      sig5(i)=sig5(i) + 2*Ln(i,5)*SIGy(5,i) + pow(Ln(i,5),2)*SIGy(5,5);
+    }
+    
   vec zprime(Nl,fill::zeros);
   vec zcheck(Nl,fill::zeros);
   //Calculate analytic probabilities
@@ -111,14 +116,12 @@ void test::COVAR(double etol){
   double rcheck = sum(zcheck);
   cout<<rprime<<" - "<<rcheck<<endl;
   
-
-
   vec r(samples,fill::zeros);
-
   
   running_stat_vec<vec> rsv_in(true);
   running_stat_vec<vec> rsv_delx(true);
   running_stat_vec<vec> rsv_y;
+  running_stat_vec<vec> rsv_y5(true);
   cout<<"Run samples"<<endl;
   for(int n=0;n<samples;n++){
     vec randin(num,fill::randn);
@@ -130,6 +133,8 @@ void test::COVAR(double etol){
     vec delf = Hw*delp;
     vec f = fbase + delf;
     rsv_y(f);
+    vec f5 = f[5]*Ln.col(5)+f;
+    rsv_y5(f5);
 
     vec z(Nl,fill::zeros);
     for(int j=0;j<Nl;j++){
@@ -144,6 +149,11 @@ void test::COVAR(double etol){
 
   double error = ravg - rprime;
 
+  rsv_delx.mean().t().print("dx mean: ");
+  rsv_delx.cov().print("dx cov: ");
+  SIG.print("SIG: ");
+  cout<<"error: "<<sum(rsv_delx.cov().diag()-SIG.diag())<<endl;
+
   std::cout << std::fixed;
   std::cout << std::setprecision(5);
 
@@ -156,6 +166,18 @@ void test::COVAR(double etol){
   cout<<ravg<<"\t+-"<<rstdv<<"\t( "<<rstdv/sqrt(samples)<<" )"<<endl;
 
   if(error>=etol) throw errtol;  
+
+
+  vec errormean = rsv_y5.mean() - mean5;
+  vec errorvar = rsv_y5.cov().diag() - sig5;
+  rsv_y5.mean().t().print("y5 mean: ");
+  mean5.t().print("y5 exp: ");
+  cout<<"error (mean - expected): "<<sum(errormean)<<endl;
+  errormean.t().print("mean error: ");
+  rsv_y5.cov().diag().t().print("y5 cov: ");
+  sig5.t().print("sig5: ");
+  cout<<"error (var - expected): "<<sum(errorvar)<<endl;
+  (rsv_y5.cov().diag() -sig5).t().print("error: ");
   
 }
 
@@ -646,15 +668,14 @@ void test::LODF(double etol){
     dg.setStatus(i,true);
   }
   cout<<"]"<<endl;
-  
+
   mat Hb=Hw*gc.getC().t();
-  bool fail=false;
+  bool fail=false; 
   for(int i=0;i<Nl;i++){
     //    cout<<Hb(i,i);
     if(Hb(i,i)<=1-.000001 || Hb(i,i)>=1+.0000001){
       cout<<"Line "<<i<<endl;
       vec fcalc = fbase[i]*L.col(i)+fbase;
-      fcalc.print("fcalc: ");
       fail=false;
       for(int j=0;j<Nl;j++){
 	double U = gr->getBranch(j).getRateA();
@@ -664,7 +685,8 @@ void test::LODF(double etol){
       if(!fail){
 	_rg[i]->outputInfo(cout);
 	vec f = gc.convert(_rg[i]->getF());
-	
+	fcalc.t().print("fcalc: ");
+	f.t().print("f: ");
 	(f-fcalc).t().print("error: ");
 	cout<<"sum: "<<sum(f-fcalc)<<endl;
 	double error=sum(abs(f-fcalc));
@@ -675,12 +697,84 @@ void test::LODF(double etol){
 	cout<<"Need redispatch"<<endl;
       }
     }
+    else{
+      cout<<"Line: "<<i<<" --- HB = 1"<<endl;
+      
+      branch br = gr->getBranch(i);
+      int from = gr->getBusNum(br.getFrom());
+      int to = gr->getBusNum(br.getTo());
+      int winner =-1;
+
+      cout<<from<<" -> "<<to<<endl;
+
+      mat C = gc.getC();
+      C.col(from).t().print("from");
+      C.col(to).t().print("to");
+
+      if(sum(abs(C.col(from))) == 1) {
+	cout<<"winner winner: "<<from<<endl;
+	winner=from;
+      }
+      if(sum(abs(C.col(to))) == 1) {
+	cout<<"winner winner: "<<to<<endl;
+	winner=to;
+      }
+      bus b = _gr->getBus(winner);
+      double load = b.getP()+b.getGs();
+      mat Cm = gc.getCm();
+      Cm.row(winner).print("Cm: ");
+      int Ng=_gr->numGens();
+      if(sum(Cm.row(winner))>=1){
+	cout<<"Have Generation"<<endl;
+	vec g = gc.convert(rbase->getG());
+	vec gnode = Cm.row(winner)*g;
+	vec fcalc = Hw.col(winner)*(load-gnode) + fbase;
+	for(int j=0;j<Ng;j++){
+	  if(Cm(winner,j)>0) {
+	    ig.getSlack()->getGNom()[j]=0;
+	    ig.slackMismatch();
+	  }
+	}
+	rg = ig.solveModel();
+	vec f = gc.convert(rg->getF());
+	f.t().print("f actual: ");
+	fcalc.t().print("f calc: ");
+	(f-fcalc).t().print("error: ");
+	if (sum(f-fcalc) > etol ) throw errtol;
+	vec ge = gc.convert(rg->getG());
+	ge.t().print("gen:");
+	for(int j=0;j<Ng;j++){
+	  if(Cm(winner,j)>0){
+	    ig.getSlack()->getGNom()[j]=g[j];
+	    ig.slackMismatch();
+	  }
+	}
+      }
+      else{
+	cout<<"Loadshed "<<load<<" at "<<winner<<endl;
+	vec fcalc = Hw.col(winner)*load+fbase;
+	
+	dg.setStatus(i,false);
+	dg.addDemand(winner,-load);
+	ig.modGrid( dg );
+	rg = ig.solveModel();
+	rg->outputInfo(cout);
+	ig.unmodGrid( dg );
+	dg.addDemand(winner,0);
+	dg.setStatus(i,true);      
+	
+	vec f = gc.convert(rg->getF());
+	f.t().print("f actual: ");
+	fcalc.t().print("f calc: ");
+	(f-fcalc).t().print("error: ");
+	if (sum(f-fcalc) > etol ) throw errtol;
+      }
+      
+
+    }
   }
-  
-  //Build ilomodel out of armadillo matricies
-  
-  
   //Solve N-1 problem
+  
   
 }
 

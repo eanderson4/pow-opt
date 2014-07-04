@@ -27,12 +27,22 @@ class gridcalc
   vec getDelG(del_g dg);
   vec getDelF(vec delg, vec slack);
   mat getC(){ return _C; };  //Admittance Matrix
+  mat getCm();  //GenAdmittance Matrix
   mat getH(){ return _H; };  //Linear Shift Factor
   mat getHw(vec slack);      //with arbitray slack distribution
   mat getL(mat Hw);          //Line outage distribution factor
   vec convert(IloNumArray na);
   vec risk(vec f,vec varf, double L, double p, double pc);
   vec dz(double f,double varf, double L, double p, double pc);
+  vec getN1(int n, vec y0, vec g,mat Hw);
+
+  class nowinner: public exception 
+  {
+    virtual const char* what() const throw()
+    {
+      return "No islanded bus found!";
+    }
+  }nowin;
 
  private:
   grid * _gr;

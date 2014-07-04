@@ -14,7 +14,17 @@ class ijcc : public igrid {
   void setup();
   rgrid * solveModel( isolve * is=NULL);
   void lineLimitStatus(bool status);
+
+  //Risk functions
   
+  class itlimit: public exception 
+  {
+    virtual const char* what() const throw()
+    {
+      return "Stopped due to iteration limit";
+    }
+  }itlimit;
+
  private:
   IloNumVarArray _z;
   IloNumVarArray _fplus;

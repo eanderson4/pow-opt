@@ -19,6 +19,8 @@ class igrid : public ibase {
   virtual rgrid * solveModel( isolve * is=NULL);
   int addCost();
   void addSlack(IloNumArray _g_nom, IloNumArray slack);
+  islack * getSlack(){ return &_islk; }
+  void slackMismatch(){ _islk.fixMismatch(_gr,getG()); }
   void allowLoadShed();
   void modGrid( del_g mod );
   void removeDemand( del_g mod );
@@ -30,7 +32,6 @@ class igrid : public ibase {
   ished getIshed(){ return _ils; }
   
   bool isLoadShed(){ return have_loadshed; }
-
   void relayInfo(rgrid * rg);  
 
  private:
