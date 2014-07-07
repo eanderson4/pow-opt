@@ -27,7 +27,8 @@ rgrid *  ijcc::solveModel( isolve * is){
       vec z=gc.risk(f,_SIGy.diag(),_L,_p,_pc);
 
       systemfail = postCC(f,z,&cplex);
-      cplex.solve();
+      z.t().print("z: ");
+      if(systemfail) cplex.solve();
     }
     //Risk constraint satisfied, record solution
     float total= float(clock() - tstart) / CLOCKS_PER_SEC;  
@@ -67,26 +68,32 @@ bool ijcc::postCC(vec f, vec z,IloCplex * cplex){
   //define tolerance for line risk > 0
   double tol = pow(10,-6);
   int Nl = getGrid()->numBranches();
+  double account=0;
   
   ranvar rv;
   double r = sum(z);
   cout<<"Risk: "<<r<<endl;
-  if(r<=_eps) return false;
+  if(r<=_eps+tol) return false;
   else{
     cout<<"Add cuts"<<endl;
     for(int i=0; i<Nl; i++){
-      if (z(i)>tol){
+      if (z(i)>0){
+	account += z(i);
 	//Add cuts for each line with positive risk
 	cout<<i<<": "<<z(i)<<endl;
 	double y_i = abs(f(i));
 	double U=getGrid()->getBranch(i).getRateA();
 	double dz=rv.deriveMu(_L,_p,_pc,abs(f(i))/U,sqrt(_SIGy(i,i))/U);
-	cout<<"z_"<<i<<" >= "<<dz<<"(y_"<<i<<" - "<<y_i<<") + "<<z(i)<<endl;
+	//	cout<<dz<<" "<<dz/U<<endl;
+	//	cout<<"z_"<<i<<" >= "<<dz<<"(y_"<<i<<" - "<<y_i<<")/"<<U<<" + "<<z(i)<<endl;
+	cout<<"z_"<<i<<" >= "<<dz/U<<" y_"<<i<<" + "<<z(i)-dz*y_i/U<<endl;
 	IloRange cut(getEnv(),-IloInfinity,0);
-	cut.setExpr( dz*(_fplus[i] - y_i) + z(i) - _z[i]);
+	cut.setExpr( dz/U*(_fplus[i] - y_i) + z(i) - _z[i]);
+	cout<<cut<<endl;
 	getModel()->add(cut);
       }
     }
+    cout<<"Accounted: "<<account<<endl;
     return true;
   }     
 }

@@ -70,12 +70,14 @@ double ranvar::deriveMu(double L, double p, double pc, double mean, double stdv)
   double two = b*mu*delta/sigma + b*beta + b*tau;
   double three=phi(alpha_high)/sigma;
 
-  double derive=one+two+three;
+  double deriveC=one+two+three;
   
   //Ignoring right side truncation
-  derive = a*phi(alpha_low)/sigma +b + b*mu*phi(alpha_low)/sigma - b*PHI(alpha_low) + b*alpha_low*phi(alpha_low);
+  deriveC = a*phi(alpha_low)/sigma +b + b*mu*phi(alpha_low)/sigma - b*PHI(alpha_low) + b*alpha_low*phi(alpha_low);
 
-  derive=b*(1-PHI(alpha_low));
+  double derive=b*(1-PHI(alpha_low));
+
+  //  if (abs(deriveC - derive) >= _tol) throw analerr;
 
   return derive;
 
@@ -175,11 +177,13 @@ double ranvar::deriveSigma(double L, double p, double pc, double mean, double st
   double two = b*xi*tau/sigma + b*delta+b*rho-b*delta*tau/beta;
   double three=alpha_high*phi(alpha_high)/sigma;
 
-  double derive=one+two+three;
+  double deriveC=one+two+three;
 
-  derive=a*alpha_low*phi(alpha_low)/sigma + b*mu*alpha_low*phi(alpha_low)/sigma + b*alpha_low*alpha_low*phi(alpha_low) +  b*phi(alpha_low);
+  deriveC=a*alpha_low*phi(alpha_low)/sigma + b*mu*alpha_low*phi(alpha_low)/sigma + b*alpha_low*alpha_low*phi(alpha_low) +  b*phi(alpha_low);
 
-  derive=b*phi(alpha_low);
+  double derive=b*phi(alpha_low);
+
+  //  if (abs(deriveC - derive) >= _tol) throw analerr;
 
   return derive;
 
@@ -206,6 +210,7 @@ double ranvar::anaProb(double L, double p, double pc, double mean, double stdv){
   double p_Ui = 1- PHI(alpha_high);
   double t_p = a*p_LU + b*ef_LU*p_LU + p_Ui;
 
+  if (p_Ui >_tol) throw analerr;
 
   if(1==0){
   cout<<"\nAnalytic Prob"<<endl;

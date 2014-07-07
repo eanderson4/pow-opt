@@ -17,7 +17,10 @@ class ranvar
 {
 
  public:
- ranvar(int seed=-372):_seed(seed) { if(seed==-372) seed=time(NULL); }
+ ranvar(int seed=-372):_seed(seed) { 
+    _tol=pow(10,-5);
+    if(seed==-372) seed=time(NULL); 
+  }
   ~ranvar() {}
 
   void createRV(int N,double mean, double stdv);
@@ -40,6 +43,13 @@ double deriveSigma(double L, double p, double pc, double mean, double stdv);
   double d2Sigma(double L, double p, double pc, double mean, double stdv);
   double dSigmaMu(double L, double p, double pc, double mean, double stdv);
 
+  class analerror: public exception 
+  {
+    virtual const char* what() const throw()
+    {
+      return "Analytic approximation failed!";
+    }
+  }analerr;
   
 
 
@@ -53,6 +63,8 @@ double deriveSigma(double L, double p, double pc, double mean, double stdv);
   int _N;
   double _mean;
   double _stdv;
+  
+  double _tol;
   
 };
 
