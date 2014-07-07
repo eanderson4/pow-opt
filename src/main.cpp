@@ -84,7 +84,7 @@ int main(int argc, char* argv[]){
   try{
     double eps=.1;
     double epsN=.15;
-    ijcc n1(gr, SIGy,L,p,pc,eps);
+    ijn1 n1(gr, SIGy,Hw,L,p,pc,eps,epsN);
     n1.addCost();
     rgrid * rn1_1 = n1.solveModel(&is);
     n1.lineLimitStatus(false);

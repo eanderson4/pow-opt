@@ -17,16 +17,21 @@ rgrid *  ijcc::solveModel( isolve * is){
   int n=0;
 
   if (cplex.solve()){
-    bool risk=false;
+    bool systemfail=true;
     gridcalc gc(getGrid());
     ranvar rv;
-    while(!risk){
+    while(systemfail){
       n++; if (n>100) throw itlimit;
       cout<<"Checking Risk Constraint"<<endl;
       IloNumArray fsolve(getEnv(),Nl);
       cplex.getValues(fsolve,_fplus);
-      //Calculate system risk
       vec f=gc.convert(fsolve);
+
+      systemfail = postCC(f);
+      systemfail += postCC(f,n);
+      
+    
+      //Calculate system risk
       vec z=gc.risk(f,_SIGy.diag(),_L,_p,_pc);
       double r = sum(z);
       cout<<"Risk: "<<r<<endl;
@@ -54,7 +59,7 @@ rgrid *  ijcc::solveModel( isolve * is){
 	f.t().print("f: ");
 	z.t().print("z: ");
 
-	risk=true;
+	systemfail=false;
       }
       else{
 	cout<<"Add cuts"<<endl;
@@ -80,7 +85,6 @@ rgrid *  ijcc::solveModel( isolve * is){
 	vec gener=gc.convert(gsolve);	
 	gener.t().print("generate : ");
 
-
       }
     }
       
@@ -92,6 +96,56 @@ rgrid *  ijcc::solveModel( isolve * is){
   cplex.end();
   
   return rg;
+}
+
+bool ijcc::postCC(vec f){
+
+  //Calculate system risk
+  vec z=gc.risk(f,_SIGy.diag(),_L,_p,_pc);
+  double r = sum(z);
+  cout<<"Risk: "<<r<<endl;
+  if(r<=_eps){
+    //Risk constraint satisfied, record solution
+    float total= float(clock() - tstart) / CLOCKS_PER_SEC;  
+    cout<<"\n - Solve info -"<<endl;
+    cout<<"MODEL solved in "<<total<<endl;
+    rg->getSolveInfo(&cplex,total);
+    getBaseResults(&cplex, rg);
+    if(isLoadShed()) getIshed().getLoadShed(&cplex, rg);
+    
+    cout<<"STATUS: "<<rg->getStatus()<<endl;
+    cout<<"OBJECTIVE: "<<cplex.getObjValue()<<"\n"<<endl;
+    double genCost = getIcost().getCost(getGrid(),rg->getG());
+    rg->setGenCost(genCost);
+    
+    IloNumArray zout(getEnv(),Nl);
+    IloNumArray fout(getEnv(),Nl);
+    cplex.getValues(zout,_z);
+    cplex.getValues(fout,_fplus);
+    cout<<"\n\nRisk constraint satisfied\n\n"<<endl;
+    cout<<"Iterations: "<<n<<endl;
+    cout<<"Time: "<<total<<endl;
+    f.t().print("f: ");
+    z.t().print("z: ");
+    
+    systemfail=false;
+  }
+  else{
+    cout<<"Add cuts"<<endl;
+    for(int i=0; i<Nl; i++){
+      if (z(i)>tol){
+	//Add cuts for each line with positive risk
+	cout<<i<<": "<<z(i)<<endl;
+	double y_i = abs(f(i));
+	double U=getGrid()->getBranch(i).getRateA();
+	double dz=rv.deriveMu(_L,_p,_pc,abs(f(i))/U,sqrt(_SIGy(i,i))/U);
+	cout<<"z_"<<i<<" >= "<<dz<<"(y_"<<i<<" - "<<y_i<<") + "<<z(i)<<endl;
+	IloRange cut(getEnv(),-IloInfinity,0);
+	cut.setExpr( dz*(_fplus[i] - y_i) + z(i) - _z[i]);
+	getModel()->add(cut);
+      }
+    }
+     
 }
 
 void ijcc::lineLimitStatus(bool status){

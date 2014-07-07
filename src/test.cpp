@@ -651,7 +651,7 @@ void test::LODF(double etol){
   L.print("L: ");
   
   
-  
+   
   rgrid * rg;
   vector<rgrid *> _rg;
   del_g dg(gr);

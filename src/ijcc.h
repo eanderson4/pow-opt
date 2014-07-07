@@ -14,6 +14,8 @@ class ijcc : public igrid {
   void setup();
   rgrid * solveModel( isolve * is=NULL);
   void lineLimitStatus(bool status);
+  bool postCC(vec f);
+  double getSig(){ return _SIGy; }
   double getEps(){ return _eps; }
   double getL(){ return _L; }
   double getP(){ return _p; }
