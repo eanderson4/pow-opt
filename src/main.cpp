@@ -2,7 +2,7 @@
 
 #include "sqlinter.h"
 #include "test.h"
-#include "ijcc.h"
+#include "ijn1.h"
 
 using namespace std;
 
@@ -83,22 +83,26 @@ int main(int argc, char* argv[]){
 
   try{
     double eps=.1;
-    ijcc ij(gr, SIGy,L,p,pc,eps);
-    ij.addCost();
-    rgrid * rjcc = ij.solveModel(&is);
-    ij.lineLimitStatus(false);
-    rgrid * rjcc2 = ij.solveModel(&is);
+    double epsN=.15;
+    ijcc n1(gr, SIGy,L,p,pc,eps);
+    n1.addCost();
+    rgrid * rn1_1 = n1.solveModel(&is);
+    n1.lineLimitStatus(false);
+    rgrid * rn1_2 = n1.solveModel(&is);
 
     vec f0=gc.convert(rbase->getF());
-    vec f1=gc.convert(rjcc->getF());
-    vec f2=gc.convert(rjcc2->getF());
-    f0.t().print("01: ");
+    vec f1=gc.convert(rn1_1->getF());
+    vec f2=gc.convert(rn1_2->getF());
+    vec g0=gc.convert(rbase->getG());
+    vec g1=gc.convert(rn1_1->getG());
+    vec g2=gc.convert(rn1_2->getG());
+    f0.t().print("f0: ");
     f1.t().print("f1: ");
-    vec z1=gc.risk(f1,SIGy.diag(),L,p,pc);
-    double r1 = sum(z1);
+    f2.t().print("f2: ");
     vec z0=gc.risk(f0,SIGy.diag(),L,p,pc);
     double r0 = sum(z0);
-    f2.t().print("f2: ");
+    vec z1=gc.risk(f1,SIGy.diag(),L,p,pc);
+    double r1 = sum(z1);
     vec z2=gc.risk(f2,SIGy.diag(),L,p,pc);
     double r2 = sum(z2);
     z0.t().print("z0: ");
@@ -106,16 +110,9 @@ int main(int argc, char* argv[]){
     z2.t().print("z2: ");
     cout<<r0<<" - "<<r1<<" - "<<r2<<endl;
     double o0=rbase->getObjective();
-    double o1=rjcc->getObjective();
-    double o2=rjcc2->getObjective();
+    double o1=rn1_1->getObjective();
+    double o2=rn1_2->getObjective();
     cout<<o0<<" - "<<o1<<" - "<<o2<<endl;
-
-    vec g0=gc.convert(rbase->getG());
-    for(int i=0;i<Nl;i++){
-      vec fn = gc.getN1(i,f0,g0,Hw);
-      //      cout<<"-"<<i<<"-"<<endl;
-      //      fn.t().print("f: ");
-    }
 
   }
   catch(IloException& e){

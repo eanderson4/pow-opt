@@ -3,7 +3,7 @@
 rgrid *  in1::solveModel( isolve * is){
 
   rgrid * rg = new rgrid();
-  /*  
+
   time_t tstart;
   tstart = clock();
     
@@ -16,10 +16,26 @@ rgrid *  in1::solveModel( isolve * is){
   if(is!=NULL) is->setCplexParams(&cplex);
   int n=0;
 
+  gridcalc gc(getGrid());
+  ranvar rv;
+
+
+
+
+
+  /*
+    vec g0=gc.convert(rbase->getG());
+    for(int i=0;i<Nl;i++){
+      vec fn = gc.getN1(i,f0,g0,Hw);
+      //      cout<<"-"<<i<<"-"<<endl;
+      //      fn.t().print("f: ");
+    }
+  */
+
+  /*  
+
   if (cplex.solve()){
     bool risk=false;
-    gridcalc gc(getGrid());
-    ranvar rv;
     while(!risk){
       n++; if (n>100) throw itlimit;
       cout<<"Checking Risk Constraint"<<endl;
@@ -96,7 +112,7 @@ rgrid *  in1::solveModel( isolve * is){
 
 
 void in1::setup(){
-  cout<<"Setup N-1 joint chance constraint"<<endl;
+  cout<<"Setup N-1 standard formulation"<<endl;
   stringstream ss;
 
   /*  IloEnv env = getEnv();

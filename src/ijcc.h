@@ -14,6 +14,10 @@ class ijcc : public igrid {
   void setup();
   rgrid * solveModel( isolve * is=NULL);
   void lineLimitStatus(bool status);
+  double getEps(){ return _eps; }
+  double getL(){ return _L; }
+  double getP(){ return _p; }
+  double getPc(){ return _pc; }
 
   //Risk functions
   

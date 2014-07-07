@@ -13,6 +13,17 @@ double ranvar::g(double fnormalized, double L, double p, double pc){
 
   return prob;
 }
+double ranvar::ginv(double eps, double L, double p, double pc){
+  double LARGE=pow(10,4);
+  double Uc=L + pc*(1-L)/p;
+  double a=-p*L/(1-L);
+  double b=p/(1-L);
+
+  if(eps>pc) return LARGE;
+  else if (eps==pc) return Uc;
+  else if (eps>0 && eps <pc) return (eps-a)/b;
+  else return 0;
+}
 
 double ranvar::simProb(double L, double p, double pc){
   double totalProb=0;

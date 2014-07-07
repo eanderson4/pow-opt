@@ -97,8 +97,14 @@ rgrid *  ijcc::solveModel( isolve * is){
 void ijcc::lineLimitStatus(bool status){
   int Nl = getGrid()->numBranches();
   
+  ranvar rv;
+  double Ueps = rv.ginv(_eps,_L,_p,_pc);
+
   for(int i=0;i<Nl;i++){
-    if(!status)    getF()[i].setBounds(-IloInfinity,IloInfinity);
+    double U = getGrid()->getBranch(i).getRateA();
+    if(!status){
+      getF()[i].setBounds(-U*Ueps,U*Ueps);
+    }
     else{
       double U = getGrid()->getBranch(i).getRateA();
       getF()[i].setBounds(-U,U);
