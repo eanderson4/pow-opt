@@ -4,17 +4,17 @@ rgrid *  in1::solveModel( isolve * is){
 
   rgrid * rg = new rgrid();
 
-  time_t tstart;
-  tstart = clock();
+  //  time_t tstart;
+  //  tstart = clock();
     
-  int Nl = getGrid()->numBranches();
+  //  int Nl = getGrid()->numBranches();
   //define tolerance for line risk > 0
-  double tol = pow(10,-6);
+  //  double tol = pow(10,-6);
   
   IloCplex cplex(*getModel());
   
   if(is!=NULL) is->setCplexParams(&cplex);
-  int n=0;
+  //  int n=0;
 
   gridcalc gc(getGrid());
   ranvar rv;

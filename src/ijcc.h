@@ -14,12 +14,14 @@ class ijcc : public igrid {
   void setup();
   rgrid * solveModel( isolve * is=NULL);
   void lineLimitStatus(bool status);
-  bool postCC(vec f);
-  double getSig(){ return _SIGy; }
+  bool postCC(vec f, vec z,IloCplex * cplex);
+  mat getSig(){ return _SIGy; }
   double getEps(){ return _eps; }
   double getL(){ return _L; }
   double getP(){ return _p; }
   double getPc(){ return _pc; }
+  IloNumVarArray getZ(){ return _z; }
+  IloNumVarArray getFplus(){ return _fplus; }
 
   //Risk functions
   
