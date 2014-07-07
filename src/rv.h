@@ -18,7 +18,7 @@ class ranvar
 
  public:
  ranvar(int seed=-372):_seed(seed) { 
-    _tol=pow(10,-5);
+    _tol=pow(10,-7);
     if(seed==-372) seed=time(NULL); 
   }
   ~ranvar() {}

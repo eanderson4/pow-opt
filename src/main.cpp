@@ -109,7 +109,8 @@ int main(int argc, char* argv[]){
     z0.t().print("z0: ");
     z1.t().print("z1: ");
     z2.t().print("z2: ");
-    cout<<r0<<" - "<<r1<<" - "<<r2<<endl;
+    cout.precision(4);
+    cout<<fixed<<r0<<" - "<<r1<<" - "<<r2<<endl;
     double o0=rbase->getObjective();
     double o1=rn1_1->getObjective();
     double o2=rn1_2->getObjective();

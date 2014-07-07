@@ -66,7 +66,7 @@ rgrid *  ijcc::solveModel( isolve * is){
 
 bool ijcc::postCC(vec f, vec z,IloCplex * cplex){
   //define tolerance for line risk > 0
-  double tol = pow(10,-6);
+  double tol = pow(10,-5);
   int Nl = getGrid()->numBranches();
   double account=0;
   
@@ -80,8 +80,8 @@ bool ijcc::postCC(vec f, vec z,IloCplex * cplex){
       if (z(i)>0){
 	account += z(i);
 	//Add cuts for each line with positive risk
-	cout<<i<<": "<<z(i)<<endl;
 	double y_i = abs(f(i));
+	cout<<"z_"<<i<<": "<<z(i)<<", y_"<<i<<": "<<y_i<<endl;
 	double U=getGrid()->getBranch(i).getRateA();
 	double dz=rv.deriveMu(_L,_p,_pc,abs(f(i))/U,sqrt(_SIGy(i,i))/U);
 	//	cout<<dz<<" "<<dz/U<<endl;

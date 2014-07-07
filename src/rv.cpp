@@ -50,34 +50,12 @@ double ranvar::simProb(double L, double p, double pc){
 }
 
 double ranvar::deriveMu(double L, double p, double pc, double mean, double stdv){
-  double Uc=L + pc*(1-L)/p;
-  double a=-p*L/(1-L);
   double b=p/(1-L);
-
   double mu = mean;
   double sigma = stdv;
-
   double alpha_low=(L - mu)/sigma;
-  double alpha_high=(Uc - mu)/sigma;
-
-  double beta=PHI(alpha_high) - PHI(alpha_low);
-  double delta=phi(alpha_low)-phi(alpha_high);
-  double tau=alpha_low*phi(alpha_low)-alpha_high*phi(alpha_high);
-  
-
-
-  double one=a*delta/sigma;
-  double two = b*mu*delta/sigma + b*beta + b*tau;
-  double three=phi(alpha_high)/sigma;
-
-  double deriveC=one+two+three;
-  
-  //Ignoring right side truncation
-  deriveC = a*phi(alpha_low)/sigma +b + b*mu*phi(alpha_low)/sigma - b*PHI(alpha_low) + b*alpha_low*phi(alpha_low);
-
   double derive=b*(1-PHI(alpha_low));
 
-  //  if (abs(deriveC - derive) >= _tol) throw analerr;
 
   return derive;
 
@@ -157,29 +135,10 @@ double ranvar::dSigmaMu(double L, double p, double pc, double mean, double stdv)
 
 
 double ranvar::deriveSigma(double L, double p, double pc, double mean, double stdv){
-  double Uc=L + pc*(1-L)/p;
-  double a=-p*L/(1-L);
   double b=p/(1-L);
-
   double mu = mean;
   double sigma = stdv;
-
   double alpha_low=(L - mu)/sigma;
-  double alpha_high=(Uc - mu)/sigma;
-
-  double beta=PHI(alpha_high) - PHI(alpha_low);
-  double delta=phi(alpha_low)-phi(alpha_high);
-  double xi=mu + sigma*delta/beta;
-  double tau=alpha_low*phi(alpha_low)-alpha_high*phi(alpha_high);
-  double rho=alpha_low*alpha_low*phi(alpha_low) - alpha_high*alpha_high*phi(alpha_high);
-  
-  double one=a*tau/sigma;
-  double two = b*xi*tau/sigma + b*delta+b*rho-b*delta*tau/beta;
-  double three=alpha_high*phi(alpha_high)/sigma;
-
-  double deriveC=one+two+three;
-
-  deriveC=a*alpha_low*phi(alpha_low)/sigma + b*mu*alpha_low*phi(alpha_low)/sigma + b*alpha_low*alpha_low*phi(alpha_low) +  b*phi(alpha_low);
 
   double derive=b*phi(alpha_low);
 
