@@ -35,7 +35,7 @@ int main(int argc, char* argv[]){
 
     //    return 0;
 
-  double multi=.75;
+  double multi=.8;
   int Nl = gr->numBranches();
   for(int i=0;i<Nl;i++){
     branch bi = gr->getBranch(i);
@@ -82,40 +82,32 @@ int main(int argc, char* argv[]){
   rbase->displayOperatingPos(gr);
 
   try{
-    double eps=.1;
-    double epsN=.15;
+    double eps=.035;
+    double epsN=.175;
     ijn1 n1(gr, SIGy,Hw,L,p,pc,eps,epsN);
     //ijcc n1(gr,SIGy,L,p,pc,eps);
     n1.addCost();
     rgrid * rn1_1 = n1.solveModel(&is);
-    n1.lineLimitStatus(true);
-    rgrid * rn1_2 = n1.solveModel(&is);
 
     vec f0=gc.convert(rbase->getF());
     vec f1=gc.convert(rn1_1->getF());
-    vec f2=gc.convert(rn1_2->getF());
     vec g0=gc.convert(rbase->getG());
     vec g1=gc.convert(rn1_1->getG());
-    vec g2=gc.convert(rn1_2->getG());
     f0.t().print("f0: ");
     f1.t().print("f1: ");
-    f2.t().print("f2: ");
     vec z0=gc.risk(f0,SIGy.diag(),L,p,pc);
     double r0 = sum(z0);
     vec z1=gc.risk(f1,SIGy.diag(),L,p,pc);
     double r1 = sum(z1);
-    vec z2=gc.risk(f2,SIGy.diag(),L,p,pc);
-    double r2 = sum(z2);
     z0.t().print("z0: ");
     z1.t().print("z1: ");
-    z2.t().print("z2: ");
     cout.precision(4);
-    cout<<fixed<<r0<<" - "<<r1<<" - "<<r2<<endl;
+    cout<<fixed<<r0<<" - "<<r1<<endl;
     double o0=rbase->getObjective();
     double o1=rn1_1->getObjective();
-    double o2=rn1_2->getObjective();
-    cout<<o0<<" - "<<o1<<" - "<<o2<<endl;
-
+    cout<<o0<<" - "<<o1<<endl;
+    //    gc.getL(Hw).col(35).print("L: ");
+    //    cout<<f0(35)<<endl;
   }
   catch(IloException& e){
     cerr<<"Concert exception: "<<e<<endl; 

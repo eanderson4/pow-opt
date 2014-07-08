@@ -59,16 +59,8 @@ rgrid *  ijn1::solveModel( isolve * is){
     double genCost = getIcost().getCost(getGrid(),rg->getG());
     rg->setGenCost(genCost);
     
-
-    IloNumArray zout(getEnv(),Nl);
-    IloNumArray fout(getEnv(),Nl);
-    cplex.getValues(zout,getZ());
-    cplex.getValues(fout,getFplus());
-    cout<<"\n\nRisk constraint satisfied\n\n"<<endl;
     cout<<"Iterations: "<<n<<endl;
     cout<<"Time: "<<total<<endl;
-    cout<<"f: "<<fout<<endl;
-    cout<<"z: "<<zout<<endl;
     
   }
 
@@ -103,7 +95,12 @@ void ijn1::setup(){
   
   for(int n=0;n<Nl;n++){  //Line i outage
     for(int j=0;j<Nl;j++){
-      _var(n,j)=Sig(j,j) + 2*_L(j,n)*Sig(n,j) + pow(_L(j,n),2)*Sig(n,n);
+      if(_Hb(n,n)<=1-.000001 || _Hb(n,n)>=1+.0000001){
+	_var(n,j)=Sig(j,j) + 2*_L(j,n)*Sig(n,j) + pow(_L(j,n),2)*Sig(n,n);
+      }
+      else{
+	_var(n,j)=Sig(j,j) + 2*_Hb(j,n)*Sig(n,j) + pow(_Hb(j,n),2)*Sig(n,n);
+      }
     }
   }
   cout<<"there";
@@ -139,7 +136,7 @@ bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex){
   //define tolerance for line risk > 0
   stringstream ss;
   grid * gr = getGrid();
-  double tol = pow(10,-6);
+  double tol = pow(10,-5);
   ranvar rv;
   int Nl = getGrid()->numBranches();
 
@@ -150,7 +147,7 @@ bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex){
   //Calculate system risk
   double r = sum(z);
   cout<<"Risk: "<<r<<endl;
-  if(r<=_epsN) return false;  // SYSTEM SUCCEEDED
+  if(r<=_epsN+tol) return false;  // SYSTEM SUCCEEDED
   else{
     cout<<"CUTTING ----------"<<endl;
     for(int i=0; i<Nl; i++){
@@ -160,6 +157,10 @@ bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex){
 	  _ydown[n][i].setExpr( _yplus[n][i] + (getF()[i] + _L(i,n)*getF()[n]) );
 	}
 	else{
+	  if(n==12){
+	     f.t().print("f: ");
+	     z.t().print("z: ");
+	  }
 	  branch br = gr->getBranch(n);
 	  int from = gr->getBusNum(br.getFrom());
 	  int to = gr->getBusNum(br.getTo());
@@ -177,14 +178,15 @@ bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex){
 	  else	    throw nowin;
 	  bus b = getGrid()->getBus(winner);
 	  double load = b.getP()+b.getGs();
-	  double total=load;
+	  _yup[n][i].setExpr( _yplus[n][i] - (getF()[i] + _Hw(i,winner)*load) );
+	  _ydown[n][i].setExpr( _yplus[n][i] + (getF()[i] + _Hw(i,winner)*load) );
+
 	  if(sum(_Cg.row(winner))>=1){
 	    for(int j=0; j<(int)_Cg.row(winner).n_elem;j++){
-	      total = total - _Cg(winner,j)*g(j);
+	      _yup[n][i].setExpr( _yup[n][i].getExpr() + _Cg(winner,j)*getG()[j]);
+	      _ydown[n][i].setExpr( _yup[n][i].getExpr() - _Cg(winner,j)*getG()[j]);
 	    }
 	  }
-	  _yup[n][i].setExpr( _yplus[n][i] - (getF()[i] + _Hw(i,winner)*(total)) );
-	  _ydown[n][i].setExpr( _yplus[n][i] + (getF()[i] + _Hw(i,winner)*(total)) );
 	}
 	double U=getGrid()->getBranch(i).getRateA();
 	double Ueps = rv.ginv(_epsN,getL(),getP(),getPc());
