@@ -41,7 +41,8 @@ rgrid *  ijn1::solveModel( isolve * is){
 	systemfail += postN1(i,fn,g0,zn,&cplex);
       }
       
-      if(systemfail) cplex.solve();
+      if(!systemfail) break;
+      if(!cplex.solve()) break;
 
     }
 
