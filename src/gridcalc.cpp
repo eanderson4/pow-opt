@@ -137,7 +137,9 @@ vec gridcalc::risk(vec f,vec varf,double L, double p, double pc){
   ranvar rv;
   for(int i=0;i<N;i++){
     double U = _gr->getBranch(i).getRateA();
-    z(i)=rv.anaProb(L,p,pc,abs(f(i))/U,sqrt(varf(i))/U);
+    if(varf(i)<=0)    z(i)=rv.anaProb(L,p,pc,abs(f(i))/U,0);
+    else    z(i)=rv.anaProb(L,p,pc,abs(f(i))/U,sqrt(varf(i))/U);
+    
   }
 
   return z;

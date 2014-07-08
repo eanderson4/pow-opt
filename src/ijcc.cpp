@@ -69,13 +69,16 @@ bool ijcc::postCC(vec f, vec z,IloCplex * cplex){
   double tol = pow(10,-5);
   int Nl = getGrid()->numBranches();
   double account=0;
+
+	  IloNumArray fp(getEnv(),Nl);
+	  cplex->getValues(fp,getFplus());
   
   ranvar rv;
   double r = sum(z);
   cout<<"Risk: "<<r<<endl;
   if(r<=_eps+tol) return false;
   else{
-    cout<<"Add cuts"<<endl;
+    cout<<"CUTTING ----------"<<endl;
     for(int i=0; i<Nl; i++){
       if (z(i)>0){
 	account += z(i);
@@ -91,6 +94,14 @@ bool ijcc::postCC(vec f, vec z,IloCplex * cplex){
 	cut.setExpr( dz/U*(_fplus[i] - y_i) + z(i) - _z[i]);
 	cout<<cut<<endl;
 	getModel()->add(cut);
+	
+	if(z(i)==1){
+	  f.t().print("f: ");
+	  cout<<"fplus: "<<fp<<endl;
+	  cout<<"f: "<<getF()<<endl;
+	  throw;
+	}
+	
       }
     }
     cout<<"Accounted: "<<account<<endl;
@@ -123,6 +134,8 @@ void ijcc::setup(){
   cout<<"Setup joint chance constraint"<<endl;
   stringstream ss;
 
+  ranvar rv;
+  double Ueps = rv.ginv(_eps,_L,_p,_pc);
   IloEnv env = getEnv();
   int Nl = getGrid()->numBranches();
   _z = IloNumVarArray(env,Nl,0,IloInfinity);
@@ -134,19 +147,21 @@ void ijcc::setup(){
   for(int i=0;i<Nl;i++){
     _fup[i].setExpr( _fplus[i] - getF()[i] );
     _fdown[i].setExpr( _fplus[i] + getF()[i] );
-
-      ss.str("");
-      ss<<"fplus"<<i<<"[0,inf]";
-      _fplus[i].setName( ss.str().c_str() );
-      ss.str("");
-      ss<<"z"<<i<<"[0,inf]";
-      _z[i].setName( ss.str().c_str() );
-      ss.str("");
-      ss<<"fup"<<i;
-      _fup[i].setName( ss.str().c_str() );
-      ss.str("");
-      ss<<"fdown"<<i;
-      _fdown[i].setName( ss.str().c_str() );
+    double U = getGrid()->getBranch(i).getRateA();
+    getF()[i].setBounds(-U*Ueps,U*Ueps);
+    _fplus[i].setBounds(0,U*Ueps);
+    ss.str("");
+    ss<<"fplus"<<i<<"[0,"<<U*Ueps<<"]";
+    _fplus[i].setName( ss.str().c_str() );
+    ss.str("");
+    ss<<"z"<<i<<"[0,"<<U*Ueps<<"]";
+    _z[i].setName( ss.str().c_str() );
+    ss.str("");
+    ss<<"fup"<<i;
+    _fup[i].setName( ss.str().c_str() );
+    ss.str("");
+    ss<<"fdown"<<i;
+    _fdown[i].setName( ss.str().c_str() );
   }
 
   _riskConstraint = IloRange(env,0,_eps,"riskconstraint");
