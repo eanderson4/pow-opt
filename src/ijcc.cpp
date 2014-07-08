@@ -94,6 +94,7 @@ bool ijcc::postCC(vec f, vec z,IloCplex * cplex){
 	cut.setExpr( dz/U*(_fplus[i] - y_i) + z(i) - _z[i]);
 	cout<<cut<<endl;
 	getModel()->add(cut);
+	_addCut(i)=_addCut(i)+1;
 	
 	if(z(i)==1){
 	  f.t().print("f: ");
@@ -138,6 +139,7 @@ void ijcc::setup(){
   double Ueps = rv.ginv(_eps,_L,_p,_pc);
   IloEnv env = getEnv();
   int Nl = getGrid()->numBranches();
+  _addCut = vec(Nl,fill::zeros);
   _z = IloNumVarArray(env,Nl,0,IloInfinity);
   _fplus = IloNumVarArray(env,Nl,0,IloInfinity);
 

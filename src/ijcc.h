@@ -20,6 +20,8 @@ class ijcc : public igrid {
   double getL(){ return _L; }
   double getP(){ return _p; }
   double getPc(){ return _pc; }
+  double getNumBaseCuts(){ return sum(_addCut); }
+  double getBaseCutsLine(int i){ return _addCut(i); }
   IloNumVarArray getZ(){ return _z; }
   IloNumVarArray getFplus(){ return _fplus; }
 
@@ -39,6 +41,8 @@ class ijcc : public igrid {
   IloRange _riskConstraint;
   IloRangeArray _fup;
   IloRangeArray _fdown;
+
+  vec _addCut;
 
   mat _SIGy;
   double _L;

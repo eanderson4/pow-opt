@@ -15,6 +15,12 @@ rgrid *  ijn1::solveModel( isolve * is){
   if(is!=NULL) is->setCplexParams(&cplex);
   int n=0;
 
+  cerr<<"n";
+  for(int i=0;i<Nl;i++){
+    cerr<<"\tln"<<i+1;
+  }
+  cerr<<"\n";
+
   if (cplex.solve()){
     bool systemfail=true;
     while(systemfail){
@@ -41,6 +47,12 @@ rgrid *  ijn1::solveModel( isolve * is){
 	systemfail += postN1(i,fn,g0,zn,&cplex);
       }
       
+      cerr<<n;
+      for(int i=0;i<Nl;i++){
+	cerr<<"\t"<<getCutsLine(i) + getBaseCutsLine(i);
+      }
+      cerr<<"\n";
+
       if(!systemfail) break;
       if(!cplex.solve()) break;
 
@@ -60,8 +72,9 @@ rgrid *  ijn1::solveModel( isolve * is){
     rg->setGenCost(genCost);
     
     cout<<"Iterations: "<<n<<endl;
+    cout<<"Cuts: "<<getTotalCuts()<<endl;
     cout<<"Time: "<<total<<endl;
-    
+        
   }
 
   else{
@@ -83,6 +96,7 @@ void ijn1::setup(){
   int Nl = getGrid()->numBranches();
   gridcalc gc(getGrid());
   ranvar rv;
+  _addCut = mat(Nl,Nl,fill::zeros);
 
   _C = gc.getC();
   _Cg = gc.getCm();
@@ -209,6 +223,7 @@ bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex){
 	cut.setExpr( dz*(_yplus[n][i] - y_i)/U + z(i) - _z[n][i]);
 	cout<<cut<<endl;
 	getModel()->add(cut);
+	_addCut(n,i)=_addCut(n,i)+1;
 	if(z(i)>.5) {
 	  f.t().print("f: ");
 	  z.t().print("z: ");	  
@@ -268,4 +283,15 @@ vec ijn1::getN1(int n, vec y0, vec g){
   
   return yn;
 
+}
+
+
+double ijn1::getTotalCuts(){
+  double total=0;
+  int Nl = getGrid()->numBranches();
+  total += getNumBaseCuts();
+  for(int i=0;i<Nl;i++){
+    total += getNumCuts(i);
+  }
+  return total;
 }

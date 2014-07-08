@@ -15,7 +15,10 @@ class ijn1 : public ijcc {
   rgrid * solveModel( isolve * is=NULL);
   bool postN1(int n,vec f, vec g,vec z, IloCplex * cplex);
   vec getN1(int n, vec y0, vec g);
-  
+  double getNumCuts(int n){ return sum(_addCut.row(n)); }
+  double getCutsLine(int i){ return sum(_addCut.col(i)); }
+  double getTotalCuts();
+
   class nowinner: public exception 
   {
     virtual const char* what() const throw()
@@ -31,6 +34,8 @@ class ijn1 : public ijcc {
   vector<IloRangeArray> _yup;
   vector<IloRangeArray> _ydown;
   IloRangeArray _riskConstraint;
+  
+  mat _addCut;
 
   mat _Hw;
   mat _L;

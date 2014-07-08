@@ -27,11 +27,11 @@ int main(int argc, char* argv[]){
 
   cout<<*gr<<endl;
   
-  grid gr2 = *gr;
+  //  grid gr2 = *gr;
 
-    test t(&gr2);
-    t.run();
-    cout<<"\n\n\n"<<endl;
+  //    test t(&gr2);
+  //    t.run();
+  //    cout<<"\n\n\n"<<endl;
 
     //    return 0;
 
@@ -106,6 +106,8 @@ int main(int argc, char* argv[]){
     double o0=rbase->getObjective();
     double o1=rn1_1->getObjective();
     cout<<o0<<" - "<<o1<<endl;
+    cout<<"gen0: "<<rbase->getG()<<endl;
+    cout<<"gen1: "<<rn1_1->getG()<<endl;
     //    gc.getL(Hw).col(35).print("L: ");
     //    cout<<f0(35)<<endl;
   }
