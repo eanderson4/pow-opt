@@ -14,7 +14,7 @@ class ijcc : public igrid {
   void setup();
   rgrid * solveModel( isolve * is=NULL);
   void lineLimitStatus(bool status);
-  bool postCC(vec f, vec z,IloCplex * cplex);
+  bool postCC(vec f, vec z,IloCplex * cplex, int iteration=0);
   mat getSig(){ return _SIGy; }
   double getEps(){ return _eps; }
   double getL(){ return _L; }

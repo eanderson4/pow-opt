@@ -64,7 +64,7 @@ rgrid *  ijcc::solveModel( isolve * is){
   return rg;
 }      
 
-bool ijcc::postCC(vec f, vec z,IloCplex * cplex){
+bool ijcc::postCC(vec f, vec z,IloCplex * cplex, int iteration){
   //define tolerance for line risk > 0
   double tol = pow(10,-5);
   int Nl = getGrid()->numBranches();
@@ -96,6 +96,14 @@ bool ijcc::postCC(vec f, vec z,IloCplex * cplex){
 	getModel()->add(cut);
 	_addCut(i)=_addCut(i)+1;
 	
+	if(i==28){
+	  double a=z(i)-dz*y_i/U;
+	  double b=dz/U;
+	  double u=1/U;
+	  double v=b;
+	  cerr<<iteration<<"\t"<<y_i/U<<"\t"<<z(i)<<"\t"<<z(i)-dz*y_i/U<<"\t"<<dz/U<<"\t"<<u<<"\t"<<v<<endl;
+	}
+
 	if(z(i)==1){
 	  f.t().print("f: ");
 	  cout<<"fplus: "<<fp<<endl;

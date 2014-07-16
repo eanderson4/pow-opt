@@ -13,7 +13,7 @@ class ijn1 : public ijcc {
  ijn1(grid * gr,mat SIGy, mat Hw, double L, double p, double pc, double eps, double epsN): ijcc(gr,SIGy,L,p,pc,eps), _Hw(Hw),_epsN(epsN) { setup(); }
   void setup();
   rgrid * solveModel( isolve * is=NULL);
-  bool postN1(int n,vec f, vec g,vec z, IloCplex * cplex);
+  bool postN1(int n,vec f, vec g,vec z, IloCplex * cplex, int iteration=0);
   vec getN1(int n, vec y0, vec g);
   double getNumCuts(int n){ return sum(_addCut.row(n)); }
   double getCutsLine(int i){ return sum(_addCut.col(i)); }

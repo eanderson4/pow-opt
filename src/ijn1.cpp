@@ -15,11 +15,7 @@ rgrid *  ijn1::solveModel( isolve * is){
   if(is!=NULL) is->setCplexParams(&cplex);
   int n=0;
 
-  cerr<<"n";
-  for(int i=0;i<Nl;i++){
-    cerr<<"\tln"<<i+1;
-  }
-  cerr<<"\n";
+  cerr<<"n\tyn\tzn\tan\tbn\tun\tvn\n";
 
   if (cplex.solve()){
     bool systemfail=true;
@@ -37,22 +33,16 @@ rgrid *  ijn1::solveModel( isolve * is){
       vec g0=gc.convert(gsolve);
       
       cout<<"Base system"<<endl;
-      systemfail = postCC(f0,z0,&cplex);
+      systemfail = postCC(f0,z0,&cplex,n);
 
       for(int i=0;i<Nl;i++){
 	cout<<"Contingency: "<<i<<endl;
 	vec fn = getN1(i,f0,g0);
 	vec zn=gc.risk(fn,_var.row(i).t(),getL(),getP(),getPc());
 	cout<<"Post eval"<<endl;
-	systemfail += postN1(i,fn,g0,zn,&cplex);
+	systemfail += postN1(i,fn,g0,zn,&cplex,n);
       }
       
-      cerr<<n;
-      for(int i=0;i<Nl;i++){
-	cerr<<"\t"<<getCutsLine(i) + getBaseCutsLine(i);
-      }
-      cerr<<"\n";
-
       if(!systemfail) break;
       if(!cplex.solve()) break;
 
@@ -146,7 +136,7 @@ void ijn1::setup(){
 }
 
 
-bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex){
+bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex, int iteration){
   //define tolerance for line risk > 0
   stringstream ss;
   grid * gr = getGrid();
@@ -224,6 +214,15 @@ bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex){
 	cout<<cut<<endl;
 	getModel()->add(cut);
 	_addCut(n,i)=_addCut(n,i)+1;
+
+	if(i==28)
+{	  double a=z(i)-dz*y_i/U;
+	  double b=dz/U;
+	  double u=1/U;
+	  double v=b;
+	  cerr<<iteration<<"\t"<<y_i/U<<"\t"<<z(i)<<"\t"<<z(i)-dz*y_i/U<<"\t"<<dz/U<<"\t"<<u<<"\t"<<v<<endl;
+	}
+
 	if(z(i)>.5) {
 	  f.t().print("f: ");
 	  z.t().print("z: ");	  
