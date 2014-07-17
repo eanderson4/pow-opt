@@ -10,13 +10,13 @@ void test::run(){
   cout<<*_gr<<endl;
  
   try {
-    //    RV(etol);
-    //    PTDF(etol);
-    //    RSLACK(etol);
-        LODF(etol);
-    //   RANDOM( .1 );
-    //    HESSIAN( etol*100 );
-    //COVAR( etol*100 );
+        RV(etol);
+	PTDF(etol);
+	//        RSLACK(etol);
+	//        LODF(etol);
+	//   RANDOM( .1 );
+	//        HESSIAN( etol*100 );
+	//    COVAR( etol*100 );
   }  
   catch (IloException& e){
     cerr<<"Concert exception caught: "<<e<<endl; fail=true;
@@ -571,7 +571,7 @@ void test::PTDF(double etol){
   vec delg(Nb,fill::zeros);
   vec slackdist(Nb,fill::zeros);
   delg(4)=5; delg(6)=7;
-  slackdist(1)=1;
+  slackdist(84)=1;
 
   vec del_f = gc.getDelF(delg,slackdist);
   
@@ -584,8 +584,14 @@ void test::PTDF(double etol){
   rgrid * rg;
   rgrid * rg2;
 
+  double gen_b;
+  double gen_a;
+
+
+
   rg = ig.solveModel();
   IloNumArray g_nom=rg->getG();
+  gen_b=IloSum(g_nom);
   cout<<"Before"<<endl;
   cout<<"F: "<<rg->getF()<<endl;
   cout<<"G: "<<g_nom<<endl;
@@ -594,23 +600,30 @@ void test::PTDF(double etol){
     
   IloNumArray slack(IloEnv(),Nb);
   for(int i=0;i<Nb;i++) slack[i]=0;
-  slack[1]=1;
+  slack[5]=1;
+
 
   ig.addSlack(g_nom,slack);
 
   rg2 = ig.solveModel();
+  rg2->outputInfo(cerr);
   cout<<"After"<<endl;
   cout<<"F: "<<rg2->getF()<<endl;
   cout<<"G: "<<rg2->getG()<<endl;
 
   cout<<"Total Demand: "<<gr->getTotalDemand()<<endl;
   cout<<"Total Gen: "<<IloSum(rg2->getG())<<endl;
+  gen_a=IloSum(rg2->getG());
   
   cout<<"delF (sim): "<<endl;
   for(int i=0;i<gr->numBranches();i++)
     cout<<" "<<(rg->getF()[i] - rg2->getF()[i])<<"   ";
 
   cout<<"\ndelF (sim) - delF (shift factor)"<<endl;
+
+  cout<<"\ngen (before) - gen (after) = error"<<endl;
+  cout<<gen_b<<" - "<<gen_a<<" = "<<gen_b-gen_a<<endl;
+
   double totalerror=0;
   for(int i=0;i<gr->numBranches();i++){
     cout<<" "<<(rg->getF()[i] - rg2->getF()[i] - del_f(i))<<"   ";

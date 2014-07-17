@@ -27,13 +27,13 @@ int main(int argc, char* argv[]){
 
   cout<<*gr<<endl;
   
-  //  grid gr2 = *gr;
+    grid gr2 = *gr;
 
-  //    test t(&gr2);
-  //    t.run();
-  //    cout<<"\n\n\n"<<endl;
-
-    //    return 0;
+    test t(&gr2);
+    t.run();
+    cout<<"\n\n\n"<<endl;
+    
+    return 0;
 
   double multi=.8;
   int Nl = gr->numBranches();
