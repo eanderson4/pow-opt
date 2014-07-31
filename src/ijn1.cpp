@@ -262,6 +262,9 @@ vec ijn1::getN1(int n, vec y0, vec g){
       winner=to;
     }
     else {
+      _C.col(from).t().print("from: ");
+      _C.col(to).t().print("to: ");
+      _L.col(n).t().print("L: ");
       throw nowin;
     }
     

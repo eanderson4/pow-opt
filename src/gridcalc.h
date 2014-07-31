@@ -31,6 +31,8 @@ class gridcalc
   mat getH(){ return _H; };  //Linear Shift Factor
   mat getHw(vec slack);      //with arbitray slack distribution
   mat getL(mat Hw);          //Line outage distribution factor
+  vec getSlack(){ return _slack; }
+  //  vec getSlackDist(){ return getCm()*_slack; }
   vec convert(IloNumArray na);
   vec risk(vec f,vec varf, double L, double p, double pc);
   vec dz(double f,double varf, double L, double p, double pc);
@@ -49,6 +51,7 @@ class gridcalc
 
   mat _H;
   mat _C;
+  vec _slack;
 
 };
 

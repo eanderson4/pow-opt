@@ -3,6 +3,7 @@
 map<int, int> grid::map_busNum;
 
 
+
 double grid::getTotalDemand(){
   double d=0;
   for(int i=0;i<numBuses();i++){

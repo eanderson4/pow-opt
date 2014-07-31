@@ -35,11 +35,14 @@ class grid
   int numBranches(){    return _branches.size();  }
   int numGens(){ return _gens.size();  }
   int getBusNum(int num);
+  int getGenBus(int n){return getBusNum( _gens[n].getBus() ); }
+  int getFromBus(int n){ return getBusNum( _branches[n].getFrom() ); }
+  int getToBus(int n){ return getBusNum( _branches[n].getTo() ); }
   void buildMap();
   void printNums(ostream& stream);
   double getLoadShedPenalty(){ return loadShedPenalty; }
   double getTotalDemand();
-
+  
   friend ostream& operator<<(ostream& os, const grid& gr);
 
  private:

@@ -11,12 +11,12 @@ void test::run(){
  
   try {
         RV(etol);
-	PTDF(etol);
-	//        RSLACK(etol);
-	//        LODF(etol);
-	//   RANDOM( .1 );
-	//        HESSIAN( etol*100 );
-	//    COVAR( etol*100 );
+	RSLACK(etol);
+		PTDF(etol);
+	//LODF(etol);
+	//RANDOM( .1 );
+	// HESSIAN( etol*100 );
+	//COVAR( etol*100 );
   }  
   catch (IloException& e){
     cerr<<"Concert exception caught: "<<e<<endl; fail=true;
@@ -80,8 +80,7 @@ void test::COVAR(double etol){
   vec fbase = gc.convert(rbase->getF());
   
   //Set Slack
-  vec slack(Nb,fill::zeros);
-  slack[1]=1;
+  vec slack = gc.getSlack();
   mat Hw = gc.getHw(slack);
   mat Ln = gc.getL(Hw);
   //Analytic Branch Flow Statistics
@@ -267,7 +266,7 @@ void test::HESSIAN(double etol){
 void test::RANDOM(double etol){
   grid * gr=_gr;
   //Declare Parameters
-  int Nb = gr->numBuses();
+  int Ng = gr->numGens();
   int Nbr = gr->numBranches();
   int samples=5750;
   vector<ranvar> rv_bus;
@@ -303,11 +302,11 @@ void test::RANDOM(double etol){
   IloNumArray g_nom=rbase->getG();
 
   //Set Slack
-  IloNumArray slack(IloEnv(),Nb);
-  for(int i=0;i<Nb;i++){
-    slack[i]=0;
+  vec slackgen = gc.getSlack();
+  IloNumArray slack(IloEnv(),Ng);
+  for(int i=0;i<Ng;i++){
+    slack[i]=slackgen(i);
   }
-  slack[1]=1;
   ig.addSlack(g_nom,slack);
 
 
@@ -568,10 +567,15 @@ void test::PTDF(double etol){
   gridcalc gc(gr);
 
   int Nb=gr->numBuses();
+  int Ng=gr->numGens();
   vec delg(Nb,fill::zeros);
-  vec slackdist(Nb,fill::zeros);
   delg(4)=5; delg(6)=7;
-  slackdist(32)=1;
+
+  vec slackgens=gc.getSlack();
+
+  mat Cg = gc.getCm();
+
+  vec slackdist=Cg*slackgens;
 
   vec del_f = gc.getDelF(delg,slackdist);
   
@@ -595,12 +599,18 @@ void test::PTDF(double etol){
   cout<<"Before"<<endl;
   cout<<"F: "<<rg->getF()<<endl;
   cout<<"G: "<<g_nom<<endl;
+
+  //  for(int i=0;i < Nr; i++){
+    //    cout<<i<<": "<<gr->getFromBus(i)<<" -> "<<gr->getToBus(i)<<"\t"<<rg->getF()[i]<<endl;
+  //  }
   
   ig.modGrid(dg);
     
-  IloNumArray slack(IloEnv(),Nb);
-  for(int i=0;i<Nb;i++) slack[i]=0;
-  slack[32]=1;
+  IloNumArray slack(IloEnv(),Ng);
+  for(int i=0;i<Ng;i++) slack[i]=slackgens(i);
+
+  cout<<slack<<endl;
+  slackdist.print("slack: ");
 
 
   ig.addSlack(g_nom,slack);
@@ -637,8 +647,9 @@ void test::PTDF(double etol){
 
 void test::LODF(double etol){ 
   grid * gr = _gr;
-  int Nb=gr->numBuses();
+
   int Nl=gr->numBranches();
+  int Ng=gr->numGens();
 
   //Solve Base System
   gridcalc gc(gr);
@@ -652,11 +663,16 @@ void test::LODF(double etol){
   vec fbase= gc.convert(rbase->getF());
   
   //Set Slack
-  IloNumArray slack(IloEnv(),Nb);
-  for(int i=0;i<Nb;i++){
-    slack[i]=0;
+  vec slackgens=gc.getSlack();
+
+  mat Cg = gc.getCm();
+
+  vec slackdist=Cg*slackgens;
+
+  IloNumArray slack(IloEnv(),Ng);
+  for(int i=0;i<Ng;i++){
+    slack[i]=slackgens(i);
   }
-  slack[1]=1;
   ig.addSlack(g_nom,slack);
   mat Hw = gc.getHw(gc.convert(slack));
   Hw.print("Hw: ");

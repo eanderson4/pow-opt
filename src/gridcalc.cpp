@@ -16,11 +16,9 @@ gridcalc::gridcalc(grid * gr) {
   //  cout<<"Line: To bus - From bus  (indicies)"<<endl;
   for(int i =0; i<Nl; i++){
     branch br = gr->getBranch(i);
-    int from = br.getFrom();
-    int fn = gr->getBusNum(from);
-    int to = br.getTo();
-    int tn = gr->getBusNum(to);
-    
+    int fn = gr->getFromBus(i);
+    int tn = gr->getToBus(i);
+
     //    cout<<i<<": "<<from<<" - "<<to<<endl;;
 
     C(i,fn)=1;
@@ -55,7 +53,30 @@ gridcalc::gridcalc(grid * gr) {
   H.insert_cols(0,1);
   cout<<"H calculated using inverse of Bbus matrix"<<endl;
   _H=H;
+
+  int Ng = gr->numGens();
+  vec slackdist(Nb,1,fill::zeros);
+  
+  double total=0;
+  for(int i=0;i<Ng;i++){
+    int buscon=_gr->getGenBus(i);
+    int r;
+    if(i==1) r=1;
+    else r=0; 
+    slackdist(buscon,0)=r;
+    total=total+r;
+  }
+
+  if(total!=1){
+    for(int i=0;i<Ng;i++){
+      int buscon=_gr->getGenBus(i);
+      double normalized = slackdist(buscon)/total;
+      slackdist(buscon,0)=normalized;
+    } 
+  }
+  _slack=slackdist;
 }
+
 
 vec gridcalc::getDelG(del_g dg){
   int Nb=_gr->numBuses();

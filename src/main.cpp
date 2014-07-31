@@ -6,7 +6,6 @@
 
 using namespace std;
 
-
 int main(int argc, char* argv[]){
 
   if(argc<=1){
@@ -27,15 +26,8 @@ int main(int argc, char* argv[]){
 
   cout<<*gr<<endl;
   
-    grid gr2 = *gr;
 
-    test t(&gr2);
-    t.run();
-    cout<<"\n\n\n"<<endl;
-    
-    return 0;
-
-  double multi=.8;
+    double multi=.8;
   int Nl = gr->numBranches();
   for(int i=0;i<Nl;i++){
     branch bi = gr->getBranch(i);
@@ -58,10 +50,10 @@ int main(int argc, char* argv[]){
   SIG(0,2)=-14;SIG(2,0)=-14;
   SIG(0,3)=-9;SIG(3,0)=-9;
   SIG(2,3)=15;SIG(3,2)=15;
-  
-  vec slack(Nb,fill::zeros);
-  slack[1]=1;
-  gridcalc gc(gr);
+
+  gridcalc gc(gr);  
+  vec slack=gc.getSlack();
+
   mat Hw = gc.getHw(slack);
 
   mat SIGy(Nl,Nl,fill::zeros);
@@ -122,6 +114,7 @@ int main(int argc, char* argv[]){
   }
 
   return 0;
+
 
 
 }

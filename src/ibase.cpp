@@ -46,8 +46,8 @@ int ibase::buildModel(grid * gr ) {
 
     for(int k=0; k<nk; k++){
       branch bk = gr->getBranch(k);
-      int from=gr->getBusNum(bk.getFrom());
-      int to=gr->getBusNum(bk.getTo());
+      int from=gr->getFromBus(k);
+      int to=gr->getToBus(k);
       double x = bk.getX();
       double tap = bk.getTap();
       double b;
