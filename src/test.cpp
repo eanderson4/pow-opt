@@ -571,7 +571,7 @@ void test::PTDF(double etol){
   vec delg(Nb,fill::zeros);
   vec slackdist(Nb,fill::zeros);
   delg(4)=5; delg(6)=7;
-  slackdist(84)=1;
+  slackdist(32)=1;
 
   vec del_f = gc.getDelF(delg,slackdist);
   
@@ -600,7 +600,7 @@ void test::PTDF(double etol){
     
   IloNumArray slack(IloEnv(),Nb);
   for(int i=0;i<Nb;i++) slack[i]=0;
-  slack[5]=1;
+  slack[32]=1;
 
 
   ig.addSlack(g_nom,slack);
