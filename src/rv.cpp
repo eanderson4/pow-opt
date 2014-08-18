@@ -155,6 +155,13 @@ double ranvar::anaProb(double L, double p, double pc, double mean, double stdv){
 
   double mu = mean;
   double sigma = stdv;
+
+  if(sigma==0){
+    double tp=a+b*mu;
+    if(tp<0) tp=0;
+    return tp;
+  }
+
   double low = L;
   double high = Uc;
   

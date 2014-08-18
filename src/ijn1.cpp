@@ -41,6 +41,7 @@ rgrid *  ijn1::solveModel( isolve * is){
 	  cout<<"Contingency: "<<i<<endl;
 	  vec fn = getN1(i,f0,g0);
 	  vec zn=gc.risk(fn,_var.row(i).t(),getL(),getP(),getPc());
+	  if(!fn.is_finite()) fn.print("fn: ");
 	  cout<<"Post eval"<<endl;
 	  systemfail += postN1(i,fn,g0,zn,&cplex,n);
 	}
@@ -148,6 +149,7 @@ void ijn1::setup(){
 
 
 bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex, int iteration){
+  if(_check(n)!=1) return false;
   //define tolerance for line risk > 0
   stringstream ss;
   grid * gr = getGrid();
@@ -217,12 +219,12 @@ bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex, int iteration){
 
 	//Add cuts for each line with positive risk
 	double y_i = abs(f(i));
-	cout<<"z_"<<i<<": "<<z(i)<<", y_"<<i<<": "<<y_i<<endl;
+	//	cout<<"z_"<<i<<": "<<z(i)<<", y_"<<i<<": "<<y_i<<endl;
 	double dz=rv.deriveMu(getL(),getP(),getPc(),abs(f(i))/U,sqrt(getSig()(i,i))/U);
-	cout<<"z_"<<i<<" >= "<<dz/U<<" y_"<<i<<" + "<<(z(i)-dz*y_i/U)<<endl;
+	//	cout<<"z_"<<i<<" >= "<<dz/U<<" y_"<<i<<" + "<<(z(i)-dz*y_i/U)<<endl;
 	IloRange cut(getEnv(),-IloInfinity,0);
 	cut.setExpr( dz*(_yplus[n][i] - y_i)/U + z(i) - _z[n][i]);
-	cout<<cut<<endl;
+	//	cout<<cut<<endl;
 	getModel()->add(cut);
 	_addCut(n,i)=_addCut(n,i)+1;
 
@@ -231,7 +233,7 @@ bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex, int iteration){
 	  double b=dz/U;
 	  double u=1/U;
 	  double v=b;
-	  cerr<<iteration<<"\t"<<y_i/U<<"\t"<<z(i)<<"\t"<<z(i)-dz*y_i/U<<"\t"<<dz/U<<"\t"<<u<<"\t"<<v<<endl;
+	  //	  cerr<<iteration<<"\t"<<y_i/U<<"\t"<<z(i)<<"\t"<<z(i)-dz*y_i/U<<"\t"<<dz/U<<"\t"<<u<<"\t"<<v<<endl;
 	}
 
 	if(z(i)>.5) {
@@ -252,7 +254,7 @@ vec ijn1::getN1(int n, vec y0, vec g){
   vec yn;
 
   if(_Hb(n,n)<=1-.000001 || _Hb(n,n)>=1+.0000001){
-    cout<<"Line "<<n<<endl;
+    //    cout<<"Line "<<n<<endl;
     yn = y0[n]*_L.col(n)+y0;
   }
   else{

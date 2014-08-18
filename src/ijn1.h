@@ -15,6 +15,7 @@ class ijn1 : public ijcc {
   rgrid * solveModel( isolve * is=NULL);
   bool postN1(int n,vec f, vec g,vec z, IloCplex * cplex, int iteration=0);
   vec getN1(int n, vec y0, vec g);
+  vec getCheck(){ return _check; }
   double getNumCuts(int n){ return sum(_addCut.row(n)); }
   double getCutsLine(int i){ return sum(_addCut.col(i)); }
   double getTotalCuts();

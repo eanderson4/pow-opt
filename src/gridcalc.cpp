@@ -168,9 +168,12 @@ vec gridcalc::risk(vec f,vec varf,double L, double p, double pc){
   ranvar rv;
   for(int i=0;i<N;i++){
     double U = _gr->getBranch(i).getRateA();
-    if(varf(i)<=0)    z(i)=rv.anaProb(L,p,pc,abs(f(i))/U,0);
+    if(varf(i)<=0.0000001)    z(i)=rv.anaProb(L,p,pc,abs(f(i))/U,0);
     else    z(i)=rv.anaProb(L,p,pc,abs(f(i))/U,sqrt(varf(i))/U);
-    
+    if(isnan(float(z(i)))){
+      cout<<z(i)<<endl;
+      cout<<L<<"\t"<<p<<"\t"<<pc<<"\t"<<abs(f(i))/U<<"\t"<<sqrt(varf(i))/U<<endl;
+    }
   }
 
   return z;

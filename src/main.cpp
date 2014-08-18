@@ -63,8 +63,8 @@ int main(int argc, char* argv[]){
   //Set Probability info
   ranvar rv;
   double L=.9;
-  double p=.05;
-  double pc=.5;
+  double p=.01;
+  double pc=.55;
 
 
   igrid ig(gr);
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]){
 
   try{
     double eps=.05;
-    double epsN=.25;
+    double epsN=.08;
     ijn1 n1(gr, SIGy,Hw,L,p,pc,eps,epsN);
     //ijcc n1(gr,SIGy,L,p,pc,eps);
     n1.addCost();
@@ -92,6 +92,7 @@ int main(int argc, char* argv[]){
     double r0 = sum(z0);
     vec z1=gc.risk(f1,SIGy.diag(),L,p,pc);
     double r1 = sum(z1);
+
     z0.t().print("z0: ");
     z1.t().print("z1: ");
     cout.precision(4);
@@ -103,6 +104,43 @@ int main(int argc, char* argv[]){
     cout<<"gen1: "<<rn1_1->getG()<<endl;
     //    gc.getL(Hw).col(35).print("L: ");
     //    cout<<f0(35)<<endl;
+
+
+    running_stat<double> stats_r0;
+    running_stat<double> stats_r1;
+
+    vec check = n1.getCheck();
+    for(int i=0;i<Nl;i++){
+      if(check(i)==1){
+	vec f0n = n1.getN1(i,f0,g0);
+	vec z0n=gc.risk(f0n,SIGy.diag(),L,p,pc);
+	double r0n = sum(z0n);
+	stats_r0(r0n);
+	vec f1n = n1.getN1(i,f1,g1);
+	vec z1n=gc.risk(f1n,SIGy.diag(),L,p,pc);
+	double r1n = sum(z1n);
+	stats_r1(r1n);
+      }
+    }
+    cout.precision(5);
+    cout<<fixed<<endl;
+    cout<<"C0: "<<o0<<endl;
+    cout<<"r0 - "<<r0<<endl;
+    cout << "count = " << stats_r0.count() << endl;
+    cout << "mean = " << stats_r0.mean() << endl;
+    cout << "stdv  = " << stats_r0.stddev()  << endl;
+    cout << "min  = " << stats_r0.min()  << endl;
+    cout << "max  = " << stats_r0.max()  << endl;
+    cout<<endl;
+    cout<<"C1: "<<o1<<endl;
+    cout<<"r1 - "<<r1<<endl;
+    cout << "count = " << stats_r1.count() << endl;
+    cout << "mean = " << stats_r1.mean() << endl;
+    cout << "stdv  = " << stats_r1.stddev()  << endl;
+    cout << "min  = " << stats_r1.min()  << endl;
+    cout << "max  = " << stats_r1.max()  << endl;
+    
+
   }
   catch(IloException& e){
     cerr<<"Concert exception: "<<e<<endl; 
