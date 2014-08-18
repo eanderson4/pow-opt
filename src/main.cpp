@@ -8,9 +8,10 @@ using namespace std;
 
 int main(int argc, char* argv[]){
 
-  if(argc<=1){
-    cout<<"cmd: pow case/30.db\n"
-	<<"\trun main for case30"<<endl;
+  if(argc<=2){
+    cout<<"cmd: pow case/30.db <M>\n"
+	<<"\trun main for case30"
+	<<"\t<M> capacity multiplier"<<endl;
     return 1;
   }
 
@@ -27,7 +28,7 @@ int main(int argc, char* argv[]){
   cout<<*gr<<endl;
   
 
-    double multi=.8;
+  double multi=atof(argv[2]);
   int Nl = gr->numBranches();
   for(int i=0;i<Nl;i++){
     branch bi = gr->getBranch(i);
@@ -71,11 +72,11 @@ int main(int argc, char* argv[]){
   isolve is;
   is.setSolver(IloCplex::Dual,IloCplex::Dual);
   rgrid * rbase = ig.solveModel(&is);
-  rbase->displayOperatingPos(gr);
+  //  rbase->displayOperatingPos(gr);
 
   try{
-    double eps=.035;
-    double epsN=.175;
+    double eps=.05;
+    double epsN=.25;
     ijn1 n1(gr, SIGy,Hw,L,p,pc,eps,epsN);
     //ijcc n1(gr,SIGy,L,p,pc,eps);
     n1.addCost();

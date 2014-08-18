@@ -15,7 +15,8 @@ rgrid *  ijn1::solveModel( isolve * is){
   if(is!=NULL) is->setCplexParams(&cplex);
   int n=0;
 
-  cerr<<"n\tyn\tzn\tan\tbn\tun\tvn\n";
+  //  cerr<<"n\tyn\tzn\tan\tbn\tun\tvn\n";
+  cout<<"Check: "<<sum(_check)<<" / "<<getGrid()->numBranches()<<endl;
 
   if (cplex.solve()){
     bool systemfail=true;
@@ -36,11 +37,14 @@ rgrid *  ijn1::solveModel( isolve * is){
       systemfail = postCC(f0,z0,&cplex,n);
 
       for(int i=0;i<Nl;i++){
-	cout<<"Contingency: "<<i<<endl;
-	vec fn = getN1(i,f0,g0);
-	vec zn=gc.risk(fn,_var.row(i).t(),getL(),getP(),getPc());
-	cout<<"Post eval"<<endl;
-	systemfail += postN1(i,fn,g0,zn,&cplex,n);
+	if(_check(i)){
+	  cout<<"Contingency: "<<i<<endl;
+	  vec fn = getN1(i,f0,g0);
+	  vec zn=gc.risk(fn,_var.row(i).t(),getL(),getP(),getPc());
+	  cout<<"Post eval"<<endl;
+	  systemfail += postN1(i,fn,g0,zn,&cplex,n);
+	}
+	else cout<<"dont check Contingency "<<i<<endl;
       }
       
       if(!systemfail) break;
@@ -85,14 +89,18 @@ void ijn1::setup(){
 
   int Nl = getGrid()->numBranches();
   gridcalc gc(getGrid());
-  ranvar rv;
   _addCut = mat(Nl,Nl,fill::zeros);
+  _check = vec(Nl,fill::ones);
 
   _C = gc.getC();
   _Cg = gc.getCm();
+  cout<<"Get Branch Sensitivities"<<endl;
+  _Hb=_Hw*trans(_C);
+  cout<<"Build L"<<endl;
   _L=gc.getL(_Hw);
-  _Hb=_Hw*_C.t();
-  cout<<"Here";
+
+
+  cout<<"Here"<<endl;;
   mat Sig = getSig();
   _var0 = Sig.diag();
   _var=mat(Nl,Nl);
@@ -103,11 +111,13 @@ void ijn1::setup(){
 	_var(n,j)=Sig(j,j) + 2*_L(j,n)*Sig(n,j) + pow(_L(j,n),2)*Sig(n,n);
       }
       else{
-	_var(n,j)=Sig(j,j) + 2*_Hb(j,n)*Sig(n,j) + pow(_Hb(j,n),2)*Sig(n,n);
+	//	_var(n,j)=Sig(j,j) + 2*_Hb(j,n)*Sig(n,j) + pow(_Hb(j,n),2)*Sig(n,n);
+	_check(n)=0;
       }
     }
   }
-  cout<<"there";
+  cout<<sum(_check)<<" / "<<getGrid()->numBranches()<<endl;
+  cout<<"there"<<endl;
 
   _riskConstraint = IloRangeArray(env,Nl,0,_epsN);
   for(int n=0;n<Nl;n++){
@@ -133,6 +143,7 @@ void ijn1::setup(){
 	//	getModel()->add(_fdown); ///save
 
   }
+
 }
 
 

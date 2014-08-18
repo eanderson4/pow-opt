@@ -48,6 +48,7 @@ gridcalc::gridcalc(grid * gr) {
   mat H(Nl,Nb-1);
   mat Hp(Nl,Nb-1);
 
+  cout<<"Calculating Bbus inverse"<<endl;
   Hp = Bf.submat(0,1,Nl-1,Nb-1)*inv(Bbus.submat(1,1,Nb-1,Nb-1));
   H = Hp;
   H.insert_cols(0,1);
@@ -57,6 +58,8 @@ gridcalc::gridcalc(grid * gr) {
   int Ng = gr->numGens();
   vec slackdist(Nb,1,fill::zeros);
   
+  cout<<"slack find"<<endl;
+
   double total=0;
   for(int i=0;i<Ng;i++){
     int buscon=_gr->getGenBus(i);
@@ -67,6 +70,7 @@ gridcalc::gridcalc(grid * gr) {
     total=total+r;
   }
 
+  cout<<"normalize"<<endl;
   if(total!=1){
     for(int i=0;i<Ng;i++){
       int buscon=_gr->getGenBus(i);
@@ -131,11 +135,17 @@ mat gridcalc::getL(mat Hw){
   int Nl=_gr->numBranches();
   for(int i=0;i<Nl;i++){
     for(int j=0;j<Nl;j++){
-      if(i!=j)      L(i,j)=H(i,j)/(1-H(j,j));
-      else L(i,j)=-1;
+      if(H(j,j)<=1+.0000001 && H(j,j)>=1-.0000001) {
+	L(i,j)=datum::nan;
+      }
+      else{
+	if(i!=j)      L(i,j)=H(i,j)/(1-H(j,j));
+	else L(i,j)=-1;
+      }
     }
   }
 
+  cout<<"L built"<<endl;
   return L;  
 }
 
