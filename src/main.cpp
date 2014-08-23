@@ -100,8 +100,8 @@ int main(int argc, char* argv[]){
     bn1.addCost();
 
     rgrid * rbn1 = bn1.solveModel(&is);
-    rgrid * rn1_1 = n1.solveModel(&is);
     rgrid * rjcc = jcc.solveModel(&is);
+    rgrid * rn1_1 = n1.solveModel(&is);
 
     double o0=rbase->getObjective();
     vec f0=gc.convert(rbase->getF());
