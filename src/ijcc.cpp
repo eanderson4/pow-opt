@@ -101,7 +101,7 @@ bool ijcc::postCC(vec f, vec z,IloCplex * cplex, int iteration){
 	  double b=dz/U;
 	  double u=1/U;
 	  double v=b;
-	  cerr<<iteration<<"\t"<<y_i/U<<"\t"<<z(i)<<"\t"<<z(i)-dz*y_i/U<<"\t"<<dz/U<<"\t"<<u<<"\t"<<v<<endl;
+	  //	  cerr<<iteration<<"\t"<<y_i/U<<"\t"<<z(i)<<"\t"<<z(i)-dz*y_i/U<<"\t"<<dz/U<<"\t"<<u<<"\t"<<v<<endl;
 	}
 
 	if(z(i)==1){

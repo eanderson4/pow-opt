@@ -29,6 +29,7 @@ int main(int argc, char* argv[]){
   double L=atof(argv[6]);
   double p=atof(argv[7]);
   double B=atof(argv[8]);
+  int sn=atoi(argv[9]);
   double pc=.85;
 
 
@@ -71,8 +72,27 @@ int main(int argc, char* argv[]){
   
   double TV = accu(SIG);
 
+  arma_rng::set_seed_random(); 
   gridcalc gc(gr);  
-  vec slack=gc.getSlack();
+  //  vec slack=gc.getSlack()
+  int Ng = gr->numGens();;
+  mat Cg=gc.getCm();
+  vec alpha(Ng,fill::randu);
+  vec yes(Ng,fill::randu);
+  for(int i=0;i<Ng;i++){
+    if(yes(i) <= .5) alpha(i)=0;
+  }
+  double total=accu(alpha);//  alpha(sn)=1;
+  if(total==0) {alpha(sn)=1;total=1;}
+  alpha=alpha/total;
+  vec slack=Cg*alpha;
+
+  double randcost=0;
+  for(int i=0;i<Ng;i++){
+    double c2=gr->getGen(i).getC2();
+    double genrandcost=c2*pow(alpha(i),2)*TV;
+    randcost=randcost+genrandcost;
+  }
 
   mat Hw = gc.getHw(slack);
 
@@ -176,7 +196,10 @@ int main(int argc, char* argv[]){
     cout.precision(5);
     cout<<fixed<<endl;
     cout<<"Total Gen: "<<TG<<endl;
-    cout<<"Total Variance: "<<TV<<" ( "<<sqrt(TV)<<" )\n\n";
+    cout<<"Total Variance: "<<TV<<" ( "<<sqrt(TV)<<" )"<<endl;
+    cout<<"Total Random Cost: "<<randcost<<endl;
+    slack.t().print("slack: ");
+    cout<<"\n\n";
     cout<<"OPF"<<"\t"<<s0<<endl;
     cout<<"C0: "<<o0<<endl;
     cout<<"r0 - "<<r0<<endl;
@@ -214,6 +237,13 @@ int main(int argc, char* argv[]){
     cout << "max  = " << stats_r1.max()  << endl;
     cout<<endl;
 
+    for(int i=0;i<Ng;i++)   cerr<<alpha(i)<<"\t";
+    cerr<<"\t"<<randcost<<"\t"<<TV<<"\t\t";
+    cerr<<o0<<"\t"<<r0<<"\t"<<stats_r0.mean()<<"\t"<<stats_r0.max()<<"\t\t";
+    cerr<<o2<<"\t"<<r2<<"\t"<<stats_r2.mean()<<"\t"<<stats_r2.max()<<"\t\t";
+    cerr<<o3<<"\t"<<r3<<"\t"<<stats_r3.mean()<<"\t"<<stats_r3.max()<<"\t\t";
+    cerr<<o1<<"\t"<<r1<<"\t"<<stats_r1.mean()<<"\t"<<stats_r1.max()<<endl;
+    
   }
   catch(IloException& e){
     cerr<<"Concert exception: "<<e<<endl; 
