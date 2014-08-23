@@ -48,6 +48,7 @@ class ijn1 : public ijcc {
   double _epsN;
 
   vec _check;
+  mat _in;
 
 };
 #endif

@@ -75,8 +75,8 @@ int main(int argc, char* argv[]){
   //  rbase->displayOperatingPos(gr);
 
   try{
-    double eps=.05;
-    double epsN=.08;
+    double eps=.075;
+    double epsN=.3;
     ijn1 n1(gr, SIGy,Hw,L,p,pc,eps,epsN);
     //ijcc n1(gr,SIGy,L,p,pc,eps);
     n1.addCost();

@@ -14,6 +14,7 @@ rgrid *  ijn1::solveModel( isolve * is){
   
   if(is!=NULL) is->setCplexParams(&cplex);
   int n=0;
+  double large=0;
 
   //  cerr<<"n\tyn\tzn\tan\tbn\tun\tvn\n";
   cout<<"Check: "<<sum(_check)<<" / "<<getGrid()->numBranches()<<endl;
@@ -35,9 +36,10 @@ rgrid *  ijn1::solveModel( isolve * is){
       
       cout<<"Base system"<<endl;
       systemfail = postCC(f0,z0,&cplex,n);
-
+      
       for(int i=0;i<Nl;i++){
-	if(_check(i)){
+	if(n==2) large=4000;
+	if(_check(i) && i<(30 + large)){
 	  cout<<"Contingency: "<<i<<endl;
 	  vec fn = getN1(i,f0,g0);
 	  vec zn=gc.risk(fn,_var.row(i).t(),getL(),getP(),getPc());
@@ -47,9 +49,15 @@ rgrid *  ijn1::solveModel( isolve * is){
 	}
 	else cout<<"dont check Contingency "<<i<<endl;
       }
+
       
       if(!systemfail) break;
       if(!cplex.solve()) break;
+
+      if(cplex.getCplexStatus()==IloCplex::CplexStatus::Infeasible) break;
+
+      cout<<"\n\n\n\n\n\n\n\n"<<cplex.getCplexStatus()<<"\n\n\n\n\n\n"<<endl;
+
 
     }
 
@@ -120,32 +128,38 @@ void ijn1::setup(){
   cout<<sum(_check)<<" / "<<getGrid()->numBranches()<<endl;
   cout<<"there"<<endl;
 
+  _in = mat(Nl,Nl,fill::zeros);
+
   _riskConstraint = IloRangeArray(env,Nl,0,_epsN);
   for(int n=0;n<Nl;n++){
-    _z.push_back(IloNumVarArray(env,Nl,0,IloInfinity));
-    _yplus.push_back(IloNumVarArray(env,Nl,0,IloInfinity));
-    _yup.push_back(IloRangeArray(env, Nl,0,IloInfinity));
-    _ydown.push_back(IloRangeArray(env,Nl,0,IloInfinity));
-   
-    _riskConstraint[n].setExpr( IloSum(_z[n]) );
-    ss.str("");
-    ss<<"rc"<<n<<"[0,"<<getEps()<<"]";
-    _riskConstraint[n].setName( ss.str().c_str() );
+    _z.push_back(IloNumVarArray(env,1,0,IloInfinity));
+    _yplus.push_back(IloNumVarArray(env,1,0,IloInfinity));
+    _yup.push_back(IloRangeArray(env, 1,0,IloInfinity));
+    _ydown.push_back(IloRangeArray(env,1,0,IloInfinity));
+
+  }
+ 
+  cout<<"DONT BUILDING"<<endl;
+}
+
+    /*
+        _riskConstraint[n].setExpr( IloSum(_z[n]) );
+        ss.str("");
+        ss<<"rc"<<n<<"[0,"<<getEps()<<"]";
+        _riskConstraint[n].setName( ss.str().c_str() );
     for(int e=0;e<Nl;e++){
 	ss.str("");
 	ss<<"z"<<n<<","<<e<<"[0,"<<_epsN<<"]";
 	_z[n][e].setName( ss.str().c_str() );
       }
 	  
-    getModel()->add(_z[n]);
-    getModel()->add(_riskConstraint[n]);
-	//        getModel()->add(_fplus[n]);  /// save
-	//	getModel()->add(_fup);  //save
-	//	getModel()->add(_fdown); ///save
+        getModel()->add(_z[n]);
+        getModel()->add(_riskConstraint[n]);
+	        getModel()->add(_fplus[n]);  /// save
+		getModel()->add(_fup);  //save
+		getModel()->add(_fdown); ///save
+    */
 
-  }
-
-}
 
 
 bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex, int iteration){
@@ -169,42 +183,19 @@ bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex, int iteration){
     cout<<"CUTTING ----------"<<endl;
     for(int i=0; i<Nl; i++){
       if (z(i)>tol){
+	if(sum(_in.row(n))==0){
+	  _z[n] = IloNumVarArray(getEnv(),Nl,0,IloInfinity);	  
+	  _yplus[n] = IloNumVarArray(getEnv(),Nl,0,IloInfinity);	  
+	  _yup[n] = IloRangeArray(getEnv(),Nl,0,IloInfinity);	  
+	  _ydown[n] = IloRangeArray(getEnv(),Nl,0,IloInfinity);	  
+	}
+
 	if(_Hb(n,n)<=1-.000001 || _Hb(n,n)>=1+.0000001){
 	  _yup[n][i].setExpr( _yplus[n][i] - (getF()[i] + _L(i,n)*(getF()[n])) );
 	  _ydown[n][i].setExpr( _yplus[n][i] + (getF()[i] + _L(i,n)*getF()[n]) );
 	}
-	else{
-	  if(n==12){
-	     f.t().print("f: ");
-	     z.t().print("z: ");
-	  }
-	  branch br = gr->getBranch(n);
-	  int from = gr->getBusNum(br.getFrom());
-	  int to = gr->getBusNum(br.getTo());
-	  int winner =-1;
-	  cout<<from<<" -> "<<to<<endl;
-	  
-	  if(sum(abs(_C.col(from))) == 1) {
-	    cout<<"winner winner: "<<from<<endl;
-	    winner=from;
-	  }
-	  else if(sum(abs(_C.col(to))) == 1) {
-	    cout<<"winner winner: "<<to<<endl;
-	    winner=to;
-	  }
-	  else	    throw nowin;
-	  bus b = getGrid()->getBus(winner);
-	  double load = b.getP()+b.getGs();
-	  _yup[n][i].setExpr( _yplus[n][i] - (getF()[i] + _Hw(i,winner)*load) );
-	  _ydown[n][i].setExpr( _yplus[n][i] + (getF()[i] + _Hw(i,winner)*load) );
 
-	  if(sum(_Cg.row(winner))>=1){
-	    for(int j=0; j<(int)_Cg.row(winner).n_elem;j++){
-	      _yup[n][i].setExpr( _yup[n][i].getExpr() + _Cg(winner,j)*getG()[j]);
-	      _ydown[n][i].setExpr( _yup[n][i].getExpr() - _Cg(winner,j)*getG()[j]);
-	    }
-	  }
-	}
+
 	double U=getGrid()->getBranch(i).getRateA();
 	double Ueps = rv.ginv(_epsN,getL(),getP(),getPc());
 	_yplus[n][i].setBounds(0, U*Ueps);
@@ -228,13 +219,19 @@ bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex, int iteration){
 	getModel()->add(cut);
 	_addCut(n,i)=_addCut(n,i)+1;
 
-	if(i==28)
-{	  double a=z(i)-dz*y_i/U;
-	  double b=dz/U;
-	  double u=1/U;
-	  double v=b;
-	  //	  cerr<<iteration<<"\t"<<y_i/U<<"\t"<<z(i)<<"\t"<<z(i)-dz*y_i/U<<"\t"<<dz/U<<"\t"<<u<<"\t"<<v<<endl;
+	if(_in(n,i)==0){
+	  _riskConstraint[n].setExpr( _riskConstraint[n].getExpr() + _z[n][i] );
+	  _in(n,i)=1;
 	}
+
+	if(i==28)
+	  {
+	    double a=z(i)-dz*y_i/U;
+	    double b=dz/U;
+	    double u=1/U;
+	    double v=b;
+	    //	  cerr<<iteration<<"\t"<<y_i/U<<"\t"<<z(i)<<"\t"<<z(i)-dz*y_i/U<<"\t"<<dz/U<<"\t"<<u<<"\t"<<v<<endl;
+	  }
 
 	if(z(i)>.5) {
 	  f.t().print("f: ");
