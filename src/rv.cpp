@@ -177,7 +177,7 @@ double ranvar::anaProb(double L, double p, double pc, double mean, double stdv){
   double t_p = a*p_LU + b*ef_LU*p_LU + p_Ui;
 
   if (p_Ui >_tol){
-    cout<<"Probability f>=Uc: "<<p_Ui<<endl;
+    //    cout<<"Probability f>=Uc: "<<p_Ui<<endl;
     //throw analerr;
   }
 

@@ -37,8 +37,8 @@ rgrid *  ijn1::solveModel( isolve * is){
       cout<<"Base system"<<endl;
       systemfail = postCC(f0,z0,&cplex,n);
       
+      if(n==2) large=5000;
       for(int i=0;i<Nl;i++){
-	if(n==2) large=4000;
 	if(_check(i) && i<(30 + large)){
 	  cout<<"Contingency: "<<i<<endl;
 	  vec fn = getN1(i,f0,g0);
@@ -51,13 +51,8 @@ rgrid *  ijn1::solveModel( isolve * is){
       }
 
       
-      if(!systemfail) break;
+      if(!systemfail && n>2) break;
       if(!cplex.solve()) break;
-
-      if(cplex.getCplexStatus()==IloCplex::CplexStatus::Infeasible) break;
-
-      cout<<"\n\n\n\n\n\n\n\n"<<cplex.getCplexStatus()<<"\n\n\n\n\n\n"<<endl;
-
 
     }
 
@@ -138,7 +133,7 @@ void ijn1::setup(){
     _ydown.push_back(IloRangeArray(env,1,0,IloInfinity));
 
   }
- 
+  getModel()->add(_riskConstraint);  
   cout<<"DONT BUILDING"<<endl;
 }
 
