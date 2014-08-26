@@ -96,6 +96,7 @@ int main(int argc, char* argv[]){
 
   mat Hw = gc.getHw(slack);
 
+
   mat SIGy(Nl,Nl,fill::zeros);
   SIGy = Hw*Cm*SIG*(Hw*Cm).t();
 
