@@ -55,6 +55,7 @@ int main(int argc, char* argv[]){
   }
 
   int num=5;
+  int Nm=num;
   int index[5] = { 1, 3, 6, 20, 28 };
   double stdv[5] = {3,.5,5,3.75,.3};
 
@@ -95,11 +96,77 @@ int main(int argc, char* argv[]){
   }
 
   mat Hw = gc.getHw(slack);
+  mat A = gc.getH();
 
+  mat Ag(Nl,Ng,fill::zeros);
+  for(int e=0;e<Nl;e++){
+    for(int j=0;j<Ng;j++){
+      Ag(e,j) = dot(A.row(e),Cg.col(j)); 
+    }
+  }
+  Ag.print("Ag: ");
+
+  mat Ak(Nl,Nm,fill::zeros);
+  for(int e=0;e<Nl;e++){
+    for(int k=0;k<Nm;k++){
+      Ak(e,k) = dot(A.row(e),Cm.col(k)); 
+    }
+  }
+  Ak.print("Ak: ");
+
+  vec sig(Nl,fill::zeros);
+  mat sigger(Nl,Nl,fill::zeros);
+  for(int e=0;e<Nl;e++){
+    double total=0;
+    for(int k=0;k<Nm;k++){
+      for(int k2=0;k2<Nm;k2++){
+	total=total+Ak(e,k)*SIG(k,k2);
+      }
+    }
+    sig(e)=total;
+  }
+  for(int e1=0; e1<Nl;e1++){
+    for(int e2=0;e2<Nl;e2++){
+      double t2=0;
+      for(int k1=0;k1<Nm;k1++){
+	for(int k2=0;k2<Nm;k2++){
+	  t2=t2+Ak(e1,k1)*Ak(e2,k2)*SIG(k1,k2);
+	}
+      }
+      sigger(e1,e2)=t2;
+    }
+  }
+  Ak.print("Ak: ");
+  sig.print("sig: ");
+  sigger.diag().print("sigger: ");
+  SIG.print("SIG: ");
 
   mat SIGy(Nl,Nl,fill::zeros);
   SIGy = Hw*Cm*SIG*(Hw*Cm).t();
 
+
+  mat cy(Nl,Nl,fill::zeros);
+
+  for(int i=0;i<Nl;i++){
+    for(int j=0;j<Nl;j++){
+      double pi_i = dot(Ag.row(i),alpha);
+      double pi_j = dot(Ag.row(j),alpha);
+      double total = pi_i*pi_j*TV - pi_i*sig(j)-pi_j*sig(i)+sigger(i,j);
+      cy(i,j)=total;
+      
+    }
+  }
+  cy.print("cy: ");
+  SIGy.print("SIGy: ");
+  mat err=cy - SIGy;
+  err.diag().print("err: ");
+  cout<<"diag error: "<<accu(err.diag())<<endl;
+  cout<<"total error: "<<accu(err)<<endl;
+
+
+
+
+  return 0;
   //Set Probability info
   ranvar rv;
 
