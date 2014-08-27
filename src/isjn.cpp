@@ -1,6 +1,6 @@
-#include "ijn1.h"
+#include "isjn.h"
 
-rgrid *  ijn1::solveModel( isolve * is){
+rgrid *  isjn::solveModel( isolve * is){
 
   rgrid * rg = new rgrid();
 
@@ -158,7 +158,7 @@ void ijn1::setup(){
 
 
 
-bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex, int iteration){
+bool isjn::postN1(int n, vec f,vec g, vec z, IloCplex * cplex, int iteration){
   if(_check(n)!=1) return false;
   //define tolerance for line risk > 0
   stringstream ss;
@@ -242,7 +242,7 @@ bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex, int iteration){
 }
 
 
-vec ijn1::getN1(int n, vec y0, vec g){
+vec isjn::getN1(int n, vec y0, vec g){
   grid * gr = getGrid();
   vec yn;
 
@@ -294,7 +294,7 @@ vec ijn1::getN1(int n, vec y0, vec g){
 }
 
 
-double ijn1::getTotalCuts(){
+double isjn::getTotalCuts(){
   double total=0;
   int Nl = getGrid()->numBranches();
   total += getNumBaseCuts();

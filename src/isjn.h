@@ -1,25 +1,21 @@
-#ifndef IJN1_H
-#define IJN1_H
+#ifndef ISJN_H
+#define ISJN_H
 
-#include "ijcc.h"
+#include "isj.h"
 #include "igrid.h"
 
 using namespace std;
 
 
-class ijn1 : public ijcc {
+class isjn : public isj {
 
  public:
- ijn1(grid * gr,mat SIGy, mat Hw, double L, double p, double pc, double eps, double epsN): ijcc(gr,SIGy,L,p,pc,eps), _Hw(Hw),_epsN(epsN) { setup(); }
+ isjn(grid * gr,mat SIGm, mat A, double L, double p, double pc, double eps, double epsN): isj( gr, SIGm ), _A(A),_L(L),_p_epsN(epsN) { setup(); }
   void setup();
   rgrid * solveModel( isolve * is=NULL);
   bool postN1(int n,vec f, vec g,vec z, IloCplex * cplex, int iteration=0);
   vec getN1(int n, vec y0, vec g);
   vec getCheck(){ return _check; }
-  double getNumCuts(int n){ return sum(_addCut.row(n)); }
-  double getCutsLine(int i){ return sum(_addCut.col(i)); }
-  double getTotalCuts();
-  mat getVar(){ return _var; }
 
   class nowinner: public exception 
   {
@@ -31,25 +27,24 @@ class ijn1 : public ijcc {
 
 
  private:
+  IloNumVarArray _risk;
+  IloRangeArray _riskConstraint;
   vector<IloNumVarArray> _z;
   vector<IloNumVarArray> _yplus;
+  vector<IloNumVarArray> _sd;
+  vector<IloNumVarArray> _psi;
   vector<IloRangeArray> _yup;
   vector<IloRangeArray> _ydown;
-  IloRangeArray _riskConstraint;
+  vector<IloRangeArray> _psipi;
   
-  mat _addCut;
+  vec _epsN;
 
-  mat _Hw;
   mat _L;
-  mat _C;
-  mat _Cg;
   mat _Hb;
-  mat _var;
-  vec _var0;
-  double _epsN;
 
   vec _check;
   mat _in;
+  mat _addCut;
 
 };
 #endif

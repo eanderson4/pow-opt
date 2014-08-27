@@ -97,6 +97,7 @@ int main(int argc, char* argv[]){
 
   mat Hw = gc.getHw(slack);
   mat A = gc.getH();
+  mat Lo = gc.getL(A);  
 
   mat Ag(Nl,Ng,fill::zeros);
   for(int e=0;e<Nl;e++){
@@ -104,7 +105,7 @@ int main(int argc, char* argv[]){
       Ag(e,j) = dot(A.row(e),Cg.col(j)); 
     }
   }
-  Ag.print("Ag: ");
+  //  Ag.print("Ag: ");
 
   mat Ak(Nl,Nm,fill::zeros);
   for(int e=0;e<Nl;e++){
@@ -112,7 +113,7 @@ int main(int argc, char* argv[]){
       Ak(e,k) = dot(A.row(e),Cm.col(k)); 
     }
   }
-  Ak.print("Ak: ");
+  //  Ak.print("Ak: ");
 
   vec sig(Nl,fill::zeros);
   mat sigger(Nl,Nl,fill::zeros);
@@ -136,10 +137,10 @@ int main(int argc, char* argv[]){
       sigger(e1,e2)=t2;
     }
   }
-  Ak.print("Ak: ");
-  sig.print("sig: ");
-  sigger.diag().print("sigger: ");
-  SIG.print("SIG: ");
+  //  Ak.print("Ak: ");
+  //  sig.print("sig: ");
+  //  sigger.diag().print("sigger: ");
+  //  SIG.print("SIG: ");
 
   mat SIGy(Nl,Nl,fill::zeros);
   SIGy = Hw*Cm*SIG*(Hw*Cm).t();
@@ -156,12 +157,44 @@ int main(int argc, char* argv[]){
       
     }
   }
-  cy.print("cy: ");
-  SIGy.print("SIGy: ");
+  //  cy.print("cy: ");
+  //  SIGy.print("SIGy: ");
   mat err=cy - SIGy;
-  err.diag().print("err: ");
+  //  err.diag().print("err: ");
   cout<<"diag error: "<<accu(err.diag())<<endl;
   cout<<"total error: "<<accu(err)<<endl;
+
+
+  ijn1 n1(gr, SIGy,Hw,L,p,pc,eps,epsN);
+
+
+  mat var = n1.getVar();
+
+  mat outvar(Nl,Nl,fill::zeros);
+  for(int e=0;e<Nl;e++){
+    for(int n=0;n<Nl;n++){
+      double len = Lo(e,n);
+      double pi_e = dot(Ag.row(e),alpha);
+      double pi_n = dot(Ag.row(n),alpha);
+      double phi_en = pi_e + Lo(e,n)*pi_n;
+
+      //double vare = pi_e*pi_e*TV - 2*pi_e*sig(e) + sigger(e,e);
+      //double varn = pi_n*pi_n*TV - 2*pi_n*sig(n) + sigger(n,n);
+      //double covar = pi_e*pi_n*TV - pi_e*sig(n) -pi_n*sig(e) + sigger(e,n);
+      //double total = vare + len*len*varn + 2*len*covar;
+      double total = phi_en*phi_en*TV -2*phi_en*(sig(e)+len*sig(n))+ sigger(e,e) + 2*len*sigger(e,n)+len*len*sigger(n,n);
+
+      if(!isfinite(total)) total=0;
+      outvar(n,e)=total;
+    }
+  }
+  mat errvar=var-outvar;
+  //  var.row(0).print("var: ");
+  //  outvar.row(0).print("var: ");
+  //  errvar.row(0).print("errvar: ");
+    cout<<"total error: "<<accu(errvar)<<endl;
+
+
 
 
 
