@@ -68,6 +68,7 @@ int main(int argc, char* argv[]){
     Cm(index[i],i)=1;
     SIG(i,i)=pow(stdv[i],2)*B;
   }
+
   SIG(0,2)=-14*B;SIG(2,0)=-14*B;
   SIG(0,3)=-9*B;SIG(3,0)=-9*B;
   SIG(2,3)=15*B;SIG(3,2)=15*B;
