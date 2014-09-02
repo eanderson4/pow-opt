@@ -111,11 +111,14 @@ bool isj::postCC(vec y, vec z,vec SIGy,IloCplex * cplex, int iteration){
 	  getModel()->add(_yup[i]);
 	  getModel()->add(_ydown[i]);
 	  
+	  _pibeta[i].setExpr(_pi[i]);
 	  for(int j=0;j<Ng;j++){
-	    _pibeta[i].setExpr( _pibeta[i].getExpr() + _A(i,j)*_beta[j]);
+	    _pibeta[i].setExpr( _pibeta[i].getExpr() - _A(i,j)*_beta[j]);
 	  }
 	  getModel()->add(_pibeta[i]);
-       
+	  
+	  _sdfe[i].setExpr( -_pi[i]*_pi[i]*_sig_delta + 2*_pi[i]*_sig(i) - _sigger(i,i) + _sd[i]*_sd[i] );
+	  
 	}
 	//Add cuts for each line with positive risk
 	double y_i = abs(y(i));
