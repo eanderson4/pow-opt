@@ -1,13 +1,11 @@
 #include "isj.h"
 
 rgrid *  isj::solveModel( isolve * is){
-  rgrid * bad;
-  throw nogo;
-  return bad;
+
 }      
 
 bool isj::postCC(vec f, vec z,IloCplex * cplex, int iteration){
-  //define tolerance for line risk > 0
+  /*  //define tolerance for line risk > 0
   double tol = pow(10,-5);
   int Nl = getGrid()->numBranches();
   double account=0;
@@ -58,6 +56,8 @@ bool isj::postCC(vec f, vec z,IloCplex * cplex, int iteration){
     cout<<"Accounted: "<<account<<endl;
     return true;
   }     
+  */
+  return true;
 }
 
 void isj::lineLimitStatus(bool status){
@@ -90,12 +90,18 @@ void isj::setup(){
   IloEnv env = getEnv();
   int Nl = getGrid()->numBranches();
 
-  _z = IloNumVarArray(env,Nl,0,IloInfinity);
+  _z = IloNumVarArray(env,Nl,0,_eps);
   _yplus = IloNumVarArray(env,Nl,0,IloInfinity);
+  _sd = IloNumVarArray(env,Nl,0,IloInfinity);
+  _beta = IloNumVarArray(env,Nl,0,IloInfinity);
+  _pi = IloNumVarArray(env,Nl,0,IloInfinity);
 
   _yup = IloRangeArray(env, Nl,0,IloInfinity);
   _ydown = IloRangeArray(env,Nl,0,IloInfinity);
-  
+  _ydown = IloRangeArray(env,Nl,0,IloInfinity);
+  _pibeta = IloRangeArray(env,Nl,0,0);
+  _sdfe = IloRangeArray(env,Nl,0,IloInfinity);
+  /*
   for(int i=0;i<Nl;i++){
     _yup[i].setExpr( _yplus[i] - getF()[i] );
     _ydown[i].setExpr( _yplus[i] + getF()[i] );
@@ -114,15 +120,15 @@ void isj::setup(){
     ss.str("");
     ss<<"fdown"<<i;
     _ydown[i].setName( ss.str().c_str() );
-  }
+    }*/
 
   _riskConstraint = IloRange(env,0,_eps,"riskconstraint");
-  _riskConstraint.setExpr( IloSum(_z) );
+  //  _riskConstraint.setExpr( IloSum(_z) );
   
-  getModel()->add(_z);
-  getModel()->add(_yplus);
-  getModel()->add(_yup);
-  getModel()->add(_ydown);
+  //  getModel()->add(_z);
+  //  getModel()->add(_yplus);
+  //  getModel()->add(_yup);
+  //  getModel()->add(_ydown);
   getModel()->add(_riskConstraint);
 
 }

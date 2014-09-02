@@ -2,6 +2,7 @@
 
 #include "sqlinter.h"
 #include "test.h"
+#include "isj.h"
 #include "ijn1.h"
 #include "in1.h"
 
@@ -9,7 +10,7 @@ using namespace std;
 
 int main(int argc, char* argv[]){
 
-  if(argc<=8){
+  if(argc<=9){
     cout<<"cmd: pow case/30.db <m0> <m1> <e0> <e1> <L> <p> <B>\n"
 	<<"\trun main for case30\n"
 	<<"\t<m0> base capacity multiplier\n"
@@ -195,9 +196,11 @@ int main(int argc, char* argv[]){
     cout<<"total error: "<<accu(errvar)<<endl;
 
 
+    vec eN(Nl, fill::ones);
+    eN = eN*epsN;
 
-
-
+    isj sj(gr, &gc, SIG, Cm, L, p, pc, eps);
+    
 
   return 0;
   //Set Probability info

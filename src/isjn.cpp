@@ -3,7 +3,7 @@
 rgrid *  isjn::solveModel( isolve * is){
 
   rgrid * rg = new rgrid();
-
+  /*
   time_t tstart;
   tstart = clock();
     
@@ -80,15 +80,15 @@ rgrid *  isjn::solveModel( isolve * is){
     cerr<<cplex.getStatus()<<endl;
   }
   cplex.end();
-  
+  */  
   return rg;
 }
 
 
-void ijn1::setup(){
+void isjn::setup(){
   cout<<"Setup N-1 joint chance constraint"<<endl;
   stringstream ss;
-
+  /*
   IloEnv env = getEnv();
 
   int Nl = getGrid()->numBranches();
@@ -136,6 +136,7 @@ void ijn1::setup(){
   }
   getModel()->add(_riskConstraint);  
   cout<<"DONT BUILDING"<<endl;
+  */
 }
 
     /*
@@ -159,7 +160,7 @@ void ijn1::setup(){
 
 
 bool isjn::postN1(int n, vec f,vec g, vec z, IloCplex * cplex, int iteration){
-  if(_check(n)!=1) return false;
+  /*  if(_check(n)!=1) return false;
   //define tolerance for line risk > 0
   stringstream ss;
   grid * gr = getGrid();
@@ -239,13 +240,15 @@ bool isjn::postN1(int n, vec f,vec g, vec z, IloCplex * cplex, int iteration){
     }
     return true;
   }     
+  */
+  return true;
 }
 
 
 vec isjn::getN1(int n, vec y0, vec g){
   grid * gr = getGrid();
   vec yn;
-
+  /*
   if(_Hb(n,n)<=1-.000001 || _Hb(n,n)>=1+.0000001){
     //    cout<<"Line "<<n<<endl;
     yn = y0[n]*_L.col(n)+y0;
@@ -288,18 +291,8 @@ vec isjn::getN1(int n, vec y0, vec g){
     }
     
   }
-  
+  */  
   return yn;
 
 }
 
-
-double isjn::getTotalCuts(){
-  double total=0;
-  int Nl = getGrid()->numBranches();
-  total += getNumBaseCuts();
-  for(int i=0;i<Nl;i++){
-    total += getNumCuts(i);
-  }
-  return total;
-}

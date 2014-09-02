@@ -10,7 +10,7 @@ using namespace std;
 class isjn : public isj {
 
  public:
- isjn(grid * gr,mat SIGm, mat A, double L, double p, double pc, double eps, double epsN): isj( gr, SIGm ), _A(A),_L(L),_p_epsN(epsN) { setup(); }
+ isjn(grid * gr,gridcalc * gc, mat SIGm,mat Cm, double L, double p, double pc, double eps, vec epsN): isj( gr, gc, SIGm, Cm, L, p, pc, eps ), _epsN(epsN) { setup(); }
   void setup();
   rgrid * solveModel( isolve * is=NULL);
   bool postN1(int n,vec f, vec g,vec z, IloCplex * cplex, int iteration=0);
@@ -36,6 +36,7 @@ class isjn : public isj {
   vector<IloRangeArray> _yup;
   vector<IloRangeArray> _ydown;
   vector<IloRangeArray> _psipi;
+  vector<IloRangeArray> _sdfe;
   
   vec _epsN;
 
@@ -44,7 +45,7 @@ class isjn : public isj {
 
   vec _check;
   mat _in;
-  mat _addCut;
+
 
 };
 #endif
