@@ -25,20 +25,24 @@ rgrid *  isj::solveModel( isolve * is){
       IloNumArray xsolve(getEnv(),Ng);
       IloNumArray betasolve(getEnv(),Ng);
       IloNumArray ysolve(getEnv(),Nl);
+      IloNumArray sdsolve(getEnv(),Nl);
 
       cplex.getValues(xsolve,getG());
       cplex.getValues(ysolve,getF());
       cplex.getValues(betasolve,_beta);
+      cplex.getValues(sdsolve,_sd);
       double genCost = getIcost().getCost(getGrid(),xsolve);
       vec x=_gc->convert(xsolve);      
       vec y=_gc->convert(ysolve);      
       vec beta=_gc->convert(betasolve);      
+      vec sd=_gc->convert(sdsolve);      
       vec ones(Nm,1,fill::ones);
 
       cout<<"Cost: "<<genCost<<endl;
       x.t().print("x: ");
       y.t().print("y: ");
       beta.t().print("beta: ");
+      sd.t().print("sd: ");
       
       vec pi = getA()*getCg()*beta;
       //      pi.t().print("pi: ");
@@ -47,6 +51,14 @@ rgrid *  isj::solveModel( isolve * is){
       //      SIGy.print("sigy: ");
       vec z=_gc->risk(y,SIGy.diag(),_L,_p,_pc);
       z.t().print("z: ");
+      //      cout<<"Risk: "<<sum(z)<<endl;
+
+      vec sdtest(Nl);
+      for(int e=0;e<Nl;e++){
+	sdtest(e) = sqrt( pi(e)*pi(e)*_sig_delta - 2 * pi(e)*_sig(e) + _sigger(e,e));
+      }
+      sdtest.print("sdtest: ");
+      
 
       systemfail = postCC(y,z,SIGy.diag(),&cplex);
 
@@ -69,6 +81,7 @@ rgrid *  isj::solveModel( isolve * is){
     cout<<"\n\nRisk constraint satisfied\n\n"<<endl;
     cout<<"Iterations: "<<n<<endl;
     cout<<"Time: "<<total<<endl;
+    _addCut.t().print("cuts: ");
   }
 
   else{
@@ -82,7 +95,7 @@ rgrid *  isj::solveModel( isolve * is){
 }      
 
 bool isj::postCC(vec y, vec z,vec SIGy,IloCplex * cplex, int iteration){
-
+  stringstream ss;
   //define tolerance for line risk > 0
   double tol = pow(10,-5);
   int Nl = getGrid()->numBranches();
@@ -110,29 +123,41 @@ bool isj::postCC(vec y, vec z,vec SIGy,IloCplex * cplex, int iteration){
 	  _yplus[i].setBounds(0,U*Ueps);	  
 	  getModel()->add(_yup[i]);
 	  getModel()->add(_ydown[i]);
+	  ss.str("");
+	  ss<<"yplus"<<i<<"[0,"<<U*Ueps<<"]";
+	  _yplus[i].setName( ss.str().c_str() );
 	  
 	  _pibeta[i].setExpr(_pi[i]);
 	  for(int j=0;j<Ng;j++){
 	    _pibeta[i].setExpr( _pibeta[i].getExpr() - _A(i,j)*_beta[j]);
 	  }
 	  getModel()->add(_pibeta[i]);
-	  
+	  ss.str("");
+	  ss<<"pibeta"<<i<<"[0,inf]";
+	  _pibeta[i].setName( ss.str().c_str() );
+
+	  cout<<_sig(i)<<endl;
 	  _sdfe[i].setExpr( -_pi[i]*_pi[i]*_sig_delta + 2*_pi[i]*_sig(i) - _sigger(i,i) + _sd[i]*_sd[i] );
+	  cout<<"sdfe"<<i<<": "<<_sdfe[i]<<endl;
+	  getModel()->add(_sdfe);
+	  ss.str("");
+	  ss<<"sdfe"<<i<<"[0,inf]";
+	  _sdfe[i].setName( ss.str().c_str() );
 	  
 	}
 	//Add cuts for each line with positive risk
 	double y_i = abs(y(i));
 	cout<<"z_"<<i<<": "<<z(i)<<", y_"<<i<<": "<<y_i<<endl;
 	double U=getGrid()->getBranch(i).getRateA();
-	double dmu=rv.deriveMu(_L,_p,_pc,abs(y(i))/U,sqrt(SIGy(i))/U);
-	double dsigma=rv.deriveSigma(_L,_p,_pc,abs(y(i))/U,sqrt(SIGy(i))/U);
+	double dmu=rv.deriveMu(_L,_p,_pc,y_i/U,sqrt(SIGy(i))/U);
+	double dsigma=rv.deriveSigma(_L,_p,_pc,y_i/U,sqrt(SIGy(i))/U);
 	cout<<"dmu: "<<dmu<<", dsigma: "<<dsigma<<endl;
 	//	cout<<dz<<" "<<dz/U<<endl;
 	//	cout<<"z_"<<i<<" >= "<<dz<<"(y_"<<i<<" - "<<y_i<<")/"<<U<<" + "<<z(i)<<endl;
 	cout<<"z_"<<i<<" >= "<<dmu/U<<" y_"<<i<<" + "<<z(i)-dmu*y_i/U<<endl;
 
 	IloRange cut(getEnv(),-IloInfinity,0);
-	cut.setExpr( dmu/U*(_yplus[i] - y_i) + dsigma/U*(_sd[i] - SIGy(i)) + z(i) - _z[i]);
+	cut.setExpr( dmu/U*(_yplus[i] - y_i) + dsigma*(_sd[i] - sqrt(SIGy(i))/U) + z(i) - _z[i]);
 	cout<<cut<<endl;
 	getModel()->add(cut);
 	_addCut(i)=_addCut(i)+1;
@@ -213,8 +238,8 @@ void isj::setup(){
   _z = IloNumVarArray(env,Nl,0,_eps);
   _yplus = IloNumVarArray(env,Nl,0,IloInfinity);
   _sd = IloNumVarArray(env,Nl,0,IloInfinity);
-  _beta = IloNumVarArray(env,Ng,0,IloInfinity);
-  _pi = IloNumVarArray(env,Nl,0,IloInfinity);
+  _beta = IloNumVarArray(env,Ng,0,1);
+  _pi = IloNumVarArray(env,Nl,-IloInfinity,IloInfinity);
 
   _yup = IloRangeArray(env, Nl,0,IloInfinity);
   _ydown = IloRangeArray(env,Nl,0,IloInfinity);
@@ -230,12 +255,28 @@ void isj::setup(){
   for(int i=0;i<Nl;i++){
     double U = getGrid()->getBranch(i).getRateA();
     getF()[i].setBounds(-U*Ueps,U*Ueps);
+
+    ss.str("");
+    ss<<"pi"<<i<<"[-inf,inf]";
+    _pi[i].setName( ss.str().c_str() );
+    ss.str("");
+    ss<<"sd"<<i<<"[0,inf]";
+    _sd[i].setName( ss.str().c_str() );
+    ss.str("");
+    ss<<"z"<<i<<"[0,eps]";
+    _z[i].setName( ss.str().c_str() );
+  }
+  for(int j=0;j<Ng;j++){
+    ss.str("");
+    ss<<"bj"<<j<<"[0,1]";
+    _pi[j].setName( ss.str().c_str() );
   }
   
   addCost(_beta,_sig_delta);
 
 
-  
+  getModel()->add(_sd);
+
   getModel()->add(_z);
   getModel()->add(_beta);
   getModel()->add(_riskConstraint);

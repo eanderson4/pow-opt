@@ -163,9 +163,18 @@ int main(int argc, char* argv[]){
     eN = eN*epsN;
 
     isj sj(gr, &gc, SIG, Cm, L, p, pc, eps);
-    
-    rgrid * rsj = sj.solveModel();
-    
+    try{
+      rgrid * rsj = sj.solveModel();
+  }
+  catch(IloException& e){
+    cerr<<"Concert exception: "<<e<<endl; 
+  }
+  catch(exception& e){
+    cerr<<"Exception: "<<e.what()<<endl; 
+  }
+  catch(...){
+    cerr<<"Unknown Error "<<endl;
+  }      
   return 0;
   //Set Probability info
   ranvar rv;
