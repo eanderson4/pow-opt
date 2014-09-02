@@ -10,12 +10,12 @@ using namespace std;
 class isj : public igrid {
 
  public:
- isj(grid * gr, gridcalc * gc, mat SIGm, mat Cm,double L, double p, double pc, double eps): igrid(gr), _gc(gc), _SIGm(SIGm), _Cm(Cm) , _L(L), _p(p), _pc(pc), _eps(eps) { setup(); }
+ isj(grid * gr, gridcalc * gc, mat SIGm, mat Cm,double L, double p, double pc, double eps): igrid(gr), _gc(gc), _SIG(SIGm), _Cm(Cm) , _L(L), _p(p), _pc(pc), _eps(eps) { setup(); }
   void setup();
   rgrid * solveModel( isolve * is=NULL);
   void lineLimitStatus(bool status);
   bool postCC(vec f, vec z,IloCplex * cplex, int iteration=0);
-  mat getSIGm(){ return _SIGm; }
+  mat getSIGm(){ return _SIG; }
   mat getA(){ return _gc->getH(); }
   mat getCb(){ return _gc->getC(); }
   mat getCm(){ return _Cm; }
@@ -53,15 +53,16 @@ class isj : public igrid {
   IloRangeArray _sdfe;
 
 
-  mat _SIGm;
+  mat _SIG;
   mat _Cm;
   double _L;
   double _p;
   double _pc;
   double _eps;
 
-  vec sig_e;
-  vec sigger_ee;
+  double _sig_delta;
+  vec _sig;
+  mat _sigger;
   
   vec _in;
   
