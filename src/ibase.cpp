@@ -177,6 +177,24 @@ int icost::buildCost(grid * gr, IloModel * mod, IloNumVarArray g){
   if (quadratic) cout<<"The objective is quadratic"<<endl;
   return 1;
 }
+int icost::buildCost(grid * gr, IloModel * mod, IloNumVarArray g, IloNumVarArray beta, double sigD){
+  int ng = gr->numGens();
+  IloEnv env = mod->getEnv();
+  IloExpr exp(env);
+  bool quadratic=false;
+  for(int i =0; i<ng; i++){
+    gen gi = gr->getGen(i);
+    double c2 = gi.getC2();
+    double c1 = gi.getC1();
+    double c0 = gi.getC0();
+    exp += (g[i]*g[i] + beta[i]*beta[i]*sigD)*c2 + c1*g[i] + c0;
+    if(c2>0) quadratic=true;
+  }
+  mod->add(IloMinimize(env,exp));
+  cout<<"Arbitrary Slack Model"<<endl;
+  if (quadratic) cout<<"The objective is quadratic"<<endl;
+  return 1;
+}
 
 int icost::buildCostWithLoadShed(grid * gr, IloModel * mod, IloNumVarArray g, IloNumVarArray ls){
   double lsPenalty=gr->getLoadShedPenalty();

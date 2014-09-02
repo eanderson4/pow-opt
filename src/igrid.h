@@ -18,6 +18,7 @@ class igrid : public ibase {
 
   virtual rgrid * solveModel( isolve * is=NULL);
   int addCost();
+  int addCost(IloNumVarArray beta,double sigD);
   void addSlack(IloNumArray _g_nom, IloNumArray slack);
   islack * getSlack(){ return &_islk; }
   void slackMismatch(){ _islk.fixMismatch(_gr,getG()); }

@@ -9,7 +9,7 @@ rgrid *  isj::solveModel( isolve * is){
     
   int Nl = getGrid()->numBranches();
   int Ng = getGrid()->numGens();
-  //  int Nm = _Cm.n_cols;
+  int Nm = _Cm.n_cols;
   
   IloCplex cplex(*getModel());
   
@@ -20,6 +20,7 @@ rgrid *  isj::solveModel( isolve * is){
     bool systemfail=true;
     while(systemfail){
       n++; if (n>100) throw itlimit;
+      cout<<"Iteration: "<<n<<endl;
       cout<<"Checking Risk Constraint"<<endl;
       IloNumArray xsolve(getEnv(),Ng);
       IloNumArray betasolve(getEnv(),Ng);
@@ -28,22 +29,29 @@ rgrid *  isj::solveModel( isolve * is){
       cplex.getValues(xsolve,getG());
       cplex.getValues(ysolve,getF());
       cplex.getValues(betasolve,_beta);
+      double genCost = getIcost().getCost(getGrid(),xsolve);
       vec x=_gc->convert(xsolve);      
       vec y=_gc->convert(ysolve);      
       vec beta=_gc->convert(betasolve);      
-      vec ones(Ng,1,fill::ones);
+      vec ones(Nm,1,fill::ones);
 
+      cout<<"Cost: "<<genCost<<endl;
+      x.t().print("x: ");
+      y.t().print("y: ");
+      beta.t().print("beta: ");
       
-      vec pi = getA()*getCg()*beta*ones.t();
-      mat SIGy = getA()*(getCg()*beta*ones.t() - getCm())*_SIG*(getCg()*beta*ones.t() - getCm())*getA().t();
-
-      
-
+      vec pi = getA()*getCg()*beta;
+      //      pi.t().print("pi: ");
+      mat term = getA()*(getCg()*beta*ones.t() - getCm());    
+      mat SIGy = term*_SIG*term.t();
+      //      SIGy.print("sigy: ");
       vec z=_gc->risk(y,SIGy.diag(),_L,_p,_pc);
-
-      systemfail = postCC(y,z,&cplex);
       z.t().print("z: ");
+
+      systemfail = postCC(y,z,SIGy.diag(),&cplex);
+
       if(systemfail) cplex.solve();
+
     }
     //Risk constraint satisfied, record solution
     float total= float(clock() - tstart) / CLOCKS_PER_SEC;  
@@ -58,16 +66,9 @@ rgrid *  isj::solveModel( isolve * is){
     double genCost = getIcost().getCost(getGrid(),rg->getG());
     rg->setGenCost(genCost);
     
-    IloNumArray zout(getEnv(),Nl);
-    IloNumArray fout(getEnv(),Nl);
-    cplex.getValues(zout,_z);
-    cplex.getValues(fout,_yplus);
     cout<<"\n\nRisk constraint satisfied\n\n"<<endl;
     cout<<"Iterations: "<<n<<endl;
     cout<<"Time: "<<total<<endl;
-    cout<<"f: "<<fout<<endl;
-    cout<<"z: "<<zout<<endl;    
-
   }
 
   else{
@@ -80,16 +81,19 @@ rgrid *  isj::solveModel( isolve * is){
 
 }      
 
-bool isj::postCC(vec f, vec z,IloCplex * cplex, int iteration){
-  /*  //define tolerance for line risk > 0
+bool isj::postCC(vec y, vec z,vec SIGy,IloCplex * cplex, int iteration){
+
+  //define tolerance for line risk > 0
   double tol = pow(10,-5);
   int Nl = getGrid()->numBranches();
+  int Ng = getGrid()->numGens();
   double account=0;
   
-  IloNumArray yplus(getEnv(),Nl);
-  cplex->getValues(fp,getYplus());
+  //  IloNumArray yplus(getEnv(),Nl);
+  //  cplex->getValues(fp,getYplus());
   
   ranvar rv;
+  double Ueps = rv.ginv(_eps,_L,_p,_pc);
   double r = sum(z);
   cout<<"Risk: "<<r<<endl;
   if(r<=_eps+tol) return false;
@@ -97,33 +101,50 @@ bool isj::postCC(vec f, vec z,IloCplex * cplex, int iteration){
     cout<<"CUTTING ----------"<<endl;
     for(int i=0; i<Nl; i++){
       if (z(i)>0){
-	account += z(i);
+       	account += z(i);
+	if(_addCut(i)==0){
+	  _riskConstraint.setExpr( _riskConstraint.getExpr() + _z[i]);
+	  _yup[i].setExpr( _yplus[i] - getF()[i] );
+	  _ydown[i].setExpr( _yplus[i] + getF()[i] );
+	  double U = getGrid()->getBranch(i).getRateA();
+	  _yplus[i].setBounds(0,U*Ueps);	  
+	  getModel()->add(_yup[i]);
+	  getModel()->add(_ydown[i]);
+	  
+	  for(int j=0;j<Ng;j++){
+	    _pibeta[i].setExpr( _pibeta[i].getExpr() + _A(i,j)*_beta[j]);
+	  }
+	  getModel()->add(_pibeta[i]);
+       
+	}
 	//Add cuts for each line with positive risk
 	double y_i = abs(y(i));
 	cout<<"z_"<<i<<": "<<z(i)<<", y_"<<i<<": "<<y_i<<endl;
 	double U=getGrid()->getBranch(i).getRateA();
-//-SIGm	double dz=rv.deriveMu(_L,_p,_pc,abs(f(i))/U,sqrt(_SIGy(i,i))/U);
+	double dmu=rv.deriveMu(_L,_p,_pc,abs(y(i))/U,sqrt(SIGy(i))/U);
+	double dsigma=rv.deriveSigma(_L,_p,_pc,abs(y(i))/U,sqrt(SIGy(i))/U);
+	cout<<"dmu: "<<dmu<<", dsigma: "<<dsigma<<endl;
 	//	cout<<dz<<" "<<dz/U<<endl;
 	//	cout<<"z_"<<i<<" >= "<<dz<<"(y_"<<i<<" - "<<y_i<<")/"<<U<<" + "<<z(i)<<endl;
-	cout<<"z_"<<i<<" >= "<<dz/U<<" y_"<<i<<" + "<<z(i)-dz*y_i/U<<endl;
+	cout<<"z_"<<i<<" >= "<<dmu/U<<" y_"<<i<<" + "<<z(i)-dmu*y_i/U<<endl;
+
 	IloRange cut(getEnv(),-IloInfinity,0);
-	cut.setExpr( dz/U*(_fplus[i] - y_i) + z(i) - _z[i]);
+	cut.setExpr( dmu/U*(_yplus[i] - y_i) + dsigma/U*(_sd[i] - SIGy(i)) + z(i) - _z[i]);
 	cout<<cut<<endl;
 	getModel()->add(cut);
 	_addCut(i)=_addCut(i)+1;
 	
-	if(i==28){
+	//Output cut information
+	/*	if(i==28){
 	  double a=z(i)-dz*y_i/U;
 	  double b=dz/U;
 	  double u=1/U;
 	  double v=b;
 	  //	  cerr<<iteration<<"\t"<<y_i/U<<"\t"<<z(i)<<"\t"<<z(i)-dz*y_i/U<<"\t"<<dz/U<<"\t"<<u<<"\t"<<v<<endl;
-	}
+	  }*/
 
 	if(z(i)==1){
-	  f.t().print("f: ");
-	  cout<<"fplus: "<<fp<<endl;
-	  cout<<"f: "<<getF()<<endl;
+	  y.t().print("y: ");
 	  throw;
 	}
 	
@@ -132,7 +153,7 @@ bool isj::postCC(vec f, vec z,IloCplex * cplex, int iteration){
     cout<<"Accounted: "<<account<<endl;
     return true;
   }     
-  */
+
   return true;
 }
 
@@ -163,78 +184,33 @@ void isj::setup(){
 
   ranvar rv;
   double Ueps = rv.ginv(_eps,_L,_p,_pc);
+
   IloEnv env = getEnv();
   int Nl = getGrid()->numBranches();
   int Ng = getGrid()->numGens();
   int Nm = _Cm.n_cols;
+  _addCut = vec(Nl,fill::zeros);
+    _A = getA();
   //Calculate branch variance terms --------------------
 
+  cout<<"Build Static Variance Terms: "<<endl;
+
+  mat Ag = getA()*getCg();
+  mat Ak = getA()*getCm();
+  vec ones2(Nm,1,fill::ones);
   _sig_delta = accu(_SIG);
-  _sig = vec(Nl);
-  _sigger = mat(Nl,Nl);
-
-  time_t tstart;
-  tstart = clock();
-
-  mat Ag(Nl,Ng,fill::zeros);
-  for(int e=0;e<Nl;e++){
-    for(int j=0;j<Ng;j++){
-      Ag(e,j) = dot(getA().row(e),getCg().col(j)); 
-    }
-  }
-  //  Ag.print("Ag: ");
-
-  mat Ak(Nl,Nm,fill::zeros);
-  for(int e=0;e<Nl;e++){
-    for(int k=0;k<Nm;k++){
-      Ak(e,k) = dot(getA().row(e),getCm().col(k)); 
-    }
-  }
-  //  Ak.print("Ak: ");
-  float total= float(clock() - tstart) ;  
-
-  time_t tstart2;
-  tstart2 = clock();
-
-
-  mat Ag2 = getA()*getCg();
-  (Ag - Ag2).print("error: ");
-
-  mat Ak2 = getA()*getCm();
-  (Ak - Ak2).print("error: ");
-
-    float total2= float(clock() - tstart2);  
-
-    cout<<"2 is better if >0: "<<total-total2<<endl;
-
-  for(int e=0;e<Nl;e++){
-    double total=0;
-    for(int k=0;k<Nm;k++){
-      for(int k2=0;k2<Nm;k2++){
-	total=total+Ak(e,k)*_SIG(k,k2);
-      }
-    }
-    _sig(e)=total;
-  }
-  for(int e1=0; e1<Nl;e1++){
-    for(int e2=0;e2<Nl;e2++){
-      double t2=0;
-      for(int k1=0;k1<Nm;k1++){
-	for(int k2=0;k2<Nm;k2++){
-	  t2=t2+Ak(e1,k1)*Ak(e2,k2)*_SIG(k1,k2);
-	}
-      }
-      _sigger(e1,e2)=t2;
-    }
-  }
+  _sig = Ak*_SIG*ones2;
+  _sigger = Ak*_SIG*Ak.t();
   
 
+    
   //Build CPLEX model ----------------------------------
+  cout<<"Build CPLEX model for base: "<<endl;
 
   _z = IloNumVarArray(env,Nl,0,_eps);
   _yplus = IloNumVarArray(env,Nl,0,IloInfinity);
   _sd = IloNumVarArray(env,Nl,0,IloInfinity);
-  _beta = IloNumVarArray(env,Nl,0,IloInfinity);
+  _beta = IloNumVarArray(env,Ng,0,IloInfinity);
   _pi = IloNumVarArray(env,Nl,0,IloInfinity);
 
   _yup = IloRangeArray(env, Nl,0,IloInfinity);
@@ -244,7 +220,25 @@ void isj::setup(){
   _sdfe = IloRangeArray(env,Nl,0,IloInfinity);
 
   _riskConstraint = IloRange(env,0,_eps,"riskconstraint");
+  _riskConstraint.setExpr( IloSum(_z) );
+  _betaSum = IloRange(env,1,1,"betasum");
+  _betaSum.setExpr( IloSum(_beta) );
+
+  for(int i=0;i<Nl;i++){
+    double U = getGrid()->getBranch(i).getRateA();
+    getF()[i].setBounds(-U*Ueps,U*Ueps);
+  }
+  
+  addCost(_beta,_sig_delta);
+
+
+  
+  getModel()->add(_z);
+  getModel()->add(_beta);
   getModel()->add(_riskConstraint);
+  getModel()->add(_betaSum);
+
+
 
 }
 

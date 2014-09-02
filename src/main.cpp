@@ -164,7 +164,8 @@ int main(int argc, char* argv[]){
 
     isj sj(gr, &gc, SIG, Cm, L, p, pc, eps);
     
-
+    rgrid * rsj = sj.solveModel();
+    
   return 0;
   //Set Probability info
   ranvar rv;

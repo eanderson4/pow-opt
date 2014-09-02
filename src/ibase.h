@@ -74,6 +74,7 @@ class icost {
   icost(){}
 
   int buildCost(grid * gr, IloModel * mod, IloNumVarArray g);
+  int buildCost(grid * gr, IloModel * mod, IloNumVarArray g, IloNumVarArray beta, double sigD);
   int buildCostWithLoadShed(grid * gr, IloModel * mod, IloNumVarArray g,IloNumVarArray ls);
   void constrainCost(grid * gr, IloModel * mod, IloNumVarArray g, double budget);
   double getCost(grid * gr, IloNumArray g);

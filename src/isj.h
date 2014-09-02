@@ -14,7 +14,7 @@ class isj : public igrid {
   void setup();
   rgrid * solveModel( isolve * is=NULL);
   void lineLimitStatus(bool status);
-  bool postCC(vec f, vec z,IloCplex * cplex, int iteration=0);
+  bool postCC(vec f, vec z, vec SIGy,IloCplex * cplex, int iteration=0);
   mat getSIGm(){ return _SIG; }
   mat getA(){ return _gc->getH(); }
   mat getCb(){ return _gc->getC(); }
@@ -33,7 +33,7 @@ class isj : public igrid {
   {
     virtual const char* what() const throw()
     {
-      return "Cant solve this version";
+      return "Hit ITERATION LIMIT";
     }
   }itlimit;
 
@@ -42,6 +42,9 @@ class isj : public igrid {
 
   IloNumVar _risk;
   IloRange _riskConstraint;
+  IloRange _betaSum;
+  IloRange _budgetConstrain;
+  IloNumVarArray _nu;
   IloNumVarArray _z;
   IloNumVarArray _yplus;
   IloNumVarArray _sd;
@@ -60,11 +63,13 @@ class isj : public igrid {
   double _pc;
   double _eps;
 
+  mat _A;
+
   double _sig_delta;
   vec _sig;
   mat _sigger;
   
-  vec _in;
+  vec _addCut;
   
 };
 #endif

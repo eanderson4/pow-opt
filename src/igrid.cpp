@@ -51,6 +51,12 @@ int igrid::addCost(){
   return have_cost; 
 }
 
+int igrid::addCost(IloNumVarArray beta, double sigD){ 
+  have_cost=_ic.buildCost(_gr,getModel(),getG(),beta,sigD);
+  if(have_cost) cout<<"Built cost object with Arbitrary slack"<<endl;
+  return have_cost; 
+}
+
 void igrid::addSlack(IloNumArray g_nom, IloNumArray slack){
   _islk = islack(g_nom,slack);
   
