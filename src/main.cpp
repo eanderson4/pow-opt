@@ -108,7 +108,13 @@ int main(int argc, char* argv[]){
 
     mat SIGy(Nl,Nl,fill::zeros);
   SIGy = Hw*Cm*SIG*(Hw*Cm).t();
-  /*
+  /*  vec sd = SIGy.diag();
+
+  for(int e=0;e<Nl;e++){
+    cerr<<sd(e)<<"\t"<<endl;
+  }
+  return 0;
+  *//*
 
   mat cy(Nl,Nl,fill::zeros);
 

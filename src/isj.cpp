@@ -45,7 +45,10 @@ rgrid *  isj::solveModel( isolve * is){
       sd.t().print("sd: ");
       
       vec pi = getA()*getCg()*beta;
-      //      pi.t().print("pi: ");
+            pi.t().print("pi: ");
+	    for(int e=0; e<Nl;e++){
+	      cout<<e<<": "<<(pi(e)*pi(e)*_sig_delta-2*pi(e)*_sig(e)+_sigger(e))<<endl;
+	    }
       mat term = getA()*(getCg()*beta*ones.t() - getCm());    
       mat SIGy = term*_SIG*term.t();
       //      SIGy.print("sigy: ");
@@ -139,7 +142,7 @@ bool isj::postCC(vec y, vec z,vec SIGy,IloCplex * cplex, int iteration){
 	  cout<<_sig(i)<<endl;
 	  _sdfe[i].setExpr( -_pi[i]*_pi[i]*_sig_delta + 2*_pi[i]*_sig(i) - _sigger(i,i) + _sd[i]*_sd[i] );
 	  cout<<"sdfe"<<i<<": "<<_sdfe[i]<<endl;
-	  getModel()->add(_sdfe);
+	  getModel()->add(_sdfe[i]);
 	  ss.str("");
 	  ss<<"sdfe"<<i<<"[0,inf]";
 	  _sdfe[i].setName( ss.str().c_str() );
@@ -184,6 +187,7 @@ bool isj::postCC(vec y, vec z,vec SIGy,IloCplex * cplex, int iteration){
 
   return true;
 }
+
 
 void isj::lineLimitStatus(bool status){
   int Nl = getGrid()->numBranches();
