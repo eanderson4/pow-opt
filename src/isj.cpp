@@ -3,7 +3,8 @@
 rgrid *  isj::solveModel( isolve * is){
 
   rgrid * rg = new rgrid();
-  
+
+  double tol = pow(10,-5);
   time_t tstart;
   tstart = clock();
     
@@ -57,13 +58,21 @@ rgrid *  isj::solveModel( isolve * is){
       //      cout<<"Risk: "<<sum(z)<<endl;
 
       vec sdtest(Nl);
+      vec sdtest2(Nl);
       for(int e=0;e<Nl;e++){
 	sdtest(e) = sqrt( pi(e)*pi(e)*_sig_delta - 2 * pi(e)*_sig(e) + _sigger(e,e));
+	sdtest2(e) = _sigger(e,e)*_sig_delta - _sig(e)*_sig(e);
       }
-      sdtest.print("sdtest: ");
+      sdtest.t().print("sdtest: ");
+      (sdtest-SIGy.diag()).print("error: ");
+      sdtest2.t().print("sdtest2: ");
+	    
+      
       
 
-      systemfail = postCC(y,z,SIGy.diag(),&cplex);
+      
+      if( accu(z) < _eps+tol) systemfail=false;
+      else  systemfail = postCC(y,z,beta,SIGy.diag(),&cplex);
 
       if(systemfail) cplex.solve();
 
@@ -97,7 +106,7 @@ rgrid *  isj::solveModel( isolve * is){
 
 }      
 
-bool isj::postCC(vec y, vec z,vec SIGy,IloCplex * cplex, int iteration){
+bool isj::postCC(vec y, vec z, vec beta, vec SIGy,IloCplex * cplex, int iteration){
   stringstream ss;
   //define tolerance for line risk > 0
   double tol = pow(10,-5);
@@ -140,13 +149,13 @@ bool isj::postCC(vec y, vec z,vec SIGy,IloCplex * cplex, int iteration){
 	  _pibeta[i].setName( ss.str().c_str() );
 
 	  cout<<_sig(i)<<endl;
-	  _sdfe[i].setExpr( -_pi[i]*_pi[i]*_sig_delta + 2*_pi[i]*_sig(i) - _sigger(i,i) + _sd[i]*_sd[i] );
+	  /*	  _sdfe[i].setExpr( -_pi[i]*_pi[i]*_sig_delta + 2*_pi[i]*_sig(i) - _sigger(i,i) + _sd[i]*_sd[i] );
 	  cout<<"sdfe"<<i<<": "<<_sdfe[i]<<endl;
 	  getModel()->add(_sdfe[i]);
 	  ss.str("");
 	  ss<<"sdfe"<<i<<"[0,inf]";
 	  _sdfe[i].setName( ss.str().c_str() );
-	  
+	  */
 	}
 	//Add cuts for each line with positive risk
 	double y_i = abs(y(i));
@@ -165,6 +174,34 @@ bool isj::postCC(vec y, vec z,vec SIGy,IloCplex * cplex, int iteration){
 	getModel()->add(cut);
 	_addCut(i)=_addCut(i)+1;
 	
+	//Add cuts to describe standard deviation of branch flow
+	IloRange cut_sd(getEnv(),-IloInfinity,0);
+
+	int Nm = _indexM.n_elem;
+	double pi_i = dot(getA().row(i),getCg()*beta);
+	double sd_i =  sqrt( pi_i*pi_i*_sig_delta - 2 * pi_i*_sig(i) + _sigger(i,i));	
+	cut_sd.setExpr( sd_i - _sd[i] );
+	double term = (pi_i*_sig_delta - _sig(i))/sd_i;
+	for( int j=0; j<Nm;j++){
+	  double pf_j = _A(i,j)*term;
+	  cut_sd.setExpr( cut_sd.getExpr() + pf_j*(_beta[j]-beta(j)) );
+	}
+	cout<<"\n";
+	cout<<"sd_i: "<<sd_i<<" - "<<SIGy(i)<<endl;
+	cout<<"pi_i: "<<pi_i<<endl;
+	cout<<cut_sd<<endl;
+	getModel()->add(cut_sd);
+	
+	cout<<"\n\n";
+	
+	
+
+	
+
+	//-----------------
+
+
+
 	//Output cut information
 	/*	if(i==28){
 	  double a=z(i)-dz*y_i/U;
@@ -219,8 +256,20 @@ void isj::setup(){
 
   IloEnv env = getEnv();
   int Nl = getGrid()->numBranches();
+  int Nb = getGrid()->numBuses();
   int Ng = getGrid()->numGens();
-  int Nm = _Cm.n_cols;
+  int Nm = _indexM.n_elem;
+
+  mat Cm(Nb,Nm,fill::zeros);
+
+  for(int i=0;i<Nm;i++){
+    Cm(_indexM(i),i)=1;
+  }
+  _Cm = Cm;
+  for(int i=0;i<Nm;i++){
+    _Cm.col(i).print("i: ");
+  }
+
   _addCut = vec(Nl,fill::zeros);
     _A = getA();
   //Calculate branch variance terms --------------------

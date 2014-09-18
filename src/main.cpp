@@ -10,7 +10,7 @@ using namespace std;
 
 int main(int argc, char* argv[]){
 
-  if(argc<=9){
+  if(argc<=6){
     cout<<"cmd: pow case/30.db <m0> <m1> <e0> <e1> <L> <p> <B>\n"
 	<<"\trun main for case30\n"
 	<<"\t<m0> base capacity multiplier\n"
@@ -30,9 +30,9 @@ int main(int argc, char* argv[]){
   double L=atof(argv[6]);
   double p=atof(argv[7]);
   double B=atof(argv[8]);
-  int sn=atoi(argv[9]);
   double pc=.85;
 
+  ///  int sn=atoi(argv[7]); //standard deviation test
 
   sqlInter db;
   grid * gr = new grid;
@@ -58,6 +58,7 @@ int main(int argc, char* argv[]){
   int num=5;
   int Nm=num;
   int index[5] = { 1, 3, 6, 20, 28 };
+  vec indexM(Nm,fill::zeros);
   double stdv[5] = {3,.5,5,3.75,.3};
 
   int Nb = gr->numBuses();
@@ -66,6 +67,7 @@ int main(int argc, char* argv[]){
   mat SIG(num,num,fill::zeros);
   for(int i=0;i<num;i++){
     Cm(index[i],i)=1;
+    indexM(i)=index[i];
     SIG(i,i)=pow(stdv[i],2)*B;
   }
 
@@ -86,8 +88,23 @@ int main(int argc, char* argv[]){
     if(yes(i) <= .5) alpha(i)=0;
   }
   double total=accu(alpha);//  alpha(sn)=1;
-  if(total==0) {alpha(sn)=1;total=1;}
+  if(total==0) {
+    for(int i=0;i<Ng;i++){
+      alpha(i)=1;
+      total=total+1;
+    }
+  }
   alpha=alpha/total;
+
+  /*  alpha(0)=atof(argv[2]);
+  alpha(1)=atof(argv[3]);
+  alpha(2)=atof(argv[4]);
+  alpha(3)=atof(argv[5]);
+  alpha(4)=atof(argv[6]);
+  alpha(5)=1-atof(argv[2]);*/
+
+  alpha.t().print("alpha: ");
+
   vec slack=Cg*alpha;
 
   double randcost=0;
@@ -106,15 +123,20 @@ int main(int argc, char* argv[]){
   //  sigger.diag().print("sigger: ");
   //  SIG.print("SIG: ");
 
-    mat SIGy(Nl,Nl,fill::zeros);
+  mat SIGy(Nl,Nl,fill::zeros);
   SIGy = Hw*Cm*SIG*(Hw*Cm).t();
-  /*  vec sd = SIGy.diag();
-
+  vec sd = SIGy.diag();
+  
+  /*  cerr<<alpha(0);
+  cerr<<fixed<<setprecision(5);
   for(int e=0;e<Nl;e++){
-    cerr<<sd(e)<<"\t"<<endl;
+    cerr<<"\t"<<sd(e);
   }
-  return 0;
-  *//*
+  cerr<<"\n";*/
+  //  return 0;
+
+
+  /*
 
   mat cy(Nl,Nl,fill::zeros);
 
@@ -165,12 +187,12 @@ int main(int argc, char* argv[]){
     cout<<"total error: "<<accu(errvar)<<endl;
   */
 
-    vec eN(Nl, fill::ones);
-    eN = eN*epsN;
-
-    isj sj(gr, &gc, SIG, Cm, L, p, pc, eps);
-    try{
-      rgrid * rsj = sj.solveModel();
+  vec eN(Nl, fill::ones);
+  eN = eN*epsN;
+  
+  isj sj(gr, &gc, SIG, indexM, L, p, pc, eps);
+  try{
+    rgrid * rsj = sj.solveModel();
   }
   catch(IloException& e){
     cerr<<"Concert exception: "<<e<<endl; 

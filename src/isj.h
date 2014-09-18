@@ -10,11 +10,11 @@ using namespace std;
 class isj : public igrid {
 
  public:
- isj(grid * gr, gridcalc * gc, mat SIGm, mat Cm,double L, double p, double pc, double eps): igrid(gr), _gc(gc), _SIG(SIGm), _Cm(Cm) , _L(L), _p(p), _pc(pc), _eps(eps) { setup(); }
+ isj(grid * gr, gridcalc * gc, mat SIGm, vec indexM,double L, double p, double pc, double eps): igrid(gr), _gc(gc), _SIG(SIGm), _indexM(indexM) , _L(L), _p(p), _pc(pc), _eps(eps) { setup(); }
   void setup();
   rgrid * solveModel( isolve * is=NULL);
   void lineLimitStatus(bool status);
-  bool postCC(vec f, vec z, vec SIGy,IloCplex * cplex, int iteration=0);
+  bool postCC(vec f, vec z, vec beta, vec SIGy,IloCplex * cplex, int iteration=0);
   mat getSIGm(){ return _SIG; }
   mat getA(){ return _gc->getH(); }
   mat getCb(){ return _gc->getC(); }
@@ -57,6 +57,7 @@ class isj : public igrid {
 
 
   mat _SIG;
+  vec _indexM;
   mat _Cm;
   double _L;
   double _p;
