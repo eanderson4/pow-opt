@@ -185,3 +185,50 @@ void ijcc::setup(){
   getModel()->add(_fdown);
   getModel()->add(_riskConstraint);
 }
+
+void ijcc::setup2(){
+  cout<<"Setup joint chance constraint"<<endl;
+  stringstream ss;
+
+  ranvar rv;
+  double Ueps = rv.ginv(_eps,_L,_p,_pc);
+  IloEnv env = getEnv();
+  int Nl = getGrid()->numBranches();
+  _addCut = vec(Nl,fill::zeros);
+  _z = IloNumVarArray(env,Nl,0,IloInfinity);
+  _fplus = IloNumVarArray(env,Nl,0,IloInfinity);
+
+  _fup = IloRangeArray(env, Nl,0,IloInfinity);
+  _fdown = IloRangeArray(env,Nl,0,IloInfinity);
+
+  cout<<"Ueps: "<<Ueps<<endl;
+  
+  for(int i=0;i<Nl;i++){
+    _fup[i].setExpr( _fplus[i] - getF()[i] );
+    _fdown[i].setExpr( _fplus[i] + getF()[i] );
+    double U = getGrid()->getBranch(i).getRateA();
+    getF()[i].setBounds(-U*Ueps,U*Ueps);
+    _fplus[i].setBounds(0,U*Ueps);
+    ss.str("");
+    ss<<"fplus"<<i<<"[0,"<<U*Ueps<<"]";
+    _fplus[i].setName( ss.str().c_str() );
+    ss.str("");
+    ss<<"z"<<i<<"[0,"<<U*Ueps<<"]";
+    _z[i].setName( ss.str().c_str() );
+    ss.str("");
+    ss<<"fup"<<i;
+    _fup[i].setName( ss.str().c_str() );
+    ss.str("");
+    ss<<"fdown"<<i;
+    _fdown[i].setName( ss.str().c_str() );
+  }
+
+  _riskConstraint = IloRange(env,0,_eps,"riskconstraint");
+  _riskConstraint.setExpr( IloSum(_z) );
+  
+  getModel()->add(_z);
+  getModel()->add(_fplus);
+  getModel()->add(_fup);
+  getModel()->add(_fdown);
+  getModel()->add(_riskConstraint);
+}

@@ -218,7 +218,8 @@ int main(int argc, char* argv[]){
   try{
     in1 bn1(gr, SIGy, Hw, m1); 
     ijn1 n1(gr, SIGy,Hw,L,p,pc,eps,epsN);
-    ijn1 jcc(gr, SIGy,Hw,L,p,pc,eps,1);
+    //    ijn1 jcc(gr, SIGy,Hw,L,p,pc,eps,1);
+    ijcc jcc(gr, SIGy, L, p, pc, eps);
     isj sj(gr, &gc, SIG, indexM, L, p, pc, eps);
 
     n1.addCost();
