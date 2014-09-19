@@ -14,7 +14,7 @@ rgrid *  ijn1::solveModel( isolve * is){
   
   if(is!=NULL) is->setCplexParams(&cplex);
   int n=0;
-  double large=0;
+  double large=30;
 
   //  cerr<<"n\tyn\tzn\tan\tbn\tun\tvn\n";
   cout<<"Check: "<<sum(_check)<<" / "<<getGrid()->numBranches()<<endl;
@@ -22,9 +22,9 @@ rgrid *  ijn1::solveModel( isolve * is){
   if (cplex.solve()){
     bool systemfail=true;
     while(systemfail){
-      n++; if (n>500) throw itlimit;  
+      n++;       if (n>500) throw itlimit;  
       cout<<" ----- Iteration - "<<n<<" ----- "<<endl;
-
+      
       IloNumArray fsolve(getEnv(),Nl);
       cplex.getValues(fsolve,getF());
       vec f0=gc.convert(fsolve);
@@ -37,9 +37,10 @@ rgrid *  ijn1::solveModel( isolve * is){
       cout<<"Base system"<<endl;
       systemfail = postCC(f0,z0,&cplex,n);
       
-      if(n==2) large=5000;
+      cout<<"n: "<<n<<endl;
+      if (n>=2) large=large+10000;
       for(int i=0;i<Nl;i++){
-	if(_check(i) && i<(30 + large)){
+	if(_check(i) && i<large){
 	  cout<<"Contingency: "<<i<<endl;
 	  vec fn = getN1(i,f0,g0);
 	  vec zn=gc.risk(fn,_var.row(i).t(),getL(),getP(),getPc());
@@ -49,9 +50,10 @@ rgrid *  ijn1::solveModel( isolve * is){
 	}
 	else cout<<"dont check Contingency "<<i<<endl;
       }
-
       
-      if(!systemfail && n>2) break;
+      if(n<3) systemfail=true;
+      
+      if(!systemfail) break;
       if(!cplex.solve()) break;
 
     }

@@ -153,6 +153,8 @@ void ijcc::setup(){
 
   _fup = IloRangeArray(env, Nl,0,IloInfinity);
   _fdown = IloRangeArray(env,Nl,0,IloInfinity);
+
+  cout<<"Ueps: "<<Ueps<<endl;
   
   for(int i=0;i<Nl;i++){
     _fup[i].setExpr( _fplus[i] - getF()[i] );

@@ -26,6 +26,9 @@ class isj : public igrid {
   double getPc(){ return _pc; }
   IloNumVarArray getZ(){ return _z; }
   IloNumVarArray getYplus(){ return _yplus; }
+  
+  vec getBeta(){ return _betaSolve; }
+  vec getSD(){ return _sdSolve; }
 
   //Risk functions
   
@@ -71,6 +74,9 @@ class isj : public igrid {
   mat _sigger;
   
   vec _addCut;
+
+  vec _betaSolve;
+  vec _sdSolve;
   
 };
 #endif

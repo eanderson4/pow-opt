@@ -118,10 +118,10 @@ int main(int argc, char* argv[]){
   mat A = gc.getH();
   mat Lo = gc.getL(A);  
 
-  //  Ak.print("Ak: ");
-  //  sig.print("sig: ");
-  //  sigger.diag().print("sigger: ");
-  //  SIG.print("SIG: ");
+  //    Ak.print("Ak: ");
+  //    sig.print("sig: ");
+  //    sigger.diag().print("sigger: ");
+  //    SIG.print("SIG: ");
 
   mat SIGy(Nl,Nl,fill::zeros);
   SIGy = Hw*Cm*SIG*(Hw*Cm).t();
@@ -190,9 +190,9 @@ int main(int argc, char* argv[]){
   vec eN(Nl, fill::ones);
   eN = eN*epsN;
   
-  isj sj(gr, &gc, SIG, indexM, L, p, pc, eps);
+
   try{
-    rgrid * rsj = sj.solveModel();
+
   }
   catch(IloException& e){
     cerr<<"Concert exception: "<<e<<endl; 
@@ -203,7 +203,7 @@ int main(int argc, char* argv[]){
   catch(...){
     cerr<<"Unknown Error "<<endl;
   }      
-  return 0;
+
   //Set Probability info
   ranvar rv;
 
@@ -219,6 +219,7 @@ int main(int argc, char* argv[]){
     in1 bn1(gr, SIGy, Hw, m1); 
     ijn1 n1(gr, SIGy,Hw,L,p,pc,eps,epsN);
     ijn1 jcc(gr, SIGy,Hw,L,p,pc,eps,1);
+    isj sj(gr, &gc, SIG, indexM, L, p, pc, eps);
 
     n1.addCost();
     jcc.addCost();
@@ -227,6 +228,9 @@ int main(int argc, char* argv[]){
     rgrid * rbn1 = bn1.solveModel(&is);
     rgrid * rjcc = jcc.solveModel(&is);
     rgrid * rn1_1 = n1.solveModel(&is);
+    rgrid * rsj = sj.solveModel();
+
+    //    return 0;
 
     double o0=rbase->getObjective();
     vec f0=gc.convert(rbase->getF());
@@ -255,6 +259,14 @@ int main(int argc, char* argv[]){
     vec z3=gc.risk(f3,SIGy.diag(),L,p,pc);
     double r3 = sum(z3);
     IloCplex::CplexStatus s3=rbn1->getStatus();
+
+    double o4=rsj->getObjective();
+    vec f4=gc.convert(rsj->getF());
+    vec g4=gc.convert(rsj->getG());
+    vec sd4=sj.getSD();
+    vec z4=gc.risk(f4,sd4,L,p,pc);
+    double r4 = sum(z4);
+    IloCplex::CplexStatus s4=rsj->getStatus();
     
 
     f0.t().print("f0: ");
@@ -271,11 +283,24 @@ int main(int argc, char* argv[]){
     cout<<"gen1: "<<rn1_1->getG()<<endl;
     
     double TG = accu(g0);
+    double exCost=0;
+    for(int j=0;j<Ng;j++){
+      double TV = accu(SIG);
+      gen gj = gr->getGen(j);
+      double c2 = gj.getC2();
+      exCost=exCost + c2*alpha(j)*alpha(j)*TV;
+    }
+    //    o0=o0+exCost;
+    //    o1=o1+exCost;
+    //    o2=o2+exCost;
+    //    o3=o3+exCost;
+
 
     running_stat<double> stats_r0;
     running_stat<double> stats_r1;
     running_stat<double> stats_r2;
     running_stat<double> stats_r3;
+    running_stat<double> stats_r4;
 
     vec check = n1.getCheck();
     for(int i=0;i<Nl;i++){
@@ -287,6 +312,7 @@ int main(int argc, char* argv[]){
 	vec f1n = n1.getN1(i,f1,g1);
 	vec z1n=gc.risk(f1n,SIGy.diag(),L,p,pc);
 	double r1n = sum(z1n);
+	if(r1n>epsN) cout<<"--------"<<i<<" - "<<r1n<<endl;
 	stats_r1(r1n);
 	vec f2n = n1.getN1(i,f2,g2);
 	vec z2n=gc.risk(f2n,SIGy.diag(),L,p,pc);
@@ -296,6 +322,10 @@ int main(int argc, char* argv[]){
 	vec z3n=gc.risk(f3n,SIGy.diag(),L,p,pc);
 	double r3n = sum(z3n);
 	stats_r3(r3n);
+	vec f4n = n1.getN1(i,f4,g4);
+	vec z4n=gc.risk(f4n,sd4,L,p,pc);
+	double r4n = sum(z4n);
+	stats_r4(r4n);
       }
     }
     cout.precision(5);
@@ -303,7 +333,7 @@ int main(int argc, char* argv[]){
     cout<<"Total Gen: "<<TG<<endl;
     cout<<"Total Variance: "<<TV<<" ( "<<sqrt(TV)<<" )"<<endl;
     cout<<"Total Random Cost: "<<randcost<<endl;
-    slack.t().print("slack: ");
+    alpha.t().print("slack: ");
     cout<<"\n\n";
     cout<<"OPF"<<"\t"<<s0<<endl;
     cout<<"C0: "<<o0<<endl;
@@ -341,13 +371,26 @@ int main(int argc, char* argv[]){
     cout << "min  = " << stats_r1.min()  << endl;
     cout << "max  = " << stats_r1.max()  << endl;
     cout<<endl;
+    cout<<"SJ"<<"\t"<<s4<<endl;
+    cout<<"C4: "<<o4<<endl;
+    cout<<"r4 - "<<r4<<endl;
+    cout << "count = " << stats_r4.count() << endl;
+    cout << "mean = " << stats_r4.mean() << endl;
+    cout << "stdv  = " << stats_r4.stddev()  << endl;
+    cout << "min  = " << stats_r4.min()  << endl;
+    cout << "max  = " << stats_r4.max()  << endl;
+    cout<<endl;
 
+    SIGy.diag().t().print("sd: ");
+    sd4.t().print("sd4: ");
+
+    /*
     for(int i=0;i<Ng;i++)   cerr<<alpha(i)<<"\t";
     cerr<<"\t"<<randcost<<"\t"<<TV<<"\t\t";
     cerr<<o0<<"\t"<<r0<<"\t"<<stats_r0.mean()<<"\t"<<stats_r0.max()<<"\t\t";
     cerr<<o2<<"\t"<<r2<<"\t"<<stats_r2.mean()<<"\t"<<stats_r2.max()<<"\t\t";
     cerr<<o3<<"\t"<<r3<<"\t"<<stats_r3.mean()<<"\t"<<stats_r3.max()<<"\t\t";
-    cerr<<o1<<"\t"<<r1<<"\t"<<stats_r1.mean()<<"\t"<<stats_r1.max()<<endl;
+    cerr<<o1<<"\t"<<r1<<"\t"<<stats_r1.mean()<<"\t"<<stats_r1.max()<<endl;*/
     
   }
   catch(IloException& e){

@@ -63,7 +63,7 @@ int ibase::buildModel(grid * gr ) {
 
       _f[k].setBounds(-limit,limit);
       ss.str("");
-      ss<<"f"<<k<<"["<<-limit<<","<<limit<<"]";
+      ss<<"f"<<k; //<<"["<<-limit<<","<<limit<<"]";
       _f[k].setName( ss.str().c_str() );
 
 
