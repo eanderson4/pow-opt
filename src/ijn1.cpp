@@ -165,7 +165,7 @@ bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex, int iteration){
   //define tolerance for line risk > 0
   stringstream ss;
   grid * gr = getGrid();
-  double tol = pow(10,-5);
+  double tol = pow(10,-6);
   ranvar rv;
   int Nl = getGrid()->numBranches();
 

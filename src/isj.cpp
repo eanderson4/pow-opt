@@ -4,7 +4,7 @@ rgrid *  isj::solveModel( isolve * is){
 
   rgrid * rg = new rgrid();
 
-  double tol = pow(10,-5);
+  double tol = pow(10,-6);
   time_t tstart;
   tstart = clock();
     
@@ -143,7 +143,7 @@ rgrid *  isj::solveModel( isolve * is){
 bool isj::postCC(vec y, vec z, vec beta, vec SIGy,IloCplex * cplex, int iteration){
   stringstream ss;
   //define tolerance for line risk > 0
-  double tol = pow(10,-5);
+  double tol = pow(10,-6);
   int Nl = getGrid()->numBranches();
   int Ng = getGrid()->numGens();
   double account=0;
