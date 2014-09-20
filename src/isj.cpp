@@ -164,7 +164,7 @@ bool isj::postCC(vec y, vec z, vec beta, vec SIGy,IloCplex * cplex, int iteratio
 	cout<<"Line "<<i<<endl;
 	if(_addCut(i)==0){
 	  cout<<"Initialize Cutting Variables for \n \tLine "<<i<<endl;
-	  //	  _riskConstraint.setExpr( _riskConstraint.getExpr() + _z[i]);
+	  _riskConstraint.setExpr( _riskConstraint.getExpr() + _z[i]);
 	  _yup[i].setExpr( _yplus[i] - getF()[i] );
 	  _ydown[i].setExpr( _yplus[i] + getF()[i] );
 	  double U = getGrid()->getBranch(i).getRateA();
@@ -185,6 +185,8 @@ bool isj::postCC(vec y, vec z, vec beta, vec SIGy,IloCplex * cplex, int iteratio
 	  _pibeta[i].setName( ss.str().c_str() );
 
 	  cout<<"sig_ee sig_delta - sig_e sig_e: "<<(_sigger(i,i)*_sig_delta - _sig(i)*_sig(i))<<endl;
+	  cout<<"sig_e: "<<_sig(i)<<endl;
+	  cout<<"sigger_e: "<<_sigger(i,i)<<endl;
 	  cout<<"\n";
 	  /*	  _sdfe[i].setExpr( -_pi[i]*_pi[i]*_sig_delta + 2*_pi[i]*_sig(i) - _sigger(i,i) + _sd[i]*_sd[i] );
 	  cout<<"sdfe"<<i<<": "<<_sdfe[i]<<endl;
@@ -222,13 +224,16 @@ bool isj::postCC(vec y, vec z, vec beta, vec SIGy,IloCplex * cplex, int iteratio
 	cout<<"\n";
 	for( int j=0; j<Ng;j++){
 	  //double pf_j = term;
-	  double pf_j = _A(i,j)*term;
-	  cout<<j<<": "<<beta(j)<<" "<<pf_j<<endl;
+	  double pf_j = _A(i,_indexG(j))*term;
+	  cout<<j<<": "<<_A(i,_indexG(j))<<"\t"<<beta(j)<<" "<<pf_j<<endl;
 	  cut_sd.setExpr( cut_sd.getExpr() + pf_j*(_beta[j]-beta(j)) );
 	}
 	cout<<"\n";
 	cout<<"sd_i: "<<sd_i<<" - "<<sqrt(SIGy(i))<<endl;
 	cout<<"pi_i: "<<pi_i<<endl;
+	  cout<<"sig_e: "<<_sig(i)<<endl;
+	  cout<<"sigger_e: "<<_sigger(i,i)<<endl;
+
 	cout<<cut_sd<<endl;
 	getModel()->add(cut_sd);
 	
@@ -308,6 +313,8 @@ void isj::setup(){
   }
   _Cm = Cm;
 
+  _indexG = _gc->getIndexG();
+
   _addCut = vec(Nl,fill::zeros);
     _A = getA();
   //Calculate branch variance terms --------------------
@@ -319,9 +326,7 @@ void isj::setup(){
   _sig_delta = accu(_SIG);
   _sig = Ak*_SIG*ones2;
   _sigger = Ak*_SIG*Ak.t();
-  
-
-    
+      
   //Build CPLEX model ----------------------------------
   cout<<"Build CPLEX model for base: "<<endl;
 
@@ -338,7 +343,7 @@ void isj::setup(){
   _sdfe = IloRangeArray(env,Nl,0,IloInfinity);
 
   _riskConstraint = IloRange(env,0,_eps,"riskconstraint");
-  _riskConstraint.setExpr( IloSum(_z) );
+  //  _riskConstraint.setExpr( IloSum(_z) );
   _betaSum = IloRange(env,1,1,"betasum");
   _betaSum.setExpr( IloSum(_beta) );
 
@@ -362,8 +367,17 @@ void isj::setup(){
     _beta[j].setName( ss.str().c_str() );
   }
   
-  addCost(_beta,_sig_delta);
+  /*  _beta[0].setBounds(0,0);
+  _beta[1].setBounds(.3308,.3308);
+  _beta[2].setBounds(0,0);
+  _beta[3].setBounds(0,0);
+  _beta[4].setBounds(.2722,.2722);
+  //  _beta[5].setBounds(.3969,.3969);
+  */
 
+  
+  
+  addCost(_beta,_sig_delta);
 
   getModel()->add(_sd);
 

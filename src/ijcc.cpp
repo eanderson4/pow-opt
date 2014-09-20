@@ -194,12 +194,21 @@ void ijcc::setup2(){
   double Ueps = rv.ginv(_eps,_L,_p,_pc);
   IloEnv env = getEnv();
   int Nl = getGrid()->numBranches();
+  int Ng = getGrid()->numGens();
   _addCut = vec(Nl,fill::zeros);
   _z = IloNumVarArray(env,Nl,0,IloInfinity);
   _fplus = IloNumVarArray(env,Nl,0,IloInfinity);
 
   _fup = IloRangeArray(env, Nl,0,IloInfinity);
   _fdown = IloRangeArray(env,Nl,0,IloInfinity);
+
+  _bt = IloNumVarArray(env,Ng,0,1);
+  double sig_delta=32.4025;
+  for(int i=0; i<Ng;i++){
+    _bt[i].setBounds(_beta(i),_beta(i));
+  }
+  
+  addCost(_bt,sig_delta);
 
   cout<<"Ueps: "<<Ueps<<endl;
   

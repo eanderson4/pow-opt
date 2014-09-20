@@ -11,6 +11,7 @@ class ijn1 : public ijcc {
 
  public:
  ijn1(grid * gr,mat SIGy, mat Hw, double L, double p, double pc, double eps, double epsN): ijcc(gr,SIGy,L,p,pc,eps), _Hw(Hw),_epsN(epsN) { setup(); }
+ ijn1(grid * gr,mat SIGy, mat Hw, vec beta, double L, double p, double pc, double eps, double epsN): ijcc(gr,SIGy,beta,L,p,pc,eps), _Hw(Hw),_epsN(epsN) { setup(); }
   void setup();
   rgrid * solveModel( isolve * is=NULL);
   bool postN1(int n,vec f, vec g,vec z, IloCplex * cplex, int iteration=0);

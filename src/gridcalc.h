@@ -28,6 +28,7 @@ class gridcalc
   vec getDelF(vec delg, vec slack);
   mat getC(){ return _C; };  //Admittance Matrix
   mat getCm();  //GenAdmittance Matrix
+  vec getIndexG();  //GenAdmittance Matrix
   mat getH(){ return _H; };  //Linear Shift Factor
   mat getHw(vec slack);      //with arbitray slack distribution
   mat getL(mat Hw);          //Line outage distribution factor

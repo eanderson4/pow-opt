@@ -55,9 +55,16 @@ gridcalc::gridcalc(grid * gr) {
   cout<<"H calculated using inverse of Bbus matrix"<<endl;
   _H=H;
 
+
   int Ng = gr->numGens();
   vec slackdist(Nb,1,fill::zeros);
   
+  /*  for(int i=0;i<Ng;i++){
+    cout<<i<<": "<<_H(i,9)<<endl;
+  }
+  double test;
+  cin>>test;*/
+
   cout<<"slack find"<<endl;
 
   double total=0;
@@ -160,6 +167,19 @@ mat gridcalc::getCm(){
   }
 
   return Cm;
+}
+
+vec gridcalc::getIndexG(){
+  int Nb=_gr->numBuses();
+  int Ng=_gr->numGens();
+  vec indexG(Ng,fill::zeros);
+  for(int i=0;i<Ng;i++){
+    gen g = _gr->getGen(i);
+    int bus=_gr->getBusNum(g.getBus());
+    indexG(i)=bus;
+  }
+
+  return indexG;
 }
 
 vec gridcalc::risk(vec f,vec varf,double L, double p, double pc){

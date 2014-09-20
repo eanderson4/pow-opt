@@ -61,6 +61,7 @@ class isj : public igrid {
 
   mat _SIG;
   vec _indexM;
+  vec _indexG;
   mat _Cm;
   double _L;
   double _p;

@@ -218,12 +218,11 @@ int main(int argc, char* argv[]){
   try{
     in1 bn1(gr, SIGy, Hw, m1); 
     ijn1 n1(gr, SIGy,Hw,L,p,pc,eps,epsN);
-    //    ijn1 jcc(gr, SIGy,Hw,L,p,pc,eps,1);
-    ijcc jcc(gr, SIGy, L, p, pc, eps);
+    ijn1 jcc(gr, SIGy,Hw,alpha,L,p,pc,eps,1);
     isj sj(gr, &gc, SIG, indexM, L, p, pc, eps);
 
     n1.addCost();
-    jcc.addCost();
+    //    jcc.addCost();
     bn1.addCost();
 
     rgrid * rbn1 = bn1.solveModel(&is);
@@ -264,6 +263,7 @@ int main(int argc, char* argv[]){
     double o4=rsj->getObjective();
     vec f4=gc.convert(rsj->getF());
     vec g4=gc.convert(rsj->getG());
+    vec beta4=sj.getBeta();
     vec sd4=sj.getSD();
     vec z4=gc.risk(f4,sd4,L,p,pc);
     double r4 = sum(z4);
@@ -382,8 +382,11 @@ int main(int argc, char* argv[]){
     cout << "max  = " << stats_r4.max()  << endl;
     cout<<endl;
 
-    SIGy.diag().t().print("sd: ");
-    sd4.t().print("sd4: ");
+
+    cout<<"dif: "<<o4-o2<<endl;
+    beta4.t().print("beta: ");
+    //    SIGy.diag().t().print("sd: ");
+    //    sd4.t().print("sd4: ");
 
     /*
     for(int i=0;i<Ng;i++)   cerr<<alpha(i)<<"\t";
@@ -392,7 +395,8 @@ int main(int argc, char* argv[]){
     cerr<<o2<<"\t"<<r2<<"\t"<<stats_r2.mean()<<"\t"<<stats_r2.max()<<"\t\t";
     cerr<<o3<<"\t"<<r3<<"\t"<<stats_r3.mean()<<"\t"<<stats_r3.max()<<"\t\t";
     cerr<<o1<<"\t"<<r1<<"\t"<<stats_r1.mean()<<"\t"<<stats_r1.max()<<endl;*/
-    
+
+
   }
   catch(IloException& e){
     cerr<<"Concert exception: "<<e<<endl; 
