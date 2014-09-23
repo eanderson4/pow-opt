@@ -10,7 +10,7 @@ using namespace std;
 class isj : public igrid {
 
  public:
- isj(grid * gr, gridcalc * gc, mat SIGm, vec indexM,double L, double p, double pc, double eps): igrid(gr), _gc(gc), _SIG(SIGm), _indexM(indexM) , _L(L), _p(p), _pc(pc), _eps(eps) { setup(); }
+ isj(grid * gr, gridcalc * gc, mat SIGm, vec indexM,double L, double p, double pc, double eps, double epsG=1): igrid(gr), _gc(gc), _SIG(SIGm), _indexM(indexM) , _L(L), _p(p), _pc(pc), _eps(eps), _epsG(epsG) { setup(); }
   void setup();
   rgrid * solveModel( isolve * is=NULL);
   void lineLimitStatus(bool status);
@@ -38,6 +38,7 @@ class isj : public igrid {
   void setBetaSolve(vec beta){ _betaSolve=beta; }
   void setSDSolve(vec sd){ _sdSolve=sd; }
 
+
   
   class iterlimit: public exception 
   {
@@ -61,6 +62,8 @@ class isj : public igrid {
   IloNumVarArray _beta;
   IloRangeArray _yup;
   IloRangeArray _ydown;
+  IloRangeArray _genup;
+  IloRangeArray _gendown;
 
   mat _SIG;
   vec _indexM;
@@ -70,6 +73,7 @@ class isj : public igrid {
   double _p;
   double _pc;
   double _eps;
+  double _epsG;
 
   mat _A;
 

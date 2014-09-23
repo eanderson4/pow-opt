@@ -17,7 +17,6 @@ rgrid *  isjn::solveModel( isolve * is){
   int n=0;
   double large=20;
 
-  //  cerr<<"n\tyn\tzn\tan\tbn\tun\tvn\n";
   cout<<"Check: "<<sum(_check)<<" / "<<getGrid()->numBranches()<<endl;
 
   if (cplex.solve()){
@@ -85,16 +84,7 @@ rgrid *  isjn::solveModel( isolve * is){
 	    sd_en(e) = sqrt( term);
 	  }
 	  vec sigpsi = _sigpsi.col(i);
-
-	  vec error_sd = sdn - square(sd_en);
-	  //	  sigpsi.t().print("sigpsi: ");
-	  //	  psi_en.t().print("psi: ");
-	  //	  sdn.t().print("sdn: ");
-	  //	  square(sd_en).t().print("sd_en: ");
-	  //	  error_sd.t().print("errod sd: ");
-	  //	  cout<<"sdn error: "<<accu(error_sd)<<endl;
-
-	  
+	  vec error_sd = sdn - square(sd_en); 
 
 
 	  vec zn=getGC()->risk(yn,sdn,getL(),getP(),getPc());
@@ -200,35 +190,14 @@ void isjn::setup(){
   
 }
 
-    /*
-        _riskConstraint[n].setExpr( IloSum(_z[n]) );
-        ss.str("");
-        ss<<"rc"<<n<<"[0,"<<getEps()<<"]";
-        _riskConstraint[n].setName( ss.str().c_str() );
-    for(int e=0;e<Nl;e++){
-	ss.str("");
-	ss<<"z"<<n<<","<<e<<"[0,"<<_epsN<<"]";
-	_z[n][e].setName( ss.str().c_str() );
-      }
-	  
-        getModel()->add(_z[n]);
-        getModel()->add(_riskConstraint[n]);
-	        getModel()->add(_fplus[n]);  /// save
-		getModel()->add(_fup);  //save
-		getModel()->add(_fdown); ///save
-    */
-
-
-
 bool isjn::postN1(int n, vec yn, vec zn, vec beta, vec sdn, IloCplex * cplex, int iteration){
   
   if(_check(n)!=1) return false;
   //define tolerance for line risk > 0
   stringstream ss;
-  grid * gr = getGrid();
+
   double tol = pow(10,-6);
   int Nl = getGrid()->numBranches();
-  int Ng = getGrid()->numGens();
 
   mat A=getA();
   vec indexG = getIndexG();
@@ -279,10 +248,7 @@ bool isjn::postN1(int n, vec yn, vec zn, vec beta, vec sdn, IloCplex * cplex, in
 	double dmu=rv.deriveMu(L,p,pc,y_i/U,sqrt(sdn(i))/U);
 	double dsigma=rv.deriveSigma(L,p,pc,y_i/U,sqrt(sdn(i))/U);
 	cout<<"dmu: "<<dmu<<", dsigma: "<<dsigma<<endl;
-	//	cout<<dz<<" "<<dz/U<<endl;
-	//	cout<<"z_"<<i<<" >= "<<dz<<"(y_"<<i<<" - "<<y_i<<")/"<<U<<" + "<<z(i)<<endl;
 	IloRange cut(getEnv(),-IloInfinity,0);
-	//cut.setExpr( dmu/U*(_yplus[i] - y_i)  + z(i) - _z[i]);
 	cut.setExpr( dmu/U*(_yplus[n][i] - y_i) + dsigma/U*(_sd[n][i] - sqrt(sdn(i))) + zn(i) - _z[n][i]);
 	cout<<cut<<endl;
 	getModel()->add(cut);
@@ -302,7 +268,6 @@ bool isjn::postN1(int n, vec yn, vec zn, vec beta, vec sdn, IloCplex * cplex, in
 	  term=(psi * getSigDelta() - (getSig()(i) + _L(i,n)*getSig()(n)))/sd_i;
 	cout<<"\n";
 	for( int j=0; j<Ng;j++){
-	  //double pf_j = term;
 	  double pf_j = (A(i,indexG(j)) + _L(i,n)*A(n,indexG(j)))*term;
 	  cut_sd.setExpr( cut_sd.getExpr() + pf_j*(getBetaVar()[j]-beta(j)) );
 	}
@@ -316,14 +281,7 @@ bool isjn::postN1(int n, vec yn, vec zn, vec beta, vec sdn, IloCplex * cplex, in
 	cout<<"RC: ";
 	cout<<_riskConstraint[n]<<endl;
 	cout<<"\n\n";
-	
-	
-
-
-
-
-
-	    
+       	    
       }
     }
     return true;

@@ -7,7 +7,9 @@
 #include <cmath>
 #include <random>
 #include <vector>
-
+#include <sstream>
+#include <iomanip>
+#include <stdexcept>
 
 using namespace std;
 
@@ -38,10 +40,14 @@ class ranvar
   double anaProb(double L, double p, double pc){ return anaProb(L,p,pc,_mean,_stdv);}
   double anaProb(double L, double p, double pc, double mean, double stdv);
   double deriveMu(double L, double p, double pc, double mean, double stdv);
-double deriveSigma(double L, double p, double pc, double mean, double stdv);
+  double deriveSigma(double L, double p, double pc, double mean, double stdv);
   double d2Mu(double L, double p, double pc, double mean, double stdv);
   double d2Sigma(double L, double p, double pc, double mean, double stdv);
   double dSigmaMu(double L, double p, double pc, double mean, double stdv);
+
+  double PHIInverse(double p);
+  double RationalApproximation(double t);
+  void demoInverse();
 
   class analerror: public exception 
   {

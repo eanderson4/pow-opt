@@ -18,6 +18,7 @@ int main(int argc, char* argv[]){
 	<<"\t<m1> contingency capacity multiplier\n"
 	<<"\t<e0> base risk\n"
 	<<"\t<e1> contingency risk\n"
+	<<"\t<eg> generator risk\n"
 	<<"\t<L> no risk intercept\n"
 	<<"\t<p> probability of failure at nominal\n"
 	<<"\t<B> Variance budget"<<endl;
@@ -28,9 +29,10 @@ int main(int argc, char* argv[]){
   double m1=atof(argv[3]);
   double eps=atof(argv[4]);
   double epsN=atof(argv[5]);
-  double L=atof(argv[6]);
-  double p=atof(argv[7]);
-  double B=atof(argv[8]);
+  double epsG=atof(argv[6]);
+  double L=atof(argv[7]);
+  double p=atof(argv[8]);
+  double B=atof(argv[9]);
   double pc=.85;
 
   ///  int sn=atoi(argv[7]); //standard deviation test
@@ -221,7 +223,7 @@ int main(int argc, char* argv[]){
     ijn1 n1(gr, SIGy,Hw,L,p,pc,eps,epsN);
     ijn1 jcc(gr, SIGy,Hw,L,p,pc,eps,1);
     isj sj(gr, &gc, SIG, indexM, L, p, pc, eps);
-    isjn sjn(gr, &gc, SIG, indexM, L, p, pc, eps,eN);
+    isjn sjn(gr, &gc, SIG, indexM, L, p, pc, eps,eN,epsG);
 
     n1.addCost();
     jcc.addCost();
@@ -410,7 +412,8 @@ int main(int argc, char* argv[]){
 
 
     cout<<"dif: "<<o4-o2-randcost<<endl;
-    beta4.t().print("beta: ");
+    g5.t().print("x: ");
+    beta5.t().print("beta: ");
     cout<<"dif: "<<o4-o5<<endl;
     cout<<"dif: "<<o5-o1-randcost<<endl;
     
@@ -425,7 +428,7 @@ int main(int argc, char* argv[]){
     cerr<<o3<<"\t"<<r3<<"\t"<<stats_r3.mean()<<"\t"<<stats_r3.max()<<"\t\t";
     cerr<<o1<<"\t"<<r1<<"\t"<<stats_r1.mean()<<"\t"<<stats_r1.max()<<endl;*/
 
-
+    //    cout<<*gr;
   }
   catch(IloException& e){
     cerr<<"Concert exception: "<<e<<endl; 

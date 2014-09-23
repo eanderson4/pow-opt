@@ -60,48 +60,6 @@ rgrid *  isj::solveModel( isolve * is){
       cout<<"r: "<<accu(z)<<endl;
 
 
-      //      cout<<"Risk: "<<sum(z)<<endl;
-      
-
-      /////// variance test --------------------------------
-      /*      mat Ag = getA()*getCg();
-      mat cy(Nl,Nl,fill::zeros);
-      double TV = _sig_delta;
-      for(int i=0;i<Nl;i++){
-	for(int j=0;j<Nl;j++){
-	  double pi_i = dot(Ag.row(i),beta);
-	  double pi_j = dot(Ag.row(j),beta);
-	  double total = pi_i*pi_j*TV - pi_i*_sig(j)-pi_j*_sig(i)+_sigger(i,j);
-	  cy(i,j)=total;
-	  
-	}
-      }
-      //  cy.print("cy: ");
-      //  SIGy.print("SIGy: ");
-      mat err=cy - SIGy;
-      //  err.diag().print("err: ");
-      cout<<"diag error: "<<accu(err.diag())<<endl;
-      cout<<"total error: "<<accu(err)<<endl;
-      */
-      ////////////
-      /*	    for(int e=0; e<Nl;e++){
-	      	      cout<<e<<": "<<(pi(e)*pi(e)*_sig_delta-2*pi(e)*_sig(e)+_sigger(e))<<endl;
-		      }*/
-
-
-      /*     vec sdtest(Nl);
-      vec sdtest2(Nl);
-      for(int e=0;e<Nl;e++){
-	sdtest(e) = sqrt( pi(e)*pi(e)*_sig_delta - 2 * pi(e)*_sig(e) + _sigger(e,e));
-	sdtest2(e) = _sigger(e,e)*_sig_delta - _sig(e)*_sig(e);
-      }
-      sdtest.t().print("sdtest: ");
-      sdtest2.t().print("sdtest2: ");
-*/	    
-      
-      
-
-      
       if( accu(z) < _eps+tol){
 	systemfail=false;
       }
@@ -145,11 +103,9 @@ bool isj::postCC(vec y, vec z, vec beta, vec SIGy,IloCplex * cplex, int iteratio
   //define tolerance for line risk > 0
   double tol = pow(10,-6);
   int Nl = getGrid()->numBranches();
-  int Ng = getGrid()->numGens();
+
   double account=0;
   
-  //  IloNumArray yplus(getEnv(),Nl);
-  //  cplex->getValues(fp,getYplus());
   
   ranvar rv;
   double Ueps = rv.ginv(_eps,_L,_p,_pc);
@@ -175,19 +131,6 @@ bool isj::postCC(vec y, vec z, vec beta, vec SIGy,IloCplex * cplex, int iteratio
 	  ss<<"yplus"<<i<<"[0,"<<U*Ueps<<"]";
 	  _yplus[i].setName( ss.str().c_str() );
 	  
-
-
-	  //	  cout<<"sig_ee sig_delta - sig_e sig_e: "<<(_sigger(i,i)*_sig_delta - _sig(i)*_sig(i))<<endl;
-	  //	  cout<<"sig_e: "<<_sig(i)<<endl;
-	  //	  cout<<"sigger_e: "<<_sigger(i,i)<<endl;
-	  //	  cout<<"\n";
-	  /*	  _sdfe[i].setExpr( -_pi[i]*_pi[i]*_sig_delta + 2*_pi[i]*_sig(i) - _sigger(i,i) + _sd[i]*_sd[i] );
-	  cout<<"sdfe"<<i<<": "<<_sdfe[i]<<endl;
-	  getModel()->add(_sdfe[i]);
-	  ss.str("");
-	  ss<<"sdfe"<<i<<"[0,inf]";
-	  _sdfe[i].setName( ss.str().c_str() );
-	  */
 	}
 	//Add cuts for each line with positive risk
 	double y_i = abs(y(i));
@@ -195,12 +138,7 @@ bool isj::postCC(vec y, vec z, vec beta, vec SIGy,IloCplex * cplex, int iteratio
 	double U=getGrid()->getBranch(i).getRateA();
 	double dmu=rv.deriveMu(_L,_p,_pc,y_i/U,sqrt(SIGy(i))/U);
 	double dsigma=rv.deriveSigma(_L,_p,_pc,y_i/U,sqrt(SIGy(i))/U);
-	//	cout<<"dmu: "<<dmu<<", dsigma: "<<dsigma<<endl;
-	//	cout<<dz<<" "<<dz/U<<endl;
-	//	cout<<"z_"<<i<<" >= "<<dz<<"(y_"<<i<<" - "<<y_i<<")/"<<U<<" + "<<z(i)<<endl;
-	//	cout<<"z_"<<i<<" >= "<<dmu/U<<" y_"<<i<<" + "<<z(i)-dmu*y_i/U<<endl;
 	IloRange cut(getEnv(),-IloInfinity,0);
-	//cut.setExpr( dmu/U*(_yplus[i] - y_i)  + z(i) - _z[i]);
 	cut.setExpr( dmu/U*(_yplus[i] - y_i) + dsigma/U*(_sd[i] - sqrt(SIGy(i))) + z(i) - _z[i]);
 	cout<<cut<<endl;
 	getModel()->add(cut);
@@ -218,42 +156,12 @@ bool isj::postCC(vec y, vec z, vec beta, vec SIGy,IloCplex * cplex, int iteratio
 	for( int j=0; j<Ng;j++){
 	  //double pf_j = term;
 	  double pf_j = _A(i,_indexG(j))*term;
-	  //	  cout<<j<<": "<<_A(i,_indexG(j))<<"\t"<<beta(j)<<" "<<pf_j<<endl;
 	  cut_sd.setExpr( cut_sd.getExpr() + pf_j*(_beta[j]-beta(j)) );
 	}
-	//	cout<<"\n";
-	//	cout<<"sd_i: "<<sd_i<<" - "<<sqrt(SIGy(i))<<endl;
-	//	cout<<"pi_i: "<<pi_i<<endl;
-	//	  cout<<"sig_e: "<<_sig(i)<<endl;
-	//	  cout<<"sigger_e: "<<_sigger(i,i)<<endl;
-
 	cout<<cut_sd<<endl;
 	getModel()->add(cut_sd);
 	
 	cout<<"\n\n";
-	
-	
-
-	
-
-	//-----------------
-
-
-
-	//Output cut information
-	/*	if(i==28){
-	  double a=z(i)-dz*y_i/U;
-	  double b=dz/U;
-	  double u=1/U;
-	  double v=b;
-	  //	  cerr<<iteration<<"\t"<<y_i/U<<"\t"<<z(i)<<"\t"<<z(i)-dz*y_i/U<<"\t"<<dz/U<<"\t"<<u<<"\t"<<v<<endl;
-	  }*/
-
-	if(z(i)==1){
-	  y.t().print("y: ");
-	  throw;
-	}
-	
       }
     }
     cout<<"Accounted: "<<account<<endl;
@@ -330,7 +238,8 @@ void isj::setup(){
 
   _yup = IloRangeArray(env, Nl,0,IloInfinity);
   _ydown = IloRangeArray(env,Nl,0,IloInfinity);
-  _ydown = IloRangeArray(env,Nl,0,IloInfinity);
+  _genup = IloRangeArray(env, Nl,0,IloInfinity);
+  _gendown = IloRangeArray(env,Nl,0,IloInfinity);
 
   _riskConstraint = IloRange(env,0,_eps,"riskconstraint");
   //  _riskConstraint.setExpr( IloSum(_z) );
@@ -352,17 +261,19 @@ void isj::setup(){
     ss.str("");
     ss<<"bj"<<j<<"[0,1]";
     _beta[j].setName( ss.str().c_str() );
+    double pmax = getGrid()->getGen(j).getPmax();
+    double pmin = getGrid()->getGen(j).getPmin();
+    double eta;
+    if(_epsG == 1) eta=0;
+    else eta = rv.PHIInverse(1-_epsG);
+    rv.demoInverse();
+    cout<<_epsG<<endl;
+    cout<<eta<<endl;
+    cout<<_sig_delta;
+    //    cin>>eta;
+    _genup[j].setExpr( pmax - getG()[j] - _beta[j]*_sig_delta*eta );
+    _gendown[j].setExpr( -pmin + getG()[j] - _beta[j]*_sig_delta*eta );
   }
-  
-  /*  _beta[0].setBounds(0,0);
-  _beta[1].setBounds(.3308,.3308);
-  _beta[2].setBounds(0,0);
-  _beta[3].setBounds(0,0);
-  _beta[4].setBounds(.2722,.2722);
-  //  _beta[5].setBounds(.3969,.3969);
-  */
-
-  
   
   addCost(_beta,_sig_delta);
 
@@ -370,35 +281,10 @@ void isj::setup(){
 
   getModel()->add(_z);
   getModel()->add(_beta);
+  getModel()->add(_genup);
+  getModel()->add(_gendown);
   getModel()->add(_riskConstraint);
   getModel()->add(_betaSum);
 
 
 }
-
-  /*
-  for(int i=0;i<Nl;i++){
-    _yup[i].setExpr( _yplus[i] - getF()[i] );
-    _ydown[i].setExpr( _yplus[i] + getF()[i] );
-    double U = getGrid()->getBranch(i).getRateA();
-    getF()[i].setBounds(-U*Ueps,U*Ueps);
-    _yplus[i].setBounds(0,U*Ueps);
-    ss.str("");
-    ss<<"yplus"<<i<<"[0,"<<U*Ueps<<"]";
-    _yplus[i].setName( ss.str().c_str() );
-    ss.str("");
-    ss<<"z"<<i<<"[0,"<<U*Ueps<<"]";
-    _z[i].setName( ss.str().c_str() );
-    ss.str("");
-    ss<<"fup"<<i;
-    _yup[i].setName( ss.str().c_str() );
-    ss.str("");
-    ss<<"fdown"<<i;
-    _ydown[i].setName( ss.str().c_str() );
-    }*/
-  //  _riskConstraint.setExpr( IloSum(_z) );
-  
-  //  getModel()->add(_z);
-  //  getModel()->add(_yplus);
-  //  getModel()->add(_yup);
-  //  getModel()->add(_ydown);

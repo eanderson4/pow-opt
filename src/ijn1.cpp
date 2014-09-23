@@ -16,7 +16,7 @@ rgrid *  ijn1::solveModel( isolve * is){
   int n=0;
   double large=30;
 
-  //  cerr<<"n\tyn\tzn\tan\tbn\tun\tvn\n";
+
   cout<<"Check: "<<sum(_check)<<" / "<<getGrid()->numBranches()<<endl;
 
   if (cplex.solve()){
@@ -140,39 +140,17 @@ void ijn1::setup(){
   cout<<"DONT BUILDING"<<endl;
 }
 
-    /*
-        _riskConstraint[n].setExpr( IloSum(_z[n]) );
-        ss.str("");
-        ss<<"rc"<<n<<"[0,"<<getEps()<<"]";
-        _riskConstraint[n].setName( ss.str().c_str() );
-    for(int e=0;e<Nl;e++){
-	ss.str("");
-	ss<<"z"<<n<<","<<e<<"[0,"<<_epsN<<"]";
-	_z[n][e].setName( ss.str().c_str() );
-      }
-	  
-        getModel()->add(_z[n]);
-        getModel()->add(_riskConstraint[n]);
-	        getModel()->add(_fplus[n]);  /// save
-		getModel()->add(_fup);  //save
-		getModel()->add(_fdown); ///save
-    */
-
-
 
 bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex, int iteration){
   if(_check(n)!=1) return false;
   //define tolerance for line risk > 0
   stringstream ss;
-  grid * gr = getGrid();
+
   double tol = pow(10,-5); 
   ranvar rv;
   int Nl = getGrid()->numBranches();
 
 
-
-  //  f.t().print("f: ");
-  //  z.t().print("z: ");
   //Calculate system risk
   double r = sum(z);
   cout<<"Risk: "<<r<<endl;
@@ -181,6 +159,7 @@ bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex, int iteration){
     cout<<"CUTTING ----------"<<endl;
     for(int i=0; i<Nl; i++){
       if (z(i)>tol){
+	cout<<"Line "<<i<<": "<<z(i)<<endl;
 	if(sum(_in.row(n))==0){
 	  _z[n] = IloNumVarArray(getEnv(),Nl,0,IloInfinity);	  
 	  _yplus[n] = IloNumVarArray(getEnv(),Nl,0,IloInfinity);	  
@@ -208,12 +187,11 @@ bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex, int iteration){
 
 	//Add cuts for each line with positive risk
 	double y_i = abs(f(i));
-	//	cout<<"z_"<<i<<": "<<z(i)<<", y_"<<i<<": "<<y_i<<endl;
 	double dz=rv.deriveMu(getL(),getP(),getPc(),abs(f(i))/U,sqrt(getSig()(i,i))/U);
-	//	cout<<"z_"<<i<<" >= "<<dz/U<<" y_"<<i<<" + "<<(z(i)-dz*y_i/U)<<endl;
+
 	IloRange cut(getEnv(),-IloInfinity,0);
 	cut.setExpr( dz*(_yplus[n][i] - y_i)/U + z(i) - _z[n][i]);
-	//	cout<<cut<<endl;
+	cout<<cut<<endl;
 	getModel()->add(cut);
 	_addCut(n,i)=_addCut(n,i)+1;
 
@@ -221,22 +199,6 @@ bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex, int iteration){
 	  _riskConstraint[n].setExpr( _riskConstraint[n].getExpr() + _z[n][i] );
 	  _in(n,i)=1;
 	}
-
-	if(i==28)
-	  {
-	    double a=z(i)-dz*y_i/U;
-	    double b=dz/U;
-	    double u=1/U;
-	    double v=b;
-	    //	  cerr<<iteration<<"\t"<<y_i/U<<"\t"<<z(i)<<"\t"<<z(i)-dz*y_i/U<<"\t"<<dz/U<<"\t"<<u<<"\t"<<v<<endl;
-	  }
-
-	if(z(i)>.5) {
-	  f.t().print("f: ");
-	  z.t().print("z: ");	  
-	  //	  throw;
-	}
-
       }
     }
     return true;

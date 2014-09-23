@@ -10,7 +10,7 @@ using namespace std;
 class isjn : public isj {
 
  public:
- isjn(grid * gr,gridcalc * gc, mat SIGm,vec indexM, double L, double p, double pc, double eps, vec epsN): isj( gr, gc, SIGm, indexM, L, p, pc, eps ), _epsN(epsN) { setup(); }
+ isjn(grid * gr,gridcalc * gc, mat SIGm,vec indexM, double L, double p, double pc, double eps, vec epsN, double epsG): isj( gr, gc, SIGm, indexM, L, p, pc, eps, epsG ), _epsN(epsN) { setup(); }
   void setup();
   rgrid * solveModel( isolve * is=NULL);
   bool postN1(int n,vec yn, vec zn,vec beta, vec sdn, IloCplex * cplex, int iteration=0);
