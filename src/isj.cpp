@@ -175,19 +175,12 @@ bool isj::postCC(vec y, vec z, vec beta, vec SIGy,IloCplex * cplex, int iteratio
 	  ss<<"yplus"<<i<<"[0,"<<U*Ueps<<"]";
 	  _yplus[i].setName( ss.str().c_str() );
 	  
-	  _pibeta[i].setExpr(_pi[i]);
-	  for(int j=0;j<Ng;j++){
-	    _pibeta[i].setExpr( _pibeta[i].getExpr() - _A(i,j)*_beta[j]);
-	  }
-	  getModel()->add(_pibeta[i]);
-	  ss.str("");
-	  ss<<"pibeta"<<i<<"[0,inf]";
-	  _pibeta[i].setName( ss.str().c_str() );
 
-	  cout<<"sig_ee sig_delta - sig_e sig_e: "<<(_sigger(i,i)*_sig_delta - _sig(i)*_sig(i))<<endl;
-	  cout<<"sig_e: "<<_sig(i)<<endl;
-	  cout<<"sigger_e: "<<_sigger(i,i)<<endl;
-	  cout<<"\n";
+
+	  //	  cout<<"sig_ee sig_delta - sig_e sig_e: "<<(_sigger(i,i)*_sig_delta - _sig(i)*_sig(i))<<endl;
+	  //	  cout<<"sig_e: "<<_sig(i)<<endl;
+	  //	  cout<<"sigger_e: "<<_sigger(i,i)<<endl;
+	  //	  cout<<"\n";
 	  /*	  _sdfe[i].setExpr( -_pi[i]*_pi[i]*_sig_delta + 2*_pi[i]*_sig(i) - _sigger(i,i) + _sd[i]*_sd[i] );
 	  cout<<"sdfe"<<i<<": "<<_sdfe[i]<<endl;
 	  getModel()->add(_sdfe[i]);
@@ -198,14 +191,14 @@ bool isj::postCC(vec y, vec z, vec beta, vec SIGy,IloCplex * cplex, int iteratio
 	}
 	//Add cuts for each line with positive risk
 	double y_i = abs(y(i));
-	cout<<"z_"<<i<<": "<<z(i)<<", y_"<<i<<": "<<y_i<<endl;
+	//	cout<<"z_"<<i<<": "<<z(i)<<", y_"<<i<<": "<<y_i<<endl;
 	double U=getGrid()->getBranch(i).getRateA();
 	double dmu=rv.deriveMu(_L,_p,_pc,y_i/U,sqrt(SIGy(i))/U);
 	double dsigma=rv.deriveSigma(_L,_p,_pc,y_i/U,sqrt(SIGy(i))/U);
-	cout<<"dmu: "<<dmu<<", dsigma: "<<dsigma<<endl;
+	//	cout<<"dmu: "<<dmu<<", dsigma: "<<dsigma<<endl;
 	//	cout<<dz<<" "<<dz/U<<endl;
 	//	cout<<"z_"<<i<<" >= "<<dz<<"(y_"<<i<<" - "<<y_i<<")/"<<U<<" + "<<z(i)<<endl;
-	cout<<"z_"<<i<<" >= "<<dmu/U<<" y_"<<i<<" + "<<z(i)-dmu*y_i/U<<endl;
+	//	cout<<"z_"<<i<<" >= "<<dmu/U<<" y_"<<i<<" + "<<z(i)-dmu*y_i/U<<endl;
 	IloRange cut(getEnv(),-IloInfinity,0);
 	//cut.setExpr( dmu/U*(_yplus[i] - y_i)  + z(i) - _z[i]);
 	cut.setExpr( dmu/U*(_yplus[i] - y_i) + dsigma/U*(_sd[i] - sqrt(SIGy(i))) + z(i) - _z[i]);
@@ -225,14 +218,14 @@ bool isj::postCC(vec y, vec z, vec beta, vec SIGy,IloCplex * cplex, int iteratio
 	for( int j=0; j<Ng;j++){
 	  //double pf_j = term;
 	  double pf_j = _A(i,_indexG(j))*term;
-	  cout<<j<<": "<<_A(i,_indexG(j))<<"\t"<<beta(j)<<" "<<pf_j<<endl;
+	  //	  cout<<j<<": "<<_A(i,_indexG(j))<<"\t"<<beta(j)<<" "<<pf_j<<endl;
 	  cut_sd.setExpr( cut_sd.getExpr() + pf_j*(_beta[j]-beta(j)) );
 	}
-	cout<<"\n";
-	cout<<"sd_i: "<<sd_i<<" - "<<sqrt(SIGy(i))<<endl;
-	cout<<"pi_i: "<<pi_i<<endl;
-	  cout<<"sig_e: "<<_sig(i)<<endl;
-	  cout<<"sigger_e: "<<_sigger(i,i)<<endl;
+	//	cout<<"\n";
+	//	cout<<"sd_i: "<<sd_i<<" - "<<sqrt(SIGy(i))<<endl;
+	//	cout<<"pi_i: "<<pi_i<<endl;
+	//	  cout<<"sig_e: "<<_sig(i)<<endl;
+	//	  cout<<"sigger_e: "<<_sigger(i,i)<<endl;
 
 	cout<<cut_sd<<endl;
 	getModel()->add(cut_sd);
@@ -334,13 +327,10 @@ void isj::setup(){
   _yplus = IloNumVarArray(env,Nl,0,IloInfinity);
   _sd = IloNumVarArray(env,Nl,0,IloInfinity);
   _beta = IloNumVarArray(env,Ng,0,1);
-  _pi = IloNumVarArray(env,Nl,-IloInfinity,IloInfinity);
 
   _yup = IloRangeArray(env, Nl,0,IloInfinity);
   _ydown = IloRangeArray(env,Nl,0,IloInfinity);
   _ydown = IloRangeArray(env,Nl,0,IloInfinity);
-  _pibeta = IloRangeArray(env,Nl,0,0);
-  _sdfe = IloRangeArray(env,Nl,0,IloInfinity);
 
   _riskConstraint = IloRange(env,0,_eps,"riskconstraint");
   //  _riskConstraint.setExpr( IloSum(_z) );
@@ -351,9 +341,6 @@ void isj::setup(){
     double U = getGrid()->getBranch(i).getRateA();
     getF()[i].setBounds(-U*Ueps,U*Ueps);
 
-    ss.str("");
-    ss<<"pi"<<i<<"[-inf,inf]";
-    _pi[i].setName( ss.str().c_str() );
     ss.str("");
     ss<<"sd"<<i<<"[0,inf]";
     _sd[i].setName( ss.str().c_str() );

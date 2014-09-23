@@ -23,7 +23,7 @@ rgrid *  ijn1::solveModel( isolve * is){
     bool systemfail=true;
     while(systemfail){
       n++;       if (n>500) throw itlimit;  
-      cout<<" ----- Iteration - "<<n<<" ----- "<<endl;
+      cout<<" --JCC-- --- Iteration - "<<n<<" ----- "<<endl;
       
       IloNumArray fsolve(getEnv(),Nl);
       cplex.getValues(fsolve,getF());
@@ -165,7 +165,7 @@ bool ijn1::postN1(int n, vec f,vec g, vec z, IloCplex * cplex, int iteration){
   //define tolerance for line risk > 0
   stringstream ss;
   grid * gr = getGrid();
-  double tol = pow(10,-6);
+  double tol = pow(10,-5);
   ranvar rv;
   int Nl = getGrid()->numBranches();
 

@@ -3,6 +3,7 @@
 #include "sqlinter.h"
 #include "test.h"
 #include "isj.h"
+#include "isjn.h"
 #include "ijn1.h"
 #include "in1.h"
 
@@ -218,17 +219,19 @@ int main(int argc, char* argv[]){
   try{
     in1 bn1(gr, SIGy, Hw, m1); 
     ijn1 n1(gr, SIGy,Hw,L,p,pc,eps,epsN);
-    ijn1 jcc(gr, SIGy,Hw,alpha,L,p,pc,eps,1);
+    ijn1 jcc(gr, SIGy,Hw,L,p,pc,eps,1);
     isj sj(gr, &gc, SIG, indexM, L, p, pc, eps);
+    isjn sjn(gr, &gc, SIG, indexM, L, p, pc, eps,eN);
 
     n1.addCost();
-    //    jcc.addCost();
+    jcc.addCost();
     bn1.addCost();
 
     rgrid * rbn1 = bn1.solveModel(&is);
     rgrid * rjcc = jcc.solveModel(&is);
     rgrid * rn1_1 = n1.solveModel(&is);
     rgrid * rsj = sj.solveModel();
+    rgrid * rsjn = sjn.solveModel();
 
     //    return 0;
 
@@ -268,6 +271,15 @@ int main(int argc, char* argv[]){
     vec z4=gc.risk(f4,sd4,L,p,pc);
     double r4 = sum(z4);
     IloCplex::CplexStatus s4=rsj->getStatus();
+
+    double o5=rsjn->getObjective();
+    vec f5=gc.convert(rsjn->getF());
+    vec g5=gc.convert(rsjn->getG());
+    vec beta5=sj.getBeta();
+    vec sd5=sj.getSD();
+    vec z5=gc.risk(f5,sd5,L,p,pc);
+    double r5 = sum(z5);
+    IloCplex::CplexStatus s5=rsjn->getStatus();
     
 
     f0.t().print("f0: ");
@@ -302,6 +314,7 @@ int main(int argc, char* argv[]){
     running_stat<double> stats_r2;
     running_stat<double> stats_r3;
     running_stat<double> stats_r4;
+    running_stat<double> stats_r5;
 
     vec check = n1.getCheck();
     for(int i=0;i<Nl;i++){
@@ -327,6 +340,10 @@ int main(int argc, char* argv[]){
 	vec z4n=gc.risk(f4n,sd4,L,p,pc);
 	double r4n = sum(z4n);
 	stats_r4(r4n);
+	vec f5n = n1.getN1(i,f5,g5);
+	vec z5n=gc.risk(f5n,sd5,L,p,pc);
+	double r5n = sum(z5n);
+	stats_r5(r5n);
       }
     }
     cout.precision(5);
@@ -354,6 +371,15 @@ int main(int argc, char* argv[]){
     cout << "min  = " << stats_r2.min()  << endl;
     cout << "max  = " << stats_r2.max()  << endl;
     cout<<endl;    
+    cout<<"SJ"<<"\t"<<s4<<endl;
+    cout<<"C4: "<<o4<<endl;
+    cout<<"r4 - "<<r4<<endl;
+    cout << "count = " << stats_r4.count() << endl;
+    cout << "mean = " << stats_r4.mean() << endl;
+    cout << "stdv  = " << stats_r4.stddev()  << endl;
+    cout << "min  = " << stats_r4.min()  << endl;
+    cout << "max  = " << stats_r4.max()  << endl;
+    cout<<endl;
     cout<<"OPF N-1"<<"\t"<<s3<<endl;
     cout<<"C3: "<<o3<<endl;
     cout<<"r3 - "<<r3<<endl;
@@ -372,19 +398,22 @@ int main(int argc, char* argv[]){
     cout << "min  = " << stats_r1.min()  << endl;
     cout << "max  = " << stats_r1.max()  << endl;
     cout<<endl;
-    cout<<"SJ"<<"\t"<<s4<<endl;
-    cout<<"C4: "<<o4<<endl;
-    cout<<"r4 - "<<r4<<endl;
-    cout << "count = " << stats_r4.count() << endl;
-    cout << "mean = " << stats_r4.mean() << endl;
-    cout << "stdv  = " << stats_r4.stddev()  << endl;
-    cout << "min  = " << stats_r4.min()  << endl;
-    cout << "max  = " << stats_r4.max()  << endl;
+    cout<<"SJ N-1"<<"\t"<<s5<<endl;
+    cout<<"C5: "<<o5<<endl;
+    cout<<"r5 - "<<r5<<endl;
+    cout << "count = " << stats_r5.count() << endl;
+    cout << "mean = " << stats_r5.mean() << endl;
+    cout << "stdv  = " << stats_r5.stddev()  << endl;
+    cout << "min  = " << stats_r5.min()  << endl;
+    cout << "max  = " << stats_r5.max()  << endl;
     cout<<endl;
 
 
-    cout<<"dif: "<<o4-o2<<endl;
+    cout<<"dif: "<<o4-o2-randcost<<endl;
     beta4.t().print("beta: ");
+    cout<<"dif: "<<o4-o5<<endl;
+    cout<<"dif: "<<o5-o1-randcost<<endl;
+    
     //    SIGy.diag().t().print("sd: ");
     //    sd4.t().print("sd4: ");
 

@@ -17,20 +17,27 @@ class isj : public igrid {
   bool postCC(vec f, vec z, vec beta, vec SIGy,IloCplex * cplex, int iteration=0);
   mat getSIGm(){ return _SIG; }
   mat getA(){ return _gc->getH(); }
-  mat getCb(){ return _gc->getC(); }
-  mat getCm(){ return _Cm; }
-  mat getCg(){ return _gc->getCm(); }
+  mat getCb(){ return _gc->getC(); }  //line admittance matrix
+  mat getCm(){ return _Cm; }          //volatile inject admittance matrix
+  mat getCg(){ return _gc->getCm(); } //generator admittance matrix
+  vec getIndexG(){ return _indexG; }
   double getEps(){ return _eps; }
   double getL(){ return _L; }
   double getP(){ return _p; }
   double getPc(){ return _pc; }
+  gridcalc * getGC(){ return _gc; }
   IloNumVarArray getZ(){ return _z; }
   IloNumVarArray getYplus(){ return _yplus; }
-  
+  IloNumVarArray getBetaVar(){ return _beta; }
+
+  double getSigDelta(){ return _sig_delta;}
+  vec getSig(){ return _sig; };
+  mat getSigger(){ return _sigger; }
   vec getBeta(){ return _betaSolve; }
   vec getSD(){ return _sdSolve; }
+  void setBetaSolve(vec beta){ _betaSolve=beta; }
+  void setSDSolve(vec sd){ _sdSolve=sd; }
 
-  //Risk functions
   
   class iterlimit: public exception 
   {
@@ -52,12 +59,8 @@ class isj : public igrid {
   IloNumVarArray _yplus;
   IloNumVarArray _sd;
   IloNumVarArray _beta;
-  IloNumVarArray _pi;
   IloRangeArray _yup;
   IloRangeArray _ydown;
-  IloRangeArray _pibeta;
-  IloRangeArray _sdfe;
-
 
   mat _SIG;
   vec _indexM;
