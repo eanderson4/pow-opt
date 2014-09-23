@@ -11,7 +11,7 @@ using namespace std;
 
 int main(int argc, char* argv[]){
 
-  if(argc<=6){
+  if(argc<=7){
     cout<<"cmd: pow case/30.db <m0> <m1> <e0> <e1> <L> <p> <B>\n"
 	<<"\trun main for case30\n"
 	<<"\t<m0> base capacity multiplier\n"
