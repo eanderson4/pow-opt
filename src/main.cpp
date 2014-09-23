@@ -121,74 +121,12 @@ int main(int argc, char* argv[]){
   mat A = gc.getH();
   mat Lo = gc.getL(A);  
 
-  //    Ak.print("Ak: ");
-  //    sig.print("sig: ");
-  //    sigger.diag().print("sigger: ");
-  //    SIG.print("SIG: ");
 
   mat SIGy(Nl,Nl,fill::zeros);
   SIGy = Hw*Cm*SIG*(Hw*Cm).t();
   vec sd = SIGy.diag();
   
-  /*  cerr<<alpha(0);
-  cerr<<fixed<<setprecision(5);
-  for(int e=0;e<Nl;e++){
-    cerr<<"\t"<<sd(e);
-  }
-  cerr<<"\n";*/
-  //  return 0;
 
-
-  /*
-
-  mat cy(Nl,Nl,fill::zeros);
-
-  for(int i=0;i<Nl;i++){
-    for(int j=0;j<Nl;j++){
-      double pi_i = dot(Ag.row(i),alpha);
-      double pi_j = dot(Ag.row(j),alpha);
-      double total = pi_i*pi_j*TV - pi_i*sig(j)-pi_j*sig(i)+sigger(i,j);
-      cy(i,j)=total;
-      
-    }
-  }
-  //  cy.print("cy: ");
-  //  SIGy.print("SIGy: ");
-  mat err=cy - SIGy;
-  //  err.diag().print("err: ");
-  cout<<"diag error: "<<accu(err.diag())<<endl;
-  cout<<"total error: "<<accu(err)<<endl;
-
-
-  ijn1 n1(gr, SIGy,Hw,L,p,pc,eps,epsN);
-
-
-  mat var = n1.getVar();
-
-  mat outvar(Nl,Nl,fill::zeros);
-  for(int e=0;e<Nl;e++){
-    for(int n=0;n<Nl;n++){
-      double len = Lo(e,n);
-      double pi_e = dot(Ag.row(e),alpha);
-      double pi_n = dot(Ag.row(n),alpha);
-      double phi_en = pi_e + Lo(e,n)*pi_n;
-
-      //double vare = pi_e*pi_e*TV - 2*pi_e*sig(e) + sigger(e,e);
-      //double varn = pi_n*pi_n*TV - 2*pi_n*sig(n) + sigger(n,n);
-      //double covar = pi_e*pi_n*TV - pi_e*sig(n) -pi_n*sig(e) + sigger(e,n);
-      //double total = vare + len*len*varn + 2*len*covar;
-      double total = phi_en*phi_en*TV -2*phi_en*(sig(e)+len*sig(n))+ sigger(e,e) + 2*len*sigger(e,n)+len*len*sigger(n,n);
-
-      if(!isfinite(total)) total=0;
-      outvar(n,e)=total;
-    }
-  }
-  mat errvar=var-outvar;
-  //  var.row(0).print("var: ");
-  //  outvar.row(0).print("var: ");
-  //  errvar.row(0).print("errvar: ");
-    cout<<"total error: "<<accu(errvar)<<endl;
-  */
 
   vec eN(Nl, fill::ones);
   eN = eN*epsN;
@@ -412,10 +350,11 @@ int main(int argc, char* argv[]){
 
 
     cout<<"dif: "<<o4-o2-randcost<<endl;
-    g5.t().print("x: ");
-    beta5.t().print("beta: ");
     cout<<"dif: "<<o4-o5<<endl;
     cout<<"dif: "<<o5-o1-randcost<<endl;
+    cout<<endl;
+    g5.t().print("x: ");
+    beta5.t().print("beta: ");
     
     //    SIGy.diag().t().print("sd: ");
     //    sd4.t().print("sd4: ");
