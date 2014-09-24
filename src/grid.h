@@ -22,6 +22,8 @@ class grid
   ~grid() {}
 
   void setCapacity(int n, double U){    _branches[n].setRateA(U);  }
+  void setGenPmax(int n, double U){    _gens[n].setPmax(U);  }
+  void setGenPmin(int n, double U){    _gens[n].setPmin(U);  }
   void addPd(int n, double pd){ _buses[n].addP(pd); }
   void addBus(bus b){    _buses.push_back(b);  }
   void addBranch(branch b){    _branches.push_back(b);  }

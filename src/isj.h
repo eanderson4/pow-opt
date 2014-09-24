@@ -29,6 +29,7 @@ class isj : public igrid {
   IloNumVarArray getZ(){ return _z; }
   IloNumVarArray getYplus(){ return _yplus; }
   IloNumVarArray getBetaVar(){ return _beta; }
+  IloRangeArray getGenUp(){ return _genup; }
 
   double getSigDelta(){ return _sig_delta;}
   vec getSig(){ return _sig; };

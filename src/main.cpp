@@ -11,7 +11,7 @@ using namespace std;
 
 int main(int argc, char* argv[]){
 
-  if(argc<=7){
+  if(argc<=8){
     cout<<"cmd: pow case/30.db <m0> <m1> <e0> <e1> <L> <p> <B>\n"
 	<<"\trun main for case30\n"
 	<<"\t<m0> base capacity multiplier\n"
@@ -27,12 +27,13 @@ int main(int argc, char* argv[]){
 
   double m0=atof(argv[2]);
   double m1=atof(argv[3]);
-  double eps=atof(argv[4]);
-  double epsN=atof(argv[5]);
-  double epsG=atof(argv[6]);
-  double L=atof(argv[7]);
-  double p=atof(argv[8]);
-  double B=atof(argv[9]);
+  double mg=atof(argv[4]);
+  double eps=atof(argv[5]);
+  double epsN=atof(argv[6]);
+  double epsG=atof(argv[7]);
+  double L=atof(argv[8]);
+  double p=atof(argv[9]);
+  double B=atof(argv[10]);
   double pc=.85;
 
   ///  int sn=atoi(argv[7]); //standard deviation test
@@ -57,6 +58,13 @@ int main(int argc, char* argv[]){
     double U = bi.getRateA();
     gr->setCapacity(i,m0*U);
   }
+
+  int Ng = gr->numGens();
+  for(int j=0;j<Nl;j++){
+    gen gj = gr->getGen(j);
+    double U = gj.getPmax();
+    gr->setGenPmax(j,mg*U);
+  } 
 
   int num=5;
   int Nm=num;
@@ -83,7 +91,6 @@ int main(int argc, char* argv[]){
   arma_rng::set_seed_random(); 
   gridcalc gc(gr);  
   //  vec slack=gc.getSlack()
-  int Ng = gr->numGens();;
   mat Cg=gc.getCm();
   vec alpha(Ng,fill::randu);
   vec yes(Ng,fill::randu);
@@ -155,7 +162,7 @@ int main(int argc, char* argv[]){
   is.setSolver(IloCplex::Dual,IloCplex::Dual);
   rgrid * rbase = ig.solveModel(&is);
   //  rbase->displayOperatingPos(gr);
-
+  
   try{
     in1 bn1(gr, SIGy, Hw, m1); 
     ijn1 n1(gr, SIGy,Hw,L,p,pc,eps,epsN);
@@ -170,8 +177,8 @@ int main(int argc, char* argv[]){
     rgrid * rbn1 = bn1.solveModel(&is);
     rgrid * rjcc = jcc.solveModel(&is);
     rgrid * rn1_1 = n1.solveModel(&is);
-    rgrid * rsj = sj.solveModel();
-    rgrid * rsjn = sjn.solveModel();
+    rgrid * rsj = sj.solveModel(&is);
+    rgrid * rsjn = sjn.solveModel(&is);
 
     //    return 0;
 
@@ -215,8 +222,8 @@ int main(int argc, char* argv[]){
     double o5=rsjn->getObjective();
     vec f5=gc.convert(rsjn->getF());
     vec g5=gc.convert(rsjn->getG());
-    vec beta5=sj.getBeta();
-    vec sd5=sj.getSD();
+    vec beta5=sjn.getBeta();
+    vec sd5=sjn.getSD();
     vec z5=gc.risk(f5,sd5,L,p,pc);
     double r5 = sum(z5);
     IloCplex::CplexStatus s5=rsjn->getStatus();
@@ -353,8 +360,29 @@ int main(int argc, char* argv[]){
     cout<<"dif: "<<o4-o5<<endl;
     cout<<"dif: "<<o5-o1-randcost<<endl;
     cout<<endl;
-    g5.t().print("x: ");
+    
+    vec p5(Ng);
+    vec Pmax(Ng);
+    vec Pmin(Ng);
+    ranvar rv;
+    for(int j=0;j<Ng;j++){
+      Pmax(j)=gr->getGen(j).getPmax();;
+      Pmin(j)=gr->getGen(j).getPmin();;
+      double sn=(g5(j) - Pmax(j))/(beta5(j)*sqrt(TV));
+      p5(j) = rv.PHI(sn);
+    }
+
+    g0.t().print("x: ");
+    g4.t().print("x4: ");
+    g5.t().print("x5: ");
     beta5.t().print("beta: ");
+    Pmax.t().print("Pmax: ");
+    //    Pmin.t().print("Pmin: ");
+    (g0-Pmax).t().print("U: ");
+    p5.t().print("prob: ");
+    
+    double genCap = accu(Pmax);
+    //    cout<<"GenAvail: "<<genCap<<endl;
     
     //    SIGy.diag().t().print("sd: ");
     //    sd4.t().print("sd4: ");

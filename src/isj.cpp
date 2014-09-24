@@ -43,7 +43,7 @@ rgrid *  isj::solveModel( isolve * is){
       vec ones(Nm,1,fill::ones);
 
       cout<<"Cost: "<<genCost<<endl;
-
+      
       
       vec pi = getA()*getCg()*beta;
       mat term = getA()*(getCg()*beta*ones.t() - getCm());    
@@ -194,7 +194,7 @@ void isj::lineLimitStatus(bool status){
 
 
 void isj::setup(){
-  cout<<"Setup slack joint chance constraint"<<endl;
+  cout<<"--sj-- ===Setup=== slack joint chance constraint"<<endl;
   stringstream ss;
 
   ranvar rv;
@@ -238,8 +238,8 @@ void isj::setup(){
 
   _yup = IloRangeArray(env, Nl,0,IloInfinity);
   _ydown = IloRangeArray(env,Nl,0,IloInfinity);
-  _genup = IloRangeArray(env, Nl,0,IloInfinity);
-  _gendown = IloRangeArray(env,Nl,0,IloInfinity);
+  _genup = IloRangeArray(env, Ng,0,IloInfinity);
+  _gendown = IloRangeArray(env,Ng,0,IloInfinity);
 
   _riskConstraint = IloRange(env,0,_eps,"riskconstraint");
   //  _riskConstraint.setExpr( IloSum(_z) );
@@ -257,22 +257,27 @@ void isj::setup(){
     ss<<"z"<<i<<"[0,eps]";
     _z[i].setName( ss.str().c_str() );
   }
+  cout<<"GenInfo (epsG="<<_epsG<<")"<<endl;
+
   for(int j=0;j<Ng;j++){
     ss.str("");
-    ss<<"bj"<<j<<"[0,1]";
+    ss<<"beta"<<j<<"[0,1]";
     _beta[j].setName( ss.str().c_str() );
     double pmax = getGrid()->getGen(j).getPmax();
     double pmin = getGrid()->getGen(j).getPmin();
     double eta;
     if(_epsG == 1) eta=0;
     else eta = rv.PHIInverse(1-_epsG);
-    rv.demoInverse();
-    cout<<_epsG<<endl;
-    cout<<eta<<endl;
-    cout<<_sig_delta;
-    //    cin>>eta;
-    _genup[j].setExpr( pmax - getG()[j] - _beta[j]*_sig_delta*eta );
-    _gendown[j].setExpr( -pmin + getG()[j] - _beta[j]*_sig_delta*eta );
+    //    rv.demoInverse();
+    cout<<"gen "<<j<<": "<<pmax<<endl;
+    _genup[j].setExpr(getG()[j] - _beta[j]*sqrt(_sig_delta)*eta );
+    _genup[j].setBounds(0,pmax);
+    //    _gendown[j].setExpr( getG()[j] - _beta[j]*sqrt(_sig_delta)*eta );
+    //    _gendown[j].setBounds(pmin,IloInfinity);
+
+    cout<<"eta*sqrt(TV): "<<eta*sqrt(_sig_delta)<<endl;
+    cout<<_genup[j]<<endl;
+    getModel()->add(_genup[j]);
   }
   
   addCost(_beta,_sig_delta);
@@ -282,7 +287,7 @@ void isj::setup(){
   getModel()->add(_z);
   getModel()->add(_beta);
   getModel()->add(_genup);
-  getModel()->add(_gendown);
+  //  getModel()->add(_gendown);
   getModel()->add(_riskConstraint);
   getModel()->add(_betaSum);
 

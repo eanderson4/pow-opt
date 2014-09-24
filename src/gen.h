@@ -27,6 +27,8 @@ class gen {
   double getC1(){ return _c1; }
   double getC0(){ return _c0; }
   double getStatus(){ return _status; }
+  void setPmax(double pmax){ _pmax=pmax; }
+  void setPmin(double pmin){ _pmin=pmin; }
 
   friend ostream& operator<<(ostream& os, const gen& g);
 

@@ -53,8 +53,9 @@ rgrid *  isjn::solveModel( isolve * is){
 
       cout<<"Base system"<<endl;
       systemfail = postCC(y,z,beta,SIGy.diag(),&cplex);
-
       
+      cout<<getGenUp()[1]<<endl;
+      cout<<x(1)<<"\t"<<beta(1)<<endl;
       
       if(n==2) large=100;
       if(n==3) large=10000;
@@ -94,8 +95,9 @@ rgrid *  isjn::solveModel( isolve * is){
 	}
 	else cout<<"dont check Contingency "<<i<<endl;
       }
-	
+      if(n<=3) systemfail=true;
       if(!systemfail && n>3){
+	cout<<"Solved!"<<endl;
 	setBetaSolve(beta);
 	setSDSolve(SIGy.diag());
 	break;
@@ -136,7 +138,7 @@ rgrid *  isjn::solveModel( isolve * is){
 
 
 void isjn::setup(){
-  cout<<"Setup N-1 joint chance constraint"<<endl;
+  cout<<"--sjn--  ===Setup=== N-1 joint chance constraint"<<endl;
   stringstream ss;
   
   IloEnv env = getEnv();
