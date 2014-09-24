@@ -39,7 +39,10 @@ int main(int argc, char* argv[]){
   ///  int sn=atoi(argv[7]); //standard deviation test
 
   sqlInter db;
+  sqlInter db2;
   grid * gr = new grid;
+  grid * gr2 = new grid;
+
   string db_name;
   
   db_name = argv[1];
@@ -48,6 +51,10 @@ int main(int argc, char* argv[]){
   gr->buildMap();
   gr->printNums(cout);
 
+
+  db2.openDb(db_name);
+  db2.load(*gr2);
+  gr2->buildMap();
   cout<<*gr<<endl;
   
 
@@ -57,6 +64,7 @@ int main(int argc, char* argv[]){
     branch bi = gr->getBranch(i);
     double U = bi.getRateA();
     gr->setCapacity(i,m0*U);
+    gr2->setCapacity(i,m0*U);
   }
 
   int Ng = gr->numGens();
@@ -64,6 +72,7 @@ int main(int argc, char* argv[]){
     gen gj = gr->getGen(j);
     double U = gj.getPmax();
     gr->setGenPmax(j,mg*U);
+    gr2->setGenPmax(j,mg*U);
   } 
 
   int num=5;
@@ -89,15 +98,22 @@ int main(int argc, char* argv[]){
   double TV = accu(SIG);
 
   //Generate second demand scenario
-  
+  arma_rng::set_seed_random();
   mat as = chol(SIG);
   vec randd(Nm,fill::randu);
   vec d2 = as*randd;
 
+  for(int m=0;m<Nm;m++){
+    gr2->addPd(indexM(m),d2(m));
+  }
 
+        cout<<*gr<<endl;
+        cout<<*gr2<<endl;
 
   arma_rng::set_seed_random(); 
   gridcalc gc(gr);  
+  gridcalc gc2(gr2);
+    
   //  vec slack=gc.getSlack()
   mat Cg=gc.getCm();
   vec alpha(Ng,fill::randu);
@@ -121,8 +137,11 @@ int main(int argc, char* argv[]){
   alpha(4)=atof(argv[6]);
   alpha(5)=1-atof(argv[2]);*/
 
+  for(int i=0;i<Ng;i++){
+    alpha(i)=1/Ng;
+  }
+  alpha = vec(Ng,fill::ones)* (1/(double)Ng);
   alpha.t().print("alpha: ");
-
   vec slack=Cg*alpha;
 
   double randcost=0;
@@ -170,18 +189,28 @@ int main(int argc, char* argv[]){
   is.setSolver(IloCplex::Dual,IloCplex::Dual);
   rgrid * rbase = ig.solveModel(&is);
   //  rbase->displayOperatingPos(gr);
-  
+  mat xnom(Ng,2);
+  mat xsjn(Ng,2);
+  mat betanom(Ng,2);
+  mat betasjn(Ng,2);
+  mat cnom(1,2);
+  mat csjn(1,2);
+  for(int gnum=0;gnum<2;gnum++){
+    if(gnum==1) gr=gr2;
   try{
+    igrid nom(gr);
     in1 bn1(gr, SIGy, Hw, m1); 
     ijn1 n1(gr, SIGy,Hw,L,p,pc,eps,epsN);
     ijn1 jcc(gr, SIGy,Hw,L,p,pc,eps,1);
     isj sj(gr, &gc, SIG, indexM, L, p, pc, eps);
     isjn sjn(gr, &gc, SIG, indexM, L, p, pc, eps,eN,epsG);
 
+    nom.addCost();
     n1.addCost();
     jcc.addCost();
     bn1.addCost();
 
+    rgrid * rnom = nom.solveModel(&is);
     rgrid * rbn1 = bn1.solveModel(&is);
     rgrid * rjcc = jcc.solveModel(&is);
     rgrid * rn1_1 = n1.solveModel(&is);
@@ -190,12 +219,12 @@ int main(int argc, char* argv[]){
 
     //    return 0;
 
-    double o0=rbase->getObjective();
-    vec f0=gc.convert(rbase->getF());
-    vec g0=gc.convert(rbase->getG());
+    double o0=rnom->getObjective();
+    vec f0=gc.convert(rnom->getF());
+    vec g0=gc.convert(rnom->getG());
     vec z0=gc.risk(f0,SIGy.diag(),L,p,pc);
     double r0 = sum(z0);
-    IloCplex::CplexStatus s0=rbase->getStatus();
+    IloCplex::CplexStatus s0=rnom->getStatus();
 
     double o1=rn1_1->getObjective();
     vec f1=gc.convert(rn1_1->getF());
@@ -303,6 +332,7 @@ int main(int argc, char* argv[]){
     }
     cout.precision(5);
     cout<<fixed<<endl;
+    cout<<"Results\t("<<gnum<<")"<<endl;
     cout<<"Total Gen: "<<TG<<endl;
     cout<<"Total Variance: "<<TV<<" ( "<<sqrt(TV)<<" )"<<endl;
     cout<<"Total Random Cost: "<<randcost<<endl;
@@ -383,19 +413,26 @@ int main(int argc, char* argv[]){
     g0.t().print("x: ");
     g4.t().print("x4: ");
     g5.t().print("x5: ");
-    beta5.t().print("beta: ");
+    beta5.t().print("beta5: ");
     Pmax.t().print("Pmax: ");
     //    Pmin.t().print("Pmin: ");
     (g0-Pmax).t().print("U: ");
-    p5.t().print("prob: ");
+    p5.t().print("prob5 g: ");
 
-    d2.t().print("d2: ");
-    (Cm*d2).t().print("d2: ");
-   
-    
     double genCap = accu(Pmax);
-    //    cout<<"GenAvail: "<<genCap<<endl;
+
+    xnom.col(gnum) = g0;
+    xsjn.col(gnum) = g5;
+
+    betanom.col(gnum) = alpha;
+    betasjn.col(gnum) = beta5;
+
+    cnom.col(gnum) = o0+randcost;
+    csjn.col(gnum) = o5;
+
     
+
+    //    cout<<"GenAvail: "<<genCap<<endl; 
     //    SIGy.diag().t().print("sd: ");
     //    sd4.t().print("sd4: ");
 
@@ -418,6 +455,35 @@ int main(int argc, char* argv[]){
   catch(...){
     cerr<<"Unknown Error "<<endl;
   }
+  }
+
+  cout<<"Time Comparison"<<endl;
+    vec dem1 = gc.getD();
+    vec dem2 = gc2.getD();
+    //    dem1.t().print("d1: ");
+    //dem2.t().print("d2: ");
+    (dem2-dem1).t().print("delta x: ");
+
+    xnom.print("xnom: ");
+    xsjn.print("xsjn: ");
+
+    betanom.print("betanom: ");
+    betasjn.print("betasjn: ");
+
+    cnom.print("cnom: ");
+    csjn.print("csjn: ");
+    
+    if(cnom(0)>1 && cnom(1)>1 && csjn(0)>1 && csjn(1)>1){
+      cerr<<cnom(0)<<"\t"<<cnom(1)<<"\t"<<csjn(0)<<"\t"<<csjn(1)<<endl;
+    }
+
+    double difnom=cnom(1)-cnom(0);
+    double difsjn=csjn(1)-csjn(0);
+
+    cout<<"d_nom: "<<difnom<<endl;
+    cout<<"d_sjn: "<<difsjn<<endl;
+    cout<<"d_sjn-nom: "<<difsjn-difnom<<endl;
+
 
   return 0;
 

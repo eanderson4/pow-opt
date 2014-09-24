@@ -38,6 +38,7 @@ class gridcalc
   vec risk(vec f,vec varf, double L, double p, double pc);
   vec dz(double f,double varf, double L, double p, double pc);
   vec getN1(int n, vec y0, vec g,mat Hw);
+  vec getD();
 
   class nowinner: public exception 
   {

@@ -250,3 +250,14 @@ vec gridcalc::getN1(int n, vec y0, vec g, mat Hw){
   return yn;
 
 }
+
+vec gridcalc::getD(){
+  int Nb = _gr->numBuses();
+  vec d(Nb);
+
+  for(int i=0;i<Nb;i++){
+    d(i) = _gr->getBus(i).getP();
+  }
+  return d;
+  
+}
