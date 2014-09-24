@@ -88,6 +88,14 @@ int main(int argc, char* argv[]){
   
   double TV = accu(SIG);
 
+  //Generate second demand scenario
+  
+  mat as = chol(SIG);
+  vec randd(Nm,fill::randu);
+  vec d2 = as*randd;
+
+
+
   arma_rng::set_seed_random(); 
   gridcalc gc(gr);  
   //  vec slack=gc.getSlack()
@@ -380,6 +388,10 @@ int main(int argc, char* argv[]){
     //    Pmin.t().print("Pmin: ");
     (g0-Pmax).t().print("U: ");
     p5.t().print("prob: ");
+
+    d2.print("d2: ");
+    (Cm*d2).print("d2: ");
+    
     
     double genCap = accu(Pmax);
     //    cout<<"GenAvail: "<<genCap<<endl;
