@@ -389,9 +389,9 @@ int main(int argc, char* argv[]){
     (g0-Pmax).t().print("U: ");
     p5.t().print("prob: ");
 
-    d2.print("d2: ");
-    (Cm*d2).print("d2: ");
-    
+    d2.t().print("d2: ");
+    (Cm*d2).t().print("d2: ");
+   
     
     double genCap = accu(Pmax);
     //    cout<<"GenAvail: "<<genCap<<endl;
