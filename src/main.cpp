@@ -195,6 +195,8 @@ int main(int argc, char* argv[]){
   mat betasjn(Ng,2);
   mat cnom(1,2);
   mat csjn(1,2);
+  mat risknom(1,2);
+  mat risksjn(1,2);
   for(int gnum=0;gnum<2;gnum++){
     if(gnum==1) gr=gr2;
   try{
@@ -398,8 +400,8 @@ int main(int argc, char* argv[]){
 
     //    cout<<"dif: "<<o4-o2-randcost<<endl;
     //    cout<<"dif: "<<o4-o5<<endl;
-    cout<<"dif: "<<o5-o0-randcost<<endl;
-    cout<<endl;
+    //    cout<<"dif: "<<o5-o1-randcost<<endl;
+    //    cout<<endl;
     
     vec p5(Ng);
     vec Pmax(Ng);
@@ -432,7 +434,13 @@ int main(int argc, char* argv[]){
     cnom.col(gnum) = o0+randcost;
     csjn.col(gnum) = o5;
 
-    
+    risknom.col(gnum) = r0;
+    risksjn.col(gnum) = r5;
+
+    f0.print("y0: ");
+    vec ztest=gc.risk(f0,SIGy.diag(),L,p,pc);
+    double rtest = sum(ztest);
+    cout<<"r: "<<rtest<<endl;
 
     //    cout<<"GenAvail: "<<genCap<<endl; 
     //    SIGy.diag().t().print("sd: ");
@@ -475,16 +483,19 @@ int main(int argc, char* argv[]){
     cnom.print("cnom: ");
     csjn.print("csjn: ");
     
-    if(cnom(0)>1 && cnom(1)>1 && csjn(0)>1 && csjn(1)>1){
-      cerr<<cnom(0)<<"\t"<<cnom(1)<<"\t"<<csjn(0)<<"\t"<<csjn(1)<<endl;
-    }
-
     double difnom=cnom(1)-cnom(0);
     double difsjn=csjn(1)-csjn(0);
 
     cout<<"d_nom: "<<difnom<<endl;
     cout<<"d_sjn: "<<difsjn<<endl;
     cout<<"d_sjn-nom: "<<difsjn-difnom<<endl;
+
+    
+    if(cnom(0)>1 && cnom(1)>1 && csjn(0)>1 && csjn(1)>1){
+      cerr<<cnom(0)<<"\t"<<cnom(1)<<"\t"<<csjn(0)<<"\t"<<csjn(1)<<"\t"<<difnom<<"\t"<<difsjn<<"\t"<<difsjn-difnom<<"\t";
+      cerr<<risknom(0)<<"\t"<<risknom(1)<<"\t"<<risksjn(0)<<"\t"<<risksjn(1)<<endl;
+    }
+
 
 
   return 0;
