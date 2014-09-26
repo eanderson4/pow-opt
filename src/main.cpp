@@ -422,6 +422,7 @@ int main(int argc, char* argv[]){
     (g0-Pmax).t().print("U: ");
     p5.t().print("prob5 g: ");
 
+
     double genCap = accu(Pmax);
 
     xnom.col(gnum) = g0;
