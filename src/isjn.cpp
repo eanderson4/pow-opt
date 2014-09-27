@@ -198,7 +198,7 @@ bool isjn::postN1(int n, vec yn, vec zn, vec beta, vec sdn, IloCplex * cplex, in
   //define tolerance for line risk > 0
   stringstream ss;
 
-  double tol = pow(10,-6);
+  double tol = pow(10,-5);
   int Nl = getGrid()->numBranches();
 
   mat A=getA();
