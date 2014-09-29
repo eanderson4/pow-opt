@@ -71,7 +71,7 @@ rgrid *  isjn::solveModel( isolve * is){
 	    if(sdn(e)<0 && sdn(e)>=-.0000001) sdn(e)=0;
 	  }
 
-	  double sdT=getSigDelta();
+	  /*	  double sdT=getSigDelta();
 	  vec sig=getSig();
 
 	  vec psi_en(Nl,fill::zeros);
@@ -86,7 +86,7 @@ rgrid *  isjn::solveModel( isolve * is){
 	  }
 	  vec sigpsi = _sigpsi.col(i);
 	  vec error_sd = sdn - square(sd_en); 
-
+	  */
 
 	  vec zn=getGC()->risk(yn,sdn,getL(),getP(),getPc());
 	  if(!yn.is_finite()) yn.print("yn: ");

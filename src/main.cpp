@@ -11,8 +11,8 @@ using namespace std;
 
 int main(int argc, char* argv[]){
 
-  if(argc<=8){
-    cout<<"cmd: pow case/30.db <m0> <m1> <e0> <e1> <L> <p> <B>\n"
+  if(argc<=11){
+    cout<<"cmd: pow case/30.db <m0> <m1> <e0> <e1> <L> <p> <B> <T>\n"
 	<<"\trun main for case30\n"
 	<<"\t<m0> base capacity multiplier\n"
 	<<"\t<m1> contingency capacity multiplier\n"
@@ -21,7 +21,8 @@ int main(int argc, char* argv[]){
 	<<"\t<eg> generator risk\n"
 	<<"\t<L> no risk intercept\n"
 	<<"\t<p> probability of failure at nominal\n"
-	<<"\t<B> Variance budget"<<endl;
+	<<"\t<B> Variance budget\n"
+	<<"\t<T> num trials"<<endl;
     return 1;
   }
 
@@ -35,6 +36,7 @@ int main(int argc, char* argv[]){
   double p=atof(argv[9]);
   double B=atof(argv[10]);
   double pc=.85;
+  int T = atoi(argv[11]);
 
   ///  int sn=atoi(argv[7]); //standard deviation test
 
@@ -61,7 +63,7 @@ int main(int argc, char* argv[]){
   }
 
   int Ng = gr->numGens();
-  for(int j=0;j<Nl;j++){
+  for(int j=0;j<Ng;j++){
     gen gj = gr->getGen(j);
     double U = gj.getPmax();
     gr->setGenPmax(j,mg*U);
@@ -203,14 +205,34 @@ int main(int argc, char* argv[]){
     running_stat<double> risk_r5;  
 
 
-    for(int trial=0;trial<100;trial++){
+    //    running_stat_vec<vec> ct(true);
+    mat cost_store(T,6);
+    vec delta_store(T);
+
+    vec gen_opf;
+
+    vec beta_main;
+    vec gen_main;
+    running_stat_vec<vec> bt_stat;
+    running_stat_vec<vec> gen_dev_opf;
+    running_stat_vec<vec> gen_dev;
+    running_stat_vec<vec> gen_2nd;
+    running_stat_vec<vec> gen_exp;
+
+    for(int trial=0;trial<T;trial++){
       
   vec randd(Nm,fill::randu);
-  vec d2 = as*randd;
+  vec d2;
+  if(trial==0) d2=vec(Nm,fill::zeros);
+  else d2 = as*randd;
 
   for(int m=0;m<Nm;m++){
     gr->addPd(indexM(m),d2(m));
   }      
+  double delta=accu(d2);
+  delta_store(trial) = accu(d2);
+
+  vec costs(6,fill::zeros);
 
     ijn1 n1(gr, SIGy,Hw,L,p,pc,eps,epsN);
     n1.addCost();
@@ -251,6 +273,14 @@ int main(int argc, char* argv[]){
 
     costs_r0(o0 + randcost);
     risk_r0(r0);
+    costs(0) = o0;
+
+    if(trial==0) gen_opf = g0;
+    else{
+      vec gen_expect = gen_opf + alpha*delta;
+      gen_dev_opf( gen_expect - g0 );
+
+    }
 
   }
   catch(IloException& e){
@@ -300,6 +330,7 @@ int main(int argc, char* argv[]){
     costs_r3(o3 + randcost);
     risk_r3(r3);
 
+    costs(3) = o3;
   }
   catch(IloException& e){
     cerr<<"Concert exception: "<<e<<endl; 
@@ -347,6 +378,8 @@ int main(int argc, char* argv[]){
 
     costs_r1(o1 + randcost);
     risk_r1(r1);
+
+    costs(1) = o1;
 
 
   }
@@ -396,6 +429,8 @@ int main(int argc, char* argv[]){
 
     costs_r2(o2 + randcost);
     risk_r2(r2);
+
+    costs(2) = o2;
 
   }
   catch(IloException& e){
@@ -447,6 +482,7 @@ int main(int argc, char* argv[]){
     costs_r4(o4);
     risk_r4(r4);
 
+        costs(4) = o4;
 
   }
   catch(IloException& e){
@@ -496,6 +532,22 @@ int main(int argc, char* argv[]){
     costs_r5(o5);
     risk_r5(r5);
     
+    costs(5) = o5;
+
+    bt_stat(beta5);
+
+    if(trial==0){
+      beta_main=beta5;
+      gen_main=g5;
+    }
+    else {
+      vec gen_expect = gen_main + beta_main*delta;
+
+      gen_dev( gen_expect-gen_main );
+      gen_2nd( g5 );
+      gen_exp( gen_expect);
+      
+    }
 
   }
   catch(IloException& e){
@@ -508,14 +560,15 @@ int main(int argc, char* argv[]){
     cerr<<"Unknown Error "<<endl;
   }
 
-
+  
     /*
     cerr<<"\t"<<randcost<<"\t"<<TV<<"\t\t";
     cerr<<o0<<"\t"<<r0<<"\t"<<stats_r0.mean()<<"\t"<<stats_r0.max()<<"\t\t";
     cerr<<o2<<"\t"<<r2<<"\t"<<stats_r2.mean()<<"\t"<<stats_r2.max()<<"\t\t";
     cerr<<o3<<"\t"<<r3<<"\t"<<stats_r3.mean()<<"\t"<<stats_r3.max()<<"\t\t";
     cerr<<o1<<"\t"<<r1<<"\t"<<stats_r1.mean()<<"\t"<<stats_r1.max()<<endl;*/
-
+  //  ct(costs);
+  cost_store.row(trial) = costs.t();
 
   for(int m=0;m<Nm;m++){
     gr->addPd(indexM(m),-d2(m));
@@ -533,6 +586,8 @@ int main(int argc, char* argv[]){
     cout<<"Total Gen: "<<TG<<endl;
     cout<<"Total Variance: "<<TV<<" ( "<<sqrt(TV)<<" )"<<endl;
     cout<<"Total Random Cost: "<<randcost<<endl;
+    cout<<"G inv: "<<rv.ginv(eps,L,p,pc)<<endl;
+    SIG.print("Cov m: ");
     alpha.t().print("slack: ");
     cout<<"\n\n";
     cout<<"OPF"<<endl;
@@ -642,29 +697,50 @@ int main(int argc, char* argv[]){
     cout<<endl;
 
 
-  /*    vec dem1 = gc.getD();
-    vec dem2 = gc2.getD();
-    //    dem1.t().print("d1: ");
-    //dem2.t().print("d2: ");
-    (dem2-dem1).t().print("delta x: ");
+    bt_stat.mean().t().print("bt mean: ");
+    bt_stat.stddev().t().print("bt stdev: ");
 
-    xnom.print("xnom: ");
-    xsjn.print("xsjn: ");
 
-    betanom.print("betanom: ");
-    betasjn.print("betasjn: ");
+    gen_dev_opf.mean().t().print("gen dev opf mean: ");
+    gen_dev_opf.stddev().t().print("gen dev opf stdv: ");
 
-    cnom.print("cnom: ");
-    csjn.print("csjn: ");
-    
-    double difnom=cnom(1)-cnom(0);
-    double difsjn=csjn(1)-csjn(0);
 
-    cout<<"d_nom: "<<difnom<<endl;
-    cout<<"d_sjn: "<<difsjn<<endl;
-    cout<<"d_sjn-nom: "<<difsjn-difnom<<endl;
+    gen_dev.mean().t().print("gen dev mean: ");
+    gen_dev.stddev().t().print("gen dev stdv: ");
 
-    
+
+    gen_2nd.mean().t().print("gen 2nd mean: ");
+    gen_2nd.stddev().t().print("gen 2nd stdv: ");
+
+
+    gen_exp.mean().t().print("gen exp mean: ");
+    gen_exp.stddev().t().print("gen exp stdv: ");
+
+
+    /*    ct.mean().t().print("mean: ");
+    ct.cov().print("cov: ");
+    mat CV = ct.cov();
+    mat COR = CV;
+    for(int i=0; i<6;i++){
+      for(int j=0; j<6; j++){
+	double sdi = sqrt(CV(i,i));
+	double sdj = sqrt(CV(j,j));
+	COR(i,j)=CV(i,j)/sdi/sdj;
+      }
+    }
+
+    COR.print("cor: ");
+    */
+    mat sort_costs = sort(cost_store);
+
+    sort_costs.print("costs: ");
+
+    for(int i=0; i<T; i++){
+      //      cerr<<i<<"\t"<<sort_costs(i,0)<<"\t"<<sort_costs(i,5)<<endl;
+      cerr<<i<<"\t"<<delta_store(i)<<"\t"<<cost_store(i,0)<<"\t"<<cost_store(i,5)<<endl;
+    }
+
+    /*    
     if(cnom(0)>1 && cnom(1)>1 && csjn(0)>1 && csjn(1)>1){
       cerr<<cnom(0)<<"\t"<<cnom(1)<<"\t"<<csjn(0)<<"\t"<<csjn(1)<<"\t"<<difnom<<"\t"<<difsjn<<"\t"<<difsjn-difnom<<"\t";
       cerr<<risknom(0)<<"\t"<<risknom(1)<<"\t"<<risksjn(0)<<"\t"<<risksjn(1)<<endl;
