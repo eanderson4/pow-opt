@@ -106,28 +106,9 @@ int main(int argc, char* argv[]){
   arma_rng::set_seed_random(); 
   gridcalc gc(gr);  
     
-  //  vec slack=gc.getSlack()
+
   mat Cg=gc.getCm();
   vec alpha(Ng,fill::randu);
-  /*  vec yes(Ng,fill::randu);
-  for(int i=0;i<Ng;i++){
-    if(yes(i) <= .5) alpha(i)=0;
-  }
-  double total=accu(alpha);//  alpha(sn)=1;
-  if(total==0) {
-    for(int i=0;i<Ng;i++){
-      alpha(i)=1;
-      total=total+1;
-    }
-  }
-  alpha=alpha/total;
-  */
-  /*  alpha(0)=atof(argv[2]);
-  alpha(1)=atof(argv[3]);
-  alpha(2)=atof(argv[4]);
-  alpha(3)=atof(argv[5]);
-  alpha(4)=atof(argv[6]);
-  alpha(5)=1-atof(argv[2]);*/
 
   for(int i=0;i<Ng;i++){
     alpha(i)=1/Ng;
@@ -180,50 +161,20 @@ int main(int argc, char* argv[]){
   isolve is;
   is.setSolver(IloCplex::Dual,IloCplex::Dual);
   rgrid * rbase = ig.solveModel(&is);
-  //  rbase->displayOperatingPos(gr);
 
-  /*  mat xnom(Ng,2);
-  mat xsjn(Ng,2);
-  mat betanom(Ng,2);
-  mat betasjn(Ng,2);
-  mat cnom(1,2);
-  mat csjn(1,2);
-  mat risknom(1,2);
-  mat risksjn(1,2);
-  */
   double TG;
- 
+  
+  
+  
+  running_stat<double> costs_opf;
+  running_stat<double> costs_sjc;
+
+  running_stat<double> risk_opf;
+  running_stat<double> risk_sjc;
+
+  vec delta_store(T);
 
   
-    running_stat<double> costs_opf;
-    running_stat<double> costs_sjc;
-    //    running_stat<double> costs_r2;
-    /*    running_stat<double> costs_r3;
-    running_stat<double> costs_r4;
-    running_stat<double> costs_r5;  
-    */
-    running_stat<double> risk_opf;
-    running_stat<double> risk_sjc;
-    //    running_stat<double> risk_r2;
-    /*    running_stat<double> risk_r3;
-    running_stat<double> risk_r4;
-    running_stat<double> risk_r5;  
-    */
-
-    //    running_stat_vec<vec> ct(true);
-    //    mat cost_store(T,6);
-    vec delta_store(T);
-
-    /*    vec gen_opf;
-    vec beta_main;
-    vec gen_main;
-    running_stat_vec<vec> bt_stat;
-    running_stat_vec<vec> gen_dev_opf;
-    running_stat_vec<vec> gen_dev;
-    running_stat_vec<vec> gen_2nd;
-    running_stat_vec<vec> gen_exp;
-    */
-
 
     for(int trial=0;trial<T;trial++){
       
@@ -237,9 +188,7 @@ int main(int argc, char* argv[]){
       }      
       double delta=accu(d2);
       delta_store(trial) = accu(delta);
-      
-      //      vec costs(6,fill::zeros);
-      
+            
       ijn1 n1(gr, SIGy,Hw,L,p,pc,eps,epsN);
       n1.addCost();
       
@@ -279,14 +228,6 @@ int main(int argc, char* argv[]){
 	
 	costs_opf(o0 + randcost);
 	risk_opf(r0);
-	//	costs(0) = o0;
-	
-	/*	if(trial==0) gen_opf = g0;
-	else{
-	  vec gen_expect = gen_opf + alpha*delta;
-	  gen_dev_opf( gen_expect - g0 );
-	  
-	  }*/
 	
       }
       catch(IloException& e){
@@ -298,158 +239,6 @@ int main(int argc, char* argv[]){
       catch(...){
 	cerr<<"Unknown Error "<<endl;
       }
-      
-      /*      try{
-	
-	in1 bn1(gr, SIGy, Hw, m1); 
-	bn1.addCost();
-	rgrid * rbn1 = bn1.solveModel(&is);
-
-	double o3=rbn1->getObjective();
-	vec f3=gc.convert(rbn1->getF());
-	vec g3=gc.convert(rbn1->getG());
-	vec z3=gc.risk(f3,SIGy.diag(),L,p,pc);
-	double r3 = sum(z3);
-	IloCplex::CplexStatus s3=rbn1->getStatus();
-	
-	running_stat<double> stats_r3;
-	vec check = n1.getCheck();
-	for(int i=0;i<Nl;i++){
-	  if(check(i)==1){
-	    vec f3n = n1.getN1(i,f3,g3);
-	    vec z3n=gc.risk(f3n,SIGy.diag(),L,p,pc);
-	    double r3n = sum(z3n);
-	    stats_r3(r3n);
-	  }
-	}
-
-	cout<<"OPF N-1"<<"\t"<<s3<<endl;
-	cout<<"C3: "<<o3<<endl;
-	cout<<"r3 - "<<r3<<endl;
-	cout << "count = " << stats_r3.count() << endl;
-	cout << "mean = " << stats_r3.mean() << endl;
-	cout << "stdv  = " << stats_r3.stddev()  << endl;
-	cout << "min  = " << stats_r3.min()  << endl;
-	cout << "max  = " << stats_r3.max()  << endl;
-	cout<<endl;
-	
-	costs_r3(o3 + randcost);
-	risk_r3(r3);
-
-	costs(3) = o3;
-      }
-      catch(IloException& e){
-	cerr<<"Concert exception: "<<e<<endl; 
-      }
-      catch(exception& e){
-	cerr<<"Exception: "<<e.what()<<endl; 
-      }
-      catch(...){
-	cerr<<"Unknown Error "<<endl;
-      }
-      */
-      /*try{
-	
-    //    ijn1 n1(gr, SIGy,Hw,L,p,pc,eps,epsN);
-    //    n1.addCost();
-	rgrid * rn1_1 = n1.solveModel(&is);
-	
-	double o1=rn1_1->getObjective();
-	vec f1=gc.convert(rn1_1->getF());
-	vec g1=gc.convert(rn1_1->getG());
-	vec z1=gc.risk(f1,SIGy.diag(),L,p,pc);
-	double r1 = sum(z1);
-	IloCplex::CplexStatus s1=rn1_1->getStatus();
-	
-	running_stat<double> stats_r1;
-	vec check = n1.getCheck();
-	for(int i=0;i<Nl;i++){
-	  if(check(i)==1){
-	    vec f1n = n1.getN1(i,f1,g1);
-	    vec z1n=gc.risk(f1n,SIGy.diag(),L,p,pc);
-	    double r1n = sum(z1n);
-	    stats_r1(r1n);
-	  }
-	}
-	
-	cout<<"JCC N-1"<<"\t"<<s1<<endl;
-	cout<<"C1: "<<o1<<endl;
-	cout<<"r1 - "<<r1<<endl;
-	cout << "count = " << stats_r1.count() << endl;
-	cout << "mean = " << stats_r1.mean() << endl;
-	cout << "stdv  = " << stats_r1.stddev()  << endl;
-	cout << "min  = " << stats_r1.min()  << endl;
-	cout << "max  = " << stats_r1.max()  << endl;
-	cout<<endl;
-	
-	costs_r1(o1 + randcost);
-	risk_r1(r1);
-	
-	costs(1) = o1;
-	
-	
-      }
-      catch(IloException& e){
-	cerr<<"Concert exception: "<<e<<endl; 
-      }
-      catch(exception& e){
-	cerr<<"Exception: "<<e.what()<<endl; 
-      }
-      catch(...){
-	cerr<<"Unknown Error "<<endl;
-      }
-      */
-      /*
-      try{
-	
-	ijn1 jcc(gr, SIGy,Hw,L,p,pc,eps,1);
-	jcc.addCost();
-	rgrid * rjcc = jcc.solveModel(&is);
-	
-	double o2=rjcc->getObjective();
-	vec f2=gc.convert(rjcc->getF());
-	vec g2=gc.convert(rjcc->getG());
-	vec z2=gc.risk(f2,SIGy.diag(),L,p,pc);
-	double r2 = sum(z2);
-	IloCplex::CplexStatus s2=rjcc->getStatus();
-	
-	running_stat<double> stats_r2;
-	vec check = n1.getCheck();
-	for(int i=0;i<Nl;i++){
-	  if(check(i)==1){
-	    vec f2n = n1.getN1(i,f2,g2);
-	    vec z2n=gc.risk(f2n,SIGy.diag(),L,p,pc);
-	    double r2n = sum(z2n);
-	    stats_r2(r2n);
-	  }
-	}
-	
-	cout<<"JCC"<<"\t"<<s2<<endl;
-	cout<<"C2: "<<o2<<endl;
-	cout<<"r2 - "<<r2<<endl;
-	cout << "count = " << stats_r2.count() << endl;
-	cout << "mean = " << stats_r2.mean() << endl;
-	cout << "stdv  = " << stats_r2.stddev()  << endl;
-	cout << "min  = " << stats_r2.min()  << endl;
-	cout << "max  = " << stats_r2.max()  << endl;
-	cout<<endl;    
-	
-	costs_r2(o2 + randcost);
-	risk_r2(r2);
-	
-	costs(2) = o2;
-	
-      }
-      catch(IloException& e){
-	cerr<<"Concert exception: "<<e<<endl; 
-      }
-      catch(exception& e){
-	cerr<<"Exception: "<<e.what()<<endl; 
-      }
-      catch(...){
-	cerr<<"Unknown Error "<<endl;
-      }
-      */
       
       try{
 	
@@ -501,83 +290,8 @@ int main(int argc, char* argv[]){
       catch(...){
 	cerr<<"Unknown Error "<<endl;
       }
-      /*
-      try{
 
-	isjn sjn(gr, &gc, SIG, indexM, L, p, pc, eps,eN,epsG);
-	rgrid * rsjn = sjn.solveModel(&is);
-	
-	double o5=rsjn->getObjective();
-	vec f5=gc.convert(rsjn->getF());
-	vec g5=gc.convert(rsjn->getG());
-	vec beta5=sjn.getBeta();
-	vec sd5=sjn.getSD();
-	vec z5=gc.risk(f5,sd5,L,p,pc);
-	double r5 = sum(z5);
-	IloCplex::CplexStatus s5=rsjn->getStatus();
-	
-	running_stat<double> stats_r5;
-	vec check = n1.getCheck();
-	for(int i=0;i<Nl;i++){
-	  if(check(i)==1){
-	    vec f5n = n1.getN1(i,f5,g5);
-	    vec z5n=gc.risk(f5n,sd5,L,p,pc);
-	    double r5n = sum(z5n);
-	    stats_r5(r5n);
-	  }
-	}
-	
-	cout<<"SJ N-1"<<"\t"<<s5<<endl;
-	cout<<"C5: "<<o5<<endl;
-	cout<<"r5 - "<<r5<<endl;
-	cout << "count = " << stats_r5.count() << endl;
-	cout << "mean = " << stats_r5.mean() << endl;
-	cout << "stdv  = " << stats_r5.stddev()  << endl;
-	cout << "min  = " << stats_r5.min()  << endl;
-	cout << "max  = " << stats_r5.max()  << endl;
-	cout<<endl;
-	
-	costs_r5(o5);
-	risk_r5(r5);
-	
-	costs(5) = o5;
-	
-	bt_stat(beta5);
-	
-	if(trial==0){
-	  beta_main=beta5;
-	  gen_main=g5;
-	}
-	else {
-	  vec gen_expect = gen_main + beta_main*delta;
-	  
-	  gen_dev( gen_expect-gen_main );
-	  gen_2nd( g5 );
-	  gen_exp( gen_expect);
-	  
-	}
-	
-      }
-      catch(IloException& e){
-	cerr<<"Concert exception: "<<e<<endl; 
-      }
-      catch(exception& e){
-	cerr<<"Exception: "<<e.what()<<endl; 
-      }
-      catch(...){
-	cerr<<"Unknown Error "<<endl;
-      }
-      
-      */
-    /*
-      cerr<<"\t"<<randcost<<"\t"<<TV<<"\t\t";
-      cerr<<o0<<"\t"<<r0<<"\t"<<stats_r0.mean()<<"\t"<<stats_r0.max()<<"\t\t";
-      cerr<<o2<<"\t"<<r2<<"\t"<<stats_r2.mean()<<"\t"<<stats_r2.max()<<"\t\t";
-      cerr<<o3<<"\t"<<r3<<"\t"<<stats_r3.mean()<<"\t"<<stats_r3.max()<<"\t\t";
-      cerr<<o1<<"\t"<<r1<<"\t"<<stats_r1.mean()<<"\t"<<stats_r1.max()<<endl;*/
-      //  ct(costs);
-      //      cost_store.row(trial) = costs.t();
-      
+
       for(int m=0;m<Nm;m++){
 	gr->addPd(indexM(m),-d2(m));
       }      
@@ -607,16 +321,7 @@ int main(int argc, char* argv[]){
     cout << "max  = " << costs_opf.max()  << endl;
     cout << "band = " << costs_opf.max() - costs_opf.min() <<endl;
     cout<<endl;
-    /*    cout<<"JCC"<<endl;
-    cout << "costs: "<<endl;
-    cout << "count = " << costs_r2.count() << endl;
-    cout << "mean = " << costs_r2.mean() << endl;
-    cout << "stdv  = " << costs_r2.stddev()  << endl;
-    cout << "min  = " << costs_r2.min()  << endl;
-    cout << "max  = " << costs_r2.max()  << endl;
-    cout << "band = " << costs_r2.max() - costs_r2.min() <<endl;
-    cout<<endl;    
-    */
+
     cout<<"SJ"<<endl;
     cout << "costs: "<<endl;
     cout << "count = " << costs_sjc.count() << endl;
@@ -626,35 +331,7 @@ int main(int argc, char* argv[]){
     cout << "max  = " << costs_sjc.max()  << endl;
     cout << "band = " << costs_sjc.max() - costs_sjc.min() <<endl;
     cout<<endl;
-    /*
-    cout<<"OPF N-1"<<endl;
-    cout << "costs: "<<endl;
-    cout << "count = " << costs_r3.count() << endl;
-    cout << "mean = " << costs_r3.mean() << endl;
-    cout << "stdv  = " << costs_r3.stddev()  << endl;
-    cout << "min  = " << costs_r3.min()  << endl;
-    cout << "max  = " << costs_r3.max()  << endl;
-    cout << "band = " << costs_r3.max() - costs_r3.min() <<endl;
-    cout<<endl;
-    cout<<"JCC N-1"<<endl;
-    cout << "costs: "<<endl;
-    cout << "count = " << costs_r1.count() << endl;
-    cout << "mean = " << costs_r1.mean() << endl;
-    cout << "stdv  = " << costs_r1.stddev()  << endl;
-    cout << "min  = " << costs_r1.min()  << endl;
-    cout << "max  = " << costs_r1.max()  << endl;
-    cout << "band = " << costs_r1.max() - costs_r1.min() <<endl;
-    cout<<endl;
-    cout<<"SJ N-1"<<endl;
-    cout << "costs: "<<endl;
-    cout << "count = " << costs_r5.count() << endl;
-    cout << "mean = " << costs_r5.mean() << endl;
-    cout << "stdv  = " << costs_r5.stddev()  << endl;
-    cout << "min  = " << costs_r5.min()  << endl;
-    cout << "max  = " << costs_r5.max()  << endl;
-    cout << "band = " << costs_r5.max() - costs_r5.min() <<endl;
-    cout<<endl;
-    */
+
 
     cout<<"\n\n";
     cout<<"OPF"<<endl;
@@ -665,15 +342,7 @@ int main(int argc, char* argv[]){
     cout << "min  = " << risk_opf.min()  << endl;
     cout << "max  = " << risk_opf.max()  << endl;
     cout<<endl;
-    /*    cout<<"JCC"<<endl;
-    cout << "risk: "<<endl;
-    cout << "count = " << risk_r2.count() << endl;
-    cout << "mean = " << risk_r2.mean() << endl;
-    cout << "stdv  = " << risk_r2.stddev()  << endl;
-    cout << "min  = " << risk_r2.min()  << endl;
-    cout << "max  = " << risk_r2.max()  << endl;
-    cout<<endl;    
-    */
+
     cout<<"SJ"<<endl;
     cout << "risk: "<<endl;
     cout << "count = " << risk_sjc.count() << endl;
@@ -682,62 +351,7 @@ int main(int argc, char* argv[]){
     cout << "min  = " << risk_sjc.min()  << endl;
     cout << "max  = " << risk_sjc.max()  << endl;
     cout<<endl;
-    /*    cout<<"OPF N-1"<<endl;
-    cout << "risk: "<<endl;
-    cout << "count = " << risk_r3.count() << endl;
-    cout << "mean = " << risk_r3.mean() << endl;
-    cout << "stdv  = " << risk_r3.stddev()  << endl;
-    cout << "min  = " << risk_r3.min()  << endl;
-    cout << "max  = " << risk_r3.max()  << endl;
-    cout<<endl;
-    cout<<"JCC N-1"<<endl;
-    cout << "risk: "<<endl;
-    cout << "count = " << risk_r1.count() << endl;
-    cout << "mean = " << risk_r1.mean() << endl;
-    cout << "stdv  = " << risk_r1.stddev()  << endl;
-    cout << "min  = " << risk_r1.min()  << endl;
-    cout << "max  = " << risk_r1.max()  << endl;
-    cout<<endl;
-    cout<<"SJ N-1"<<endl;
-    cout << "risk: "<<endl;
-    cout << "count = " << risk_r5.count() << endl;
-    cout << "mean = " << risk_r5.mean() << endl;
-    cout << "stdv  = " << risk_r5.stddev()  << endl;
-    cout << "min  = " << risk_r5.min()  << endl;
-    cout << "max  = " << risk_r5.max()  << endl;
-    cout<<endl;
-    */
 
-    /*    ct.mean().t().print("mean: ");
-    ct.cov().print("cov: ");
-    mat CV = ct.cov();
-    mat COR = CV;
-    for(int i=0; i<6;i++){
-      for(int j=0; j<6; j++){
-	double sdi = sqrt(CV(i,i));
-	double sdj = sqrt(CV(j,j));
-	COR(i,j)=CV(i,j)/sdi/sdj;
-      }
-    }
-
-    COR.print("cor: ");
-    */
-    /*    mat sort_costs = sort(cost_store);
-
-    sort_costs.print("costs: ");
-
-    for(int i=0; i<T; i++){
-      //      cerr<<i<<"\t"<<sort_costs(i,0)<<"\t"<<sort_costs(i,5)<<endl;
-      cerr<<i<<"\t"<<delta_store(i)<<"\t"<<cost_store(i,0)<<"\t"<<cost_store(i,5)<<endl;
-    }
-    */
-    /*    
-    if(cnom(0)>1 && cnom(1)>1 && csjn(0)>1 && csjn(1)>1){
-      cerr<<cnom(0)<<"\t"<<cnom(1)<<"\t"<<csjn(0)<<"\t"<<csjn(1)<<"\t"<<difnom<<"\t"<<difsjn<<"\t"<<difsjn-difnom<<"\t";
-      cerr<<risknom(0)<<"\t"<<risknom(1)<<"\t"<<risksjn(0)<<"\t"<<risksjn(1)<<endl;
-    }
-
-  */
 
   return 0;
 
