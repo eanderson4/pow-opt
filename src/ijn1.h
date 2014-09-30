@@ -35,7 +35,7 @@ class ijn1 : public ijcc {
   vector<IloNumVarArray> _z;
   vector<IloNumVarArray> _yplus;
   vector<IloRangeArray> _yup;
-  vector<IloRangeArray> _ydown;
+   vector<IloRangeArray> _ydown;
   IloRangeArray _riskConstraint;
   
   mat _addCut;

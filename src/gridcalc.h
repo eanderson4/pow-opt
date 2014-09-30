@@ -27,11 +27,13 @@ class gridcalc
   vec getDelG(del_g dg);
   vec getDelF(vec delg, vec slack);
   mat getC(){ return _C; };  //Admittance Matrix
-  mat getCm();  //GenAdmittance Matrix
+  sp_mat getCm();  //GenAdmittance Matrix
   vec getIndexG();  //GenAdmittance Matrix
   mat getH(){ return _H; };  //Linear Shift Factor
   mat getHw(vec slack);      //with arbitray slack distribution
   mat getL(mat Hw);          //Line outage distribution factor
+  void makeL(mat Hw){ _L = getL(Hw); }
+  mat getMadeL(){ if(have_L) return _L;  else return NULL; }
   vec getSlack(){ return _slack; }
   //  vec getSlackDist(){ return getCm()*_slack; }
   vec convert(IloNumArray na);
@@ -52,8 +54,13 @@ class gridcalc
   grid * _gr;
 
   mat _H;
+  mat _L;
   mat _C;
   vec _slack;
+
+  bool have_L;
+  
+ 
 
 };
 

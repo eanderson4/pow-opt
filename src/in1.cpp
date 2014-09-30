@@ -120,7 +120,62 @@ bool in1::postN1(int n, vec yn, IloCplex * cplex){
 }
 
 
+
+
 void in1::setup(){
+  cout<<"Setup N-1 standard formulation"<<endl;
+  stringstream ss;
+
+  
+  IloEnv env = getEnv();
+
+  int Nl = getGrid()->numBranches();
+
+  _check = vec(Nl,fill::ones);
+
+  _C = _gc->getC();
+  _Cg = _gc->getCm();
+  cout<<"Get Branch Sensitivities"<<endl;
+  _Hb=_gc->getH()*trans(_C);
+  cout<<"Build L"<<endl;
+  _L=_gc->getL(_Hw);
+
+  _in = mat(Nl,Nl,fill::zeros);
+  addedBounds=0;
+
+  cout<<"Here"<<endl;;
+  mat Sig = _SIGy;
+  _var0 = Sig.diag();
+  _var=mat(Nl,Nl);
+  
+  for(int n=0;n<Nl;n++){  //Line i outage
+    for(int j=0;j<Nl;j++){
+      if(_Hb(n,n)<=1-.000001 || _Hb(n,n)>=1+.0000001){
+	_var(n,j)=Sig(j,j) + 2*_L(j,n)*Sig(n,j) + pow(_L(j,n),2)*Sig(n,n);
+      }
+      else{
+	//	_var(n,j)=Sig(j,j) + 2*_Hb(j,n)*Sig(n,j) + pow(_Hb(j,n),2)*Sig(n,n);
+	_check(n)=0;
+      }
+    }
+  }
+  cout<<sum(_check)<<" / "<<getGrid()->numBranches()<<endl;
+  cout<<"there"<<endl;
+
+
+  for(int n=0;n<Nl;n++){
+    _yplus.push_back(IloNumVarArray(env,1,0,IloInfinity));
+    _yup.push_back(IloRangeArray(env, 1,0,IloInfinity));
+    _ydown.push_back(IloRangeArray(env,1,0,IloInfinity));
+
+  }
+  cout<<"DONT BUILDING"<<endl;
+}
+
+
+
+
+void in1::setupOld(){
   cout<<"Setup N-1 standard formulation"<<endl;
   stringstream ss;
 

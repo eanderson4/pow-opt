@@ -10,8 +10,10 @@ using namespace std;
 class in1 : public igrid {
 
  public:
- in1(grid * gr,mat SIGy, mat Hw, double m1): igrid(gr), _SIGy(SIGy), _Hw(Hw), _m1( m1 ) { setup(); }
+ in1(grid * gr,mat SIGy, mat Hw, double m1): igrid(gr), _SIGy(SIGy), _Hw(Hw), _m1( m1 ) { setupOld(); }
+ in1(grid * gr,gridcalc * gc,mat SIGy, mat Hw, double m1): igrid(gr), _gc(gc), _SIGy(SIGy), _Hw(Hw), _m1( m1 ) { setup(); }
   void setup();
+  void setupOld();
   rgrid * solveModel( isolve * is=NULL);
   bool postN1(int n,vec yn, IloCplex * cplex);
   vec getN1(int n, vec y0, vec g);
@@ -26,6 +28,8 @@ class in1 : public igrid {
 
 
  private:
+  gridcalc * _gc;
+
   vector<IloNumVarArray> _yplus;
   vector<IloRangeArray> _yup;
   vector<IloRangeArray> _ydown;
@@ -43,6 +47,7 @@ class in1 : public igrid {
   mat _SIGy;
   mat _Hw;  
   double _m1;
+
 
 
 

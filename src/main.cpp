@@ -1,7 +1,8 @@
 #include <stdlib.h>
 
+#include <ctime>
 #include "sqlinter.h"
-#include "test.h"
+
 #include "isj.h"
 #include "isjn.h"
 #include "ijn1.h"
@@ -86,13 +87,15 @@ int main(int argc, char* argv[]){
   vec indexM(Nm,fill::zeros);
 
 
-  mat Cm(Nb,Nm,fill::zeros);
+  sp_mat Cm(Nb,Nm);
   vec mu(Nm,fill::zeros);
   mat SIG(Nm,Nm,fill::zeros);
+  sp_mat SIG_SP(Nm,Nm);
   for(int i=0;i<Nm;i++){
     Cm(nodes[i],i)=1;
     indexM(i)=nodes[i];
     SIG(i,i)=pow(.05*demand[i],2)*B;
+    SIG_SP(i,i)=pow(.05*demand[i],2)*B;
   }
   SIG.diag().t().print("StDv Volatile Injects: ");
   double TV = accu(SIG);
@@ -107,14 +110,38 @@ int main(int argc, char* argv[]){
   gridcalc gc(gr);  
     
 
-  mat Cg=gc.getCm();
-  vec alpha(Ng,fill::randu);
+  sp_mat Cg=gc.getCm();
+  vec alpha(Ng,fill::zeros);
 
   for(int i=0;i<Ng;i++){
-    alpha(i)=1/Ng;
+    gen gi=gr->getGen(i);
+    double status = gi.getStatus();
+    if (status>0)   alpha(i)=1;
   }
-  alpha = vec(Ng,fill::ones)* (1/(double)Ng);
+  int numSlack = accu(alpha);
+  alpha = alpha/numSlack;
   alpha.t().print("alpha: ");
+
+  mat Cg_big(gc.getCm());
+  mat Cm_big(Cm);
+
+      vec ones(Nm,1,fill::ones);
+      cout<<"HERE"<<endl;
+      clock_t one = clock();
+      mat calc = gc.getH()*(Cg*alpha*ones.t() - Cm);
+      mat ans = calc*SIG_SP*calc.t();
+      clock_t two = clock();
+      mat calc2 =  gc.getH()*(Cg_big*alpha*ones.t() - Cm_big);
+      mat ans2 = calc2*SIG*calc2.t();
+      clock_t three = clock();
+
+    double time1 = (two - one) / (double)(CLOCKS_PER_SEC / 1000);
+    double time2 = (three - two) / (double)(CLOCKS_PER_SEC / 1000);
+
+    cout<<"T1: "<<time1<<endl;
+    cout<<"T2: "<<time2<<endl;
+    cin>>time1;
+
   vec slack=Cg*alpha;
 
   double randcost=0;
@@ -139,19 +166,6 @@ int main(int argc, char* argv[]){
   eN = eN*epsN;
   
 
-  try{
-
-  }
-  catch(IloException& e){
-    cerr<<"Concert exception: "<<e<<endl; 
-  }
-  catch(exception& e){
-    cerr<<"Exception: "<<e.what()<<endl; 
-  }
-  catch(...){
-    cerr<<"Unknown Error "<<endl;
-  }      
-
   //Set Probability info
   ranvar rv;
 
@@ -160,7 +174,7 @@ int main(int argc, char* argv[]){
   ig.addCost();
   isolve is;
   is.setSolver(IloCplex::Dual,IloCplex::Dual);
-  rgrid * rbase = ig.solveModel(&is);
+  //  rgrid * rbase = ig.solveModel(&is);
 
   double TG;
   
@@ -172,10 +186,17 @@ int main(int argc, char* argv[]){
   running_stat<double> risk_opf;
   running_stat<double> risk_sjc;
 
-  vec delta_store(T);
-
+  running_stat<double> time_opf;
+  running_stat<double> time_sjc;
   
 
+  vec delta_store(T);
+
+
+  ijn1 n1(gr,  SIGy,Hw,L,p,pc,eps,epsN);
+  n1.addCost();
+  vec check = n1.getCheck();
+      
     for(int trial=0;trial<T;trial++){
       
       vec randd(Nm,fill::randu);
@@ -189,13 +210,18 @@ int main(int argc, char* argv[]){
       double delta=accu(d2);
       delta_store(trial) = accu(delta);
             
-      ijn1 n1(gr, SIGy,Hw,L,p,pc,eps,epsN);
-      n1.addCost();
       
+
+
+
       try{
+	clock_t start = clock();
 	igrid nom(gr);
 	nom.addCost();
 	rgrid * rnom = nom.solveModel(&is);
+	double time = (clock() - start) / (double)(CLOCKS_PER_SEC / 1000);
+	
+
 	
 	double o0=rnom->getObjective();
 	vec f0=gc.convert(rnom->getF());
@@ -206,7 +232,6 @@ int main(int argc, char* argv[]){
 	TG = accu(g0);
 	
 	running_stat<double> stats_r0;
-	vec check = n1.getCheck();
 	for(int i=0;i<Nl;i++){
 	  if(check(i)==1){
 	    vec f0n = n1.getN1(i,f0,g0);
@@ -228,6 +253,8 @@ int main(int argc, char* argv[]){
 	
 	costs_opf(o0 + randcost);
 	risk_opf(r0);
+	time_opf(time);
+
 	
       }
       catch(IloException& e){
@@ -241,9 +268,10 @@ int main(int argc, char* argv[]){
       }
       
       try{
-	
+	clock_t start = clock();	
 	isj sj(gr, &gc, SIG, indexM, L, p, pc, eps);
 	rgrid * rsj = sj.solveModel(&is);
+	double time = (clock() - start) / (double)(CLOCKS_PER_SEC / 1000);
 	
 	double o4=rsj->getObjective();
 	vec f4=gc.convert(rsj->getF());
@@ -255,7 +283,6 @@ int main(int argc, char* argv[]){
 	IloCplex::CplexStatus s4=rsj->getStatus();
 	
 	running_stat<double> stats_r4;
-	vec check = n1.getCheck();
 	for(int i=0;i<Nl;i++){
 	  if(check(i)==1){
 	    vec f4n = n1.getN1(i,f4,g4);
@@ -277,7 +304,7 @@ int main(int argc, char* argv[]){
 	
 	costs_sjc(o4);
 	risk_sjc(r4);
-	
+	time_sjc(time);	
 	//	costs(4) = o4;
 	
       }
@@ -304,13 +331,14 @@ int main(int argc, char* argv[]){
     
     cout<<"2nd stage Comparison"<<endl;
     cout<<*gr<<endl;
-    
+    SIG.diag().t().print("Cov.diag m: ");
+    alpha.t().print("slack: ");
+   
     cout<<"Total Gen: "<<TG<<endl;
     cout<<"Total Variance: "<<TV<<" ( "<<sqrt(TV)<<" )"<<endl;
     cout<<"Total Random Cost: "<<randcost<<endl;
     cout<<"G inv: "<<rv.ginv(eps,L,p,pc)<<endl;
-    SIG.diag().t().print("Cov.diag m: ");
-    alpha.t().print("slack: ");
+
     cout<<"\n\n";
     cout<<"OPF"<<endl;
     cout << "costs: "<<endl;
@@ -351,6 +379,29 @@ int main(int argc, char* argv[]){
     cout << "min  = " << risk_sjc.min()  << endl;
     cout << "max  = " << risk_sjc.max()  << endl;
     cout<<endl;
+
+
+    cout<<"\n\n";
+    cout<<"OPF"<<endl;
+    cout << "time: "<<endl;
+    cout << "count = " << time_opf.count() << endl;
+    cout << "mean = " << time_opf.mean() << endl;
+    cout << "stdv  = " << time_opf.stddev()  << endl;
+    cout << "min  = " << time_opf.min()  << endl;
+    cout << "max  = " << time_opf.max()  << endl;
+    cout<<endl;
+
+    cout<<"SJ"<<endl;
+    cout << "time: "<<endl;
+    cout << "count = " << time_sjc.count() << endl;
+    cout << "mean = " << time_sjc.mean() << endl;
+    cout << "stdv  = " << time_sjc.stddev()  << endl;
+    cout << "min  = " << time_sjc.min()  << endl;
+    cout << "max  = " << time_sjc.max()  << endl;
+    cout<<endl;
+
+
+
 
 
   return 0;

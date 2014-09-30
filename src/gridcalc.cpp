@@ -153,13 +153,15 @@ mat gridcalc::getL(mat Hw){
   }
 
   cout<<"L built"<<endl;
+  have_L =true;
+  _L = L;
   return L;  
 }
 
-mat gridcalc::getCm(){
+sp_mat gridcalc::getCm(){
   int Nb=_gr->numBuses();
   int Ng=_gr->numGens();
-  mat Cm(Nb,Ng,fill::zeros);
+  sp_mat Cm(Nb,Ng);
   for(int i=0;i<Ng;i++){
     gen g = _gr->getGen(i);
     int bus=_gr->getBusNum(g.getBus());
@@ -213,37 +215,6 @@ vec gridcalc::getN1(int n, vec y0, vec g, mat Hw){
   }
   else{
     cout<<"Line: "<<n<<" --- HB = 1"<<endl;  //obvious island ?
-    
-    branch br = gr->getBranch(n);
-    int from = gr->getBusNum(br.getFrom());
-    int to = gr->getBusNum(br.getTo());
-    int winner =-1;
-    cout<<from<<" -> "<<to<<endl;
-    
-    if(sum(abs(C.col(from))) == 1) {
-      cout<<"winner winner: "<<from<<endl;
-      winner=from;
-    }
-    else if(sum(abs(C.col(to))) == 1) {
-      cout<<"winner winner: "<<to<<endl;
-      winner=to;
-    }
-    else {
-      throw nowin;
-    }
-    
-    bus b = _gr->getBus(winner);
-    double load = b.getP()+b.getGs();
-    mat Cm = getCm();
-    if(sum(Cm.row(winner))>=1){
-      cout<<"Have Generation"<<endl;
-      vec gnode = Cm.row(winner)*g;
-      yn = Hw.col(winner)*(load-gnode) + y0;
-    }
-    else{
-      cout<<"Loadshed "<<load<<" at "<<winner<<endl;
-      yn = Hw.col(winner)*load+y0;
-    }
     
   }
   
