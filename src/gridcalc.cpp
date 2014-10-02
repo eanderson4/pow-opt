@@ -34,7 +34,7 @@ gridcalc::gridcalc(grid * gr) {
     //IGNORING PHASE SHIFT FOR NOW
   }
   _C=C;
-  //cout<<"C: "<<sp_mat(C.col(3))<<endl;
+  //cout<<"C: "<<mat(C.col(3))<<endl;
 
   mat Bf(Nl,Nb);
   mat Bbus(Nb,Nb);
@@ -42,8 +42,8 @@ gridcalc::gridcalc(grid * gr) {
   Bf=Bff*C;
   Bbus=trans(C)*Bf;
   
-  //  cout<<"Bf: "<<sp_mat(Bf.col(3))<<endl;
-  //  cout<<"Bbus: "<<sp_mat(Bbus)<<endl;
+  //  cout<<"Bf: "<<mat(Bf.col(3))<<endl;
+  //  cout<<"Bbus: "<<mat(Bbus)<<endl;
 
   mat H(Nl,Nb-1);
   mat Hp(Nl,Nb-1);
@@ -158,10 +158,10 @@ mat gridcalc::getL(mat Hw){
   return L;  
 }
 
-sp_mat gridcalc::getCm(){
+mat gridcalc::getCm(){
   int Nb=_gr->numBuses();
   int Ng=_gr->numGens();
-  sp_mat Cm(Nb,Ng);
+  mat Cm(Nb,Ng,fill::zeros);
   for(int i=0;i<Ng;i++){
     gen g = _gr->getGen(i);
     int bus=_gr->getBusNum(g.getBus());
@@ -199,6 +199,19 @@ vec gridcalc::risk(vec f,vec varf,double L, double p, double pc){
   }
 
   return z;
+}
+
+vec gridcalc::lineprob(vec f,vec varf){
+  int N=f.n_elem;
+  vec p(N,fill::zeros);
+  ranvar rv;
+  for(int i=0;i<N;i++){
+    double U = _gr->getBranch(i).getRateA();
+    
+    p(i) = 1-rv.PHI( (U - abs(f(i)))/sqrt(varf(i)));
+  }
+
+  return p;
 }
 
 

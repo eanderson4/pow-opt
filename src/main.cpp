@@ -3,6 +3,7 @@
 #include <ctime>
 #include "sqlinter.h"
 
+#include "icc.h"
 #include "isj.h"
 #include "isjn.h"
 #include "ijn1.h"
@@ -12,14 +13,15 @@ using namespace std;
 
 int main(int argc, char* argv[]){
 
-  if(argc<=11){
+  if(argc<=12){
     cout<<"cmd: pow case/30.db <m0> <m1> <e0> <e1> <L> <p> <B> <T>\n"
 	<<"\trun main for case30\n"
 	<<"\t<m0> base capacity multiplier\n"
 	<<"\t<m1> contingency capacity multiplier\n"
 	<<"\t<e0> base risk\n"
 	<<"\t<e1> contingency risk\n"
-	<<"\t<eg> generator risk\n"
+	<<"\t<pl> line fail prob\n"
+	<<"\t<pg> generator fail prob\n"
 	<<"\t<L> no risk intercept\n"
 	<<"\t<p> probability of failure at nominal\n"
 	<<"\t<B> Variance budget\n"
@@ -32,12 +34,13 @@ int main(int argc, char* argv[]){
   double mg=atof(argv[4]);
   double eps=atof(argv[5]);
   double epsN=atof(argv[6]);
-  double epsG=atof(argv[7]);
-  double L=atof(argv[8]);
-  double p=atof(argv[9]);
-  double B=atof(argv[10]);
+  double epsL=atof(argv[7]);
+  double epsG=atof(argv[8]);
+  double L=atof(argv[9]);
+  double p=atof(argv[10]);
+  double B=atof(argv[11]);
   double pc=.85;
-  int T = atoi(argv[11]);
+  int T = atoi(argv[12]);
 
   ///  int sn=atoi(argv[7]); //standard deviation test
 
@@ -87,15 +90,13 @@ int main(int argc, char* argv[]){
   vec indexM(Nm,fill::zeros);
 
 
-  sp_mat Cm(Nb,Nm);
+  mat Cm(Nb,Nm,fill::zeros);
   vec mu(Nm,fill::zeros);
   mat SIG(Nm,Nm,fill::zeros);
-  sp_mat SIG_SP(Nm,Nm);
   for(int i=0;i<Nm;i++){
     Cm(nodes[i],i)=1;
     indexM(i)=nodes[i];
     SIG(i,i)=pow(.05*demand[i],2)*B;
-    SIG_SP(i,i)=pow(.05*demand[i],2)*B;
   }
   SIG.diag().t().print("StDv Volatile Injects: ");
   double TV = accu(SIG);
@@ -110,7 +111,7 @@ int main(int argc, char* argv[]){
   gridcalc gc(gr);  
     
 
-  sp_mat Cg=gc.getCm();
+  mat Cg=gc.getCm();
   vec alpha(Ng,fill::zeros);
 
   for(int i=0;i<Ng;i++){
@@ -121,26 +122,6 @@ int main(int argc, char* argv[]){
   int numSlack = accu(alpha);
   alpha = alpha/numSlack;
   alpha.t().print("alpha: ");
-
-  mat Cg_big(gc.getCm());
-  mat Cm_big(Cm);
-
-      vec ones(Nm,1,fill::ones);
-      cout<<"HERE"<<endl;
-      clock_t one = clock();
-      mat calc = gc.getH()*(Cg*alpha*ones.t() - Cm);
-      mat ans = calc*SIG_SP*calc.t();
-      clock_t two = clock();
-      mat calc2 =  gc.getH()*(Cg_big*alpha*ones.t() - Cm_big);
-      mat ans2 = calc2*SIG*calc2.t();
-      clock_t three = clock();
-
-    double time1 = (two - one) / (double)(CLOCKS_PER_SEC / 1000);
-    double time2 = (three - two) / (double)(CLOCKS_PER_SEC / 1000);
-
-    cout<<"T1: "<<time1<<endl;
-    cout<<"T2: "<<time2<<endl;
-    cin>>time1;
 
   vec slack=Cg*alpha;
 
@@ -181,13 +162,26 @@ int main(int argc, char* argv[]){
   
   
   running_stat<double> costs_opf;
+  running_stat<double> costs_cc;
   running_stat<double> costs_sjc;
 
   running_stat<double> risk_opf;
+  running_stat<double> risk_cc;
   running_stat<double> risk_sjc;
 
+  running_stat<double> prob_mean_opf;
+  running_stat<double> prob_mean_cc;
+  running_stat<double> prob_mean_sjc;
+
+  running_stat<double> prob_max_opf;
+  running_stat<double> prob_max_cc;
+  running_stat<double> prob_max_sjc;
+
   running_stat<double> time_opf;
+  running_stat<double> time_cc;
   running_stat<double> time_sjc;
+  running_stat<double> formtime_cc;
+  running_stat<double> formtime_sjc;
   
 
   vec delta_store(T);
@@ -228,6 +222,7 @@ int main(int argc, char* argv[]){
 	vec g0=gc.convert(rnom->getG());
 	vec z0=gc.risk(f0,SIGy.diag(),L,p,pc);
 	double r0 = sum(z0);
+	vec p0=gc.lineprob(f0,SIGy.diag());
 	IloCplex::CplexStatus s0=rnom->getStatus();
 	TG = accu(g0);
 	
@@ -254,6 +249,8 @@ int main(int argc, char* argv[]){
 	costs_opf(o0 + randcost);
 	risk_opf(r0);
 	time_opf(time);
+	prob_mean_opf(mean(p0));
+	prob_max_opf(max(p0));
 
 	
       }
@@ -269,7 +266,65 @@ int main(int argc, char* argv[]){
       
       try{
 	clock_t start = clock();	
+	icc cc(gr, &gc, SIG, indexM, epsL, epsG);
+	double formtime = (clock() - start) / (double)(CLOCKS_PER_SEC / 1000);
+	rgrid * rcc = cc.solveModel(&is);
+	double time = (clock() - start) / (double)(CLOCKS_PER_SEC / 1000);
+	
+	double o=rcc->getObjective();
+	vec f=gc.convert(rcc->getF());
+	vec g=gc.convert(rcc->getG());
+	vec beta=cc.getBeta();
+	vec sd=cc.getSD();
+	vec z=gc.risk(f,sd,L,p,pc);
+	double r = sum(z);
+	vec p1=gc.lineprob(f,sd);
+	IloCplex::CplexStatus s=rcc->getStatus();
+	
+	running_stat<double> stats_risk;
+	for(int i=0;i<Nl;i++){
+	  if(check(i)==1){
+	    vec fn = n1.getN1(i,f,g);
+	    vec zn=gc.risk(fn,sd,L,p,pc);
+	    double rn = sum(zn);
+	    stats_risk(rn);
+	  }
+	}
+	
+	cout<<"CC"<<"\t"<<s<<endl;
+	cout<<"C: "<<o<<endl;
+	cout<<"r - "<<r<<endl;
+	cout << "count = " << stats_risk.count() << endl;
+	cout << "mean = " << stats_risk.mean() << endl;
+	cout << "stdv  = " << stats_risk.stddev()  << endl;
+	cout << "min  = " << stats_risk.min()  << endl;
+	cout << "max  = " << stats_risk.max()  << endl;
+	cout<<endl;
+	
+	costs_cc(o);
+	risk_cc(r);
+	prob_mean_cc(mean(p1));
+	prob_max_cc(max(p1));
+	time_cc(time);	
+	formtime_cc(formtime);	
+	//	costs(4) = o4;
+	
+      }
+      catch(IloException& e){
+	cerr<<"Concert exception: "<<e<<endl; 
+      }
+      catch(exception& e){
+	cerr<<"Exception: "<<e.what()<<endl; 
+      }
+      catch(...){
+	cerr<<"Unknown Error "<<endl;
+      }
+      
+
+      try{
+	clock_t start = clock();	
 	isj sj(gr, &gc, SIG, indexM, L, p, pc, eps);
+	double formtime = (clock() - start) / (double)(CLOCKS_PER_SEC / 1000);
 	rgrid * rsj = sj.solveModel(&is);
 	double time = (clock() - start) / (double)(CLOCKS_PER_SEC / 1000);
 	
@@ -280,6 +335,7 @@ int main(int argc, char* argv[]){
 	vec sd4=sj.getSD();
 	vec z4=gc.risk(f4,sd4,L,p,pc);
 	double r4 = sum(z4);
+	vec p4=gc.lineprob(f4,sd4);
 	IloCplex::CplexStatus s4=rsj->getStatus();
 	
 	running_stat<double> stats_r4;
@@ -304,7 +360,10 @@ int main(int argc, char* argv[]){
 	
 	costs_sjc(o4);
 	risk_sjc(r4);
+	prob_mean_sjc(mean(p4));
+	prob_max_sjc(max(p4));
 	time_sjc(time);	
+	formtime_sjc(formtime);	
 	//	costs(4) = o4;
 	
       }
@@ -330,16 +389,103 @@ int main(int argc, char* argv[]){
     
     
     cout<<"2nd stage Comparison"<<endl;
-    cout<<*gr<<endl;
+    //    cout<<*gr<<endl;
     SIG.diag().t().print("Cov.diag m: ");
     alpha.t().print("slack: ");
-   
+    
+
+    cout<<"Parameters: "<<endl;
+    cout<<"m0\tm1\tmg\teps\tepsN\tpL\tpG\tL\tp\tB\tT"<<endl;
+    cout<<m0<<"\t"<<m1<<"\t"<<mg<<"\t"<<eps<<"\t"<<epsN<<"\t"<<epsL<<"\t"<<epsG<<"\t"<<L<<"\t"<<p<<"\t"<<B<<"\t"<<T<<endl;
+
     cout<<"Total Gen: "<<TG<<endl;
     cout<<"Total Variance: "<<TV<<" ( "<<sqrt(TV)<<" )"<<endl;
     cout<<"Total Random Cost: "<<randcost<<endl;
     cout<<"G inv: "<<rv.ginv(eps,L,p,pc)<<endl;
 
     cout<<"\n\n";
+    cout<<" --- \t --- RISK --- \t ---\n"<<endl;
+    cout<<"OPF"<<endl;
+    cout << "risk: "<<endl;
+    cout << "count = " << risk_opf.count() << endl;
+    cout << "mean = " << risk_opf.mean() << endl;
+    cout << "stdv  = " << risk_opf.stddev()  << endl;
+    cout << "min  = " << risk_opf.min()  << endl;
+    cout << "max  = " << risk_opf.max()  << endl;
+    cout << "prob: "<<endl;
+    cout << "mean  = " << prob_mean_opf.mean()  << endl;
+    cout << "max  = " << prob_max_opf.mean()  << endl;
+    cout<<endl;
+
+    cout<<"CC"<<endl;
+    cout << "risk: "<<endl;
+    cout << "count = " << risk_cc.count() << endl;
+    cout << "mean = " << risk_cc.mean() << endl;
+    cout << "stdv  = " << risk_cc.stddev()  << endl;
+    cout << "min  = " << risk_cc.min()  << endl;
+    cout << "max  = " << risk_cc.max()  << endl;
+    cout << "prob: "<<endl;
+    cout << "mean  = " << prob_mean_cc.mean()  << endl;
+    cout << "max  = " << prob_max_cc.mean()  << endl;
+    cout<<endl;
+
+
+    cout<<"SJ"<<endl;
+    cout << "risk: "<<endl;
+    cout << "count = " << risk_sjc.count() << endl;
+    cout << "mean = " << risk_sjc.mean() << endl;
+    cout << "stdv  = " << risk_sjc.stddev()  << endl;
+    cout << "min  = " << risk_sjc.min()  << endl;
+    cout << "max  = " << risk_sjc.max()  << endl;
+    cout << "prob: "<<endl;
+    cout << "mean  = " << prob_mean_sjc.mean()  << endl;
+    cout << "max  = " << prob_max_sjc.mean()  << endl;
+    cout<<endl;
+
+
+    cout<<"\n\n";
+    cout<<" --- \t --- TIME --- \t ---\n"<<endl;
+    cout<<"OPF"<<endl;
+    cout << "time: "<<endl;
+    cout << "count = " << time_opf.count() << endl;
+    cout << "mean = " << time_opf.mean() << endl;
+    cout << "stdv  = " << time_opf.stddev()  << endl;
+    cout << "min  = " << time_opf.min()  << endl;
+    cout << "max  = " << time_opf.max()  << endl;
+    cout<<endl;
+
+    cout<<"CC"<<endl;
+    cout << "time: "<<endl;
+    cout << "count = " << time_cc.count() << endl;
+    cout << "mean = " << time_cc.mean() << endl;
+    cout << "stdv  = " << time_cc.stddev()  << endl;
+    cout << "min  = " << time_cc.min()  << endl;
+    cout << "max  = " << time_cc.max()  << endl;
+    cout<<endl;
+
+    cout<<"SJ"<<endl;
+    cout << "time: "<<endl;
+    cout << "count = " << time_sjc.count() << endl;
+    cout << "mean = " << time_sjc.mean() << endl;
+    cout << "stdv  = " << time_sjc.stddev()  << endl;
+    cout << "min  = " << time_sjc.min()  << endl;
+    cout << "max  = " << time_sjc.max()  << endl;
+    cout<<endl;
+
+
+    cout<<"SJ"<<endl;
+    cout << "formtime: "<<endl;
+    cout << "count = " << formtime_sjc.count() << endl;
+    cout << "mean = " << formtime_sjc.mean() << endl;
+    cout << "stdv  = " << formtime_sjc.stddev()  << endl;
+    cout << "min  = " << formtime_sjc.min()  << endl;
+    cout << "max  = " << formtime_sjc.max()  << endl;
+    cout<<endl;
+
+
+
+    cout<<"\n\n";
+    cout<<" --- \t --- COST --- \t ---\n"<<endl;
     cout<<"OPF"<<endl;
     cout << "costs: "<<endl;
     cout << "count = " << costs_opf.count() << endl;
@@ -349,6 +495,17 @@ int main(int argc, char* argv[]){
     cout << "max  = " << costs_opf.max()  << endl;
     cout << "band = " << costs_opf.max() - costs_opf.min() <<endl;
     cout<<endl;
+
+    cout<<"CC"<<endl;
+    cout << "costs: "<<endl;
+    cout << "count = " << costs_cc.count() << endl;
+    cout << "mean = " << costs_cc.mean() << endl;
+    cout << "stdv  = " << costs_cc.stddev()  << endl;
+    cout << "min  = " << costs_cc.min()  << endl;
+    cout << "max  = " << costs_cc.max()  << endl;
+    cout << "band = " << costs_cc.max() - costs_cc.min() <<endl;
+    cout<<endl;
+
 
     cout<<"SJ"<<endl;
     cout << "costs: "<<endl;
@@ -361,44 +518,6 @@ int main(int argc, char* argv[]){
     cout<<endl;
 
 
-    cout<<"\n\n";
-    cout<<"OPF"<<endl;
-    cout << "risk: "<<endl;
-    cout << "count = " << risk_opf.count() << endl;
-    cout << "mean = " << risk_opf.mean() << endl;
-    cout << "stdv  = " << risk_opf.stddev()  << endl;
-    cout << "min  = " << risk_opf.min()  << endl;
-    cout << "max  = " << risk_opf.max()  << endl;
-    cout<<endl;
-
-    cout<<"SJ"<<endl;
-    cout << "risk: "<<endl;
-    cout << "count = " << risk_sjc.count() << endl;
-    cout << "mean = " << risk_sjc.mean() << endl;
-    cout << "stdv  = " << risk_sjc.stddev()  << endl;
-    cout << "min  = " << risk_sjc.min()  << endl;
-    cout << "max  = " << risk_sjc.max()  << endl;
-    cout<<endl;
-
-
-    cout<<"\n\n";
-    cout<<"OPF"<<endl;
-    cout << "time: "<<endl;
-    cout << "count = " << time_opf.count() << endl;
-    cout << "mean = " << time_opf.mean() << endl;
-    cout << "stdv  = " << time_opf.stddev()  << endl;
-    cout << "min  = " << time_opf.min()  << endl;
-    cout << "max  = " << time_opf.max()  << endl;
-    cout<<endl;
-
-    cout<<"SJ"<<endl;
-    cout << "time: "<<endl;
-    cout << "count = " << time_sjc.count() << endl;
-    cout << "mean = " << time_sjc.mean() << endl;
-    cout << "stdv  = " << time_sjc.stddev()  << endl;
-    cout << "min  = " << time_sjc.min()  << endl;
-    cout << "max  = " << time_sjc.max()  << endl;
-    cout<<endl;
 
 
 

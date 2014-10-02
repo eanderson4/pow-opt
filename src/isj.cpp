@@ -16,13 +16,30 @@ rgrid *  isj::solveModel( isolve * is){
   
   if(is!=NULL) is->setCplexParams(&cplex);
   int n=0;  
-
+  running_stat<double> tcplex;
+  running_stat<double> tcalcs;
+  running_stat<double> tcuts;
+  clock_t start;
+  clock_t stop;
+  double time;
+  start = clock();
   if (cplex.solve()){
+    stop = clock();
+    time = (stop - start) / (double)(CLOCKS_PER_SEC / 1000);  
+    tcplex(time);
+
     bool systemfail=true;
+    mat Am = getA()*getCm();
+    vec ones(Nm,1,fill::ones);
+    mat ker = ones.t()*_SIG*ones;
+    mat AmSone = Am*_SIG*ones;
+    mat Ag = getA()*getCg();
     while(systemfail){
       n++; if (n>100) throw itlimit;
       cout<<"Iteration: "<<n<<endl;
       cout<<"Checking Risk Constraint"<<endl;
+      
+      start = clock();
 
       IloNumArray betasolve(getEnv(),Ng);
       IloNumArray ysolve(getEnv(),Nl);
@@ -32,34 +49,38 @@ rgrid *  isj::solveModel( isolve * is){
 
       vec y=_gc->convert(ysolve);      
       vec beta=_gc->convert(betasolve);      
-      vec ones(Nm,1,fill::ones);
-      cout<<"ONE"<<endl;
-      mat term = getA()*(getCg()*beta*ones.t() - getCm());    
-      cout<<"HERE"<<endl;
-      mat SIGy = term*_SIG*term.t();
-      cout<<"THERE"<<endl;
-      vec z=_gc->risk(y,SIGy.diag(),_L,_p,_pc);
-      cout<<"TEST"<<endl;
-      //      cout<<"ONE"<<endl;
-      //      mat term_sp = getA()*(getCg_SP()*beta*ones.t() - getCm_SP();    
-      //      cout<<"HERE"<<endl;
-      //      mat SIGy_sp = term_sp*_SIG*term_sp.t();
-      //      cout<<"THERE"<<endl;
-      //      vec z=_gc->risk(y,SIGy.diag(),_L,_p,_pc);
 
-      
+      mat term3=Ag*beta;
+      mat SIGy = term3*ker*term3.t()-term3*AmSone.t()-AmSone*term3.t()+_sigger;
+
+      vec z=_gc->risk(y,SIGy.diag(),_L,_p,_pc);
 
       cout<<"r: "<<accu(z)<<endl;
+
+      stop = clock();
+      time = (stop - start) / (double)(CLOCKS_PER_SEC / 1000);  
+      tcalcs(time);
 
 
       if( accu(z) < _eps+tol){
 	systemfail=false;
       }
-      else  systemfail = postCC(y,z,beta,SIGy.diag(),&cplex);
+      else{
+	start = clock();
+	systemfail = postCC(y,z,beta,SIGy.diag(),&cplex);
+	stop = clock();
+	time = (stop - start) / (double)(CLOCKS_PER_SEC / 1000);  
+	tcuts(time);
+       
+      }
 
       if(systemfail) {
 	cout<<"Re-Solving LP"<<endl;
+	start = clock();
 	cplex.solve();
+	stop = clock();
+	time = (stop - start) / (double)(CLOCKS_PER_SEC / 1000);  
+	tcplex(time);
 	cout<<"LP Solved, perform risk analysis"<<endl;
       }
       else{
@@ -83,7 +104,14 @@ rgrid *  isj::solveModel( isolve * is){
     cout<<"\n\nRisk constraint satisfied\n\n"<<endl;
     cout<<"Iterations: "<<n<<endl;
     cout<<"Time: "<<total<<endl;
-    _addCut.t().print("cuts: ");
+    cout<<"\n";
+    cout<<"Tcplex: "<<tcplex.count()<<"\t"<<tcplex.mean()<<"\t"<<tcplex.count()*tcplex.mean()<<endl;
+    cout<<"Tcalcs: "<<tcalcs.count()<<"\t"<<tcalcs.mean()<<"\t"<<tcalcs.count()*tcalcs.mean()<<endl;
+    cout<<"Tcuts: "<<tcuts.count()<<"\t"<<tcuts.mean()<<"\t"<<tcuts.count()*tcuts.mean()<<endl;
+
+    cout<<"\n"<<endl;
+
+    //    _addCut.t().print("cuts: ");
   }
 
   else{
@@ -208,7 +236,7 @@ void isj::setup(){
   int Ng = getGrid()->numGens();
   int Nm = _indexM.n_elem;
 
-  sp_mat Cm(Nb,Nm);
+  mat Cm(Nb,Nm,fill::zeros);
 
   for(int i=0;i<Nm;i++){
     Cm(_indexM(i),i)=1;

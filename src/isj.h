@@ -1,6 +1,8 @@
 #ifndef ISJ_H
 #define ISJ_H
 
+
+#include <ctime>
 #include "igrid.h"
 #include "gridcalc.h"
 
@@ -18,8 +20,8 @@ class isj : public igrid {
   mat getSIGm(){ return _SIG; }
   mat getA(){ return _gc->getH(); }
   mat getCb(){ return _gc->getC(); }  //line admittance matrix
-  sp_mat getCm(){ return _Cm; }          //volatile inject admittance matrix
-  sp_mat getCg(){ return _gc->getCm(); } //generator admittance matrix
+  mat getCm(){ return _Cm; }          //volatile inject admittance matrix
+  mat getCg(){ return _gc->getCm(); } //generator admittance matrix
   vec getIndexG(){ return _indexG; }
   double getEps(){ return _eps; }
   double getL(){ return _L; }
@@ -69,7 +71,7 @@ class isj : public igrid {
   mat _SIG;
   vec _indexM;
   vec _indexG;
-  sp_mat _Cm;
+  mat _Cm;
   double _L;
   double _p;
   double _pc;
