@@ -207,8 +207,21 @@ vec gridcalc::lineprob(vec f,vec varf){
   ranvar rv;
   for(int i=0;i<N;i++){
     double U = _gr->getBranch(i).getRateA();
-    
-    p(i) = 1-rv.PHI( (U - abs(f(i)))/sqrt(varf(i)));
+    double fplus = abs(f(i));
+    if(varf(i)<.0001){
+      if ( fplus < U ) p(i) = 0;
+      else p(i) = 1;
+    }
+    else {
+      p(i) = 1-rv.PHI( (U - fplus)/sqrt(varf(i)));
+    }
+
+  }
+  if(!p.is_finite()){
+    f.print("f: ");
+    varf.print("varf: ");
+    cout<<p;
+    cin>>N;
   }
 
   return p;

@@ -186,6 +186,8 @@ int main(int argc, char* argv[]){
 
   vec delta_store(T);
 
+  mat results(T,13,fill::zeros);
+  
 
   ijn1 n1(gr,  SIGy,Hw,L,p,pc,eps,epsN);
   n1.addCost();
@@ -204,7 +206,7 @@ int main(int argc, char* argv[]){
       double delta=accu(d2);
       delta_store(trial) = accu(delta);
             
-      
+      results(trial,0)=trial;
 
 
 
@@ -252,6 +254,10 @@ int main(int argc, char* argv[]){
 	prob_mean_opf(mean(p0));
 	prob_max_opf(max(p0));
 
+	results(trial,1)=o0 + randcost;
+	results(trial,2)=r0;
+	results(trial,3)=mean(p0);
+	results(trial,4)=max(p0);
 	
       }
       catch(IloException& e){
@@ -308,6 +314,12 @@ int main(int argc, char* argv[]){
 	time_cc(time);	
 	formtime_cc(formtime);	
 	//	costs(4) = o4;
+
+	results(trial,5)=o;
+	results(trial,6)=r;
+	results(trial,7)=mean(p1);
+	results(trial,8)=max(p1);
+
 	
       }
       catch(IloException& e){
@@ -365,6 +377,11 @@ int main(int argc, char* argv[]){
 	time_sjc(time);	
 	formtime_sjc(formtime);	
 	//	costs(4) = o4;
+
+	results(trial,9)=o4;
+	results(trial,10)=r4;
+	results(trial,11)=mean(p4);
+	results(trial,12)=max(p4);
 	
       }
       catch(IloException& e){
@@ -519,8 +536,14 @@ int main(int argc, char* argv[]){
 
 
 
-
-
+    cerr<<"trial\tcopf\tropf\tpmopf\tpxopf\tccc\trcc\tpmcc\tpxcc\tcsjc\trsjc\tpmsjc\tpxsjc"<<endl;
+    for(int t=0;t<T;t++){
+      cerr<<t;
+      for(int i=1;i<13;i++){
+	cerr<<"\t"<<results(t,i);
+      }
+      cerr<<endl;
+    }
 
 
   return 0;

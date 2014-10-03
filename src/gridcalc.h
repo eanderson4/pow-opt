@@ -4,6 +4,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <ilcplex/ilocplex.h>
+#include <math.h>
 #include "grid.h"
 #include "igrid.h"
 #include "rgrid.h"
