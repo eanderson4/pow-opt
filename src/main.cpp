@@ -538,7 +538,7 @@ int main(int argc, char* argv[]){
 
     cerr<<"trial\tcopf\tropf\tpmopf\tpxopf\tccc\trcc\tpmcc\tpxcc\tcsjc\trsjc\tpmsjc\tpxsjc"<<endl;
     for(int t=0;t<T;t++){
-      cerr<<t;
+      cerr<<t; 
       for(int i=1;i<13;i++){
 	cerr<<"\t"<<results(t,i);
       }
