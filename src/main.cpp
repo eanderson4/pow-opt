@@ -177,6 +177,10 @@ int main(int argc, char* argv[]){
   running_stat<double> prob_max_cc;
   running_stat<double> prob_max_sjc;
 
+  running_stat_vec<vec> flow_opf;
+  running_stat_vec<vec> flow_cc;
+  running_stat_vec<vec> flow_sjc;
+
   running_stat<double> time_opf;
   running_stat<double> time_cc;
   running_stat<double> time_sjc;
@@ -192,28 +196,43 @@ int main(int argc, char* argv[]){
   ijn1 n1(gr,  SIGy,Hw,L,p,pc,eps,epsN);
   n1.addCost();
   vec check = n1.getCheck();
+
+  igrid nom(gr);
+  nom.addCost();
+  //  isj nom(gr, &gc, SIG, indexM, L, p, pc, 1);
+  isj sj(gr, &gc, SIG, indexM, L, p, pc, eps);
+  icc cc(gr, &gc, SIG, indexM, epsL, epsG);
+
       
     for(int trial=0;trial<T;trial++){
       
-      vec randd(Nm,fill::randu);
+      vec randd(Nm,fill::randn);
       vec d2;
       if(trial==0) d2=vec(Nm,fill::zeros);
       else d2 = as*randd;
       
+      del_g dg(gr);
       for(int m=0;m<Nm;m++){
-	gr->addPd(indexM(m),d2(m));
+	dg.addDemand(indexM(m),d2(m));
+	//	gr->addPd(indexM(m),d2(m));
       }      
       double delta=accu(d2);
       delta_store(trial) = accu(delta);
             
       results(trial,0)=trial;
 
+      nom.modGrid(dg);
+      cc.modGrid(dg);
+      sj.modGrid(dg);
+      
+      
+
 
 
       try{
 	clock_t start = clock();
-	igrid nom(gr);
-	nom.addCost();
+
+
 	rgrid * rnom = nom.solveModel(&is);
 	double time = (clock() - start) / (double)(CLOCKS_PER_SEC / 1000);
 	
@@ -227,6 +246,12 @@ int main(int argc, char* argv[]){
 	vec p0=gc.lineprob(f0,SIGy.diag());
 	IloCplex::CplexStatus s0=rnom->getStatus();
 	TG = accu(g0);
+
+	vec fU(Nl);
+	for(int i=0;i<Nl;i++){
+	  double U = gr->getBranch(i).getRateA();
+	  fU(i) = abs(f0(i))/U;
+	}
 	
 	running_stat<double> stats_r0;
 	for(int i=0;i<Nl;i++){
@@ -253,6 +278,7 @@ int main(int argc, char* argv[]){
 	time_opf(time);
 	prob_mean_opf(mean(p0));
 	prob_max_opf(max(p0));
+	flow_opf(fU);
 
 	results(trial,1)=o0 + randcost;
 	results(trial,2)=r0;
@@ -272,7 +298,6 @@ int main(int argc, char* argv[]){
       
       try{
 	clock_t start = clock();	
-	icc cc(gr, &gc, SIG, indexM, epsL, epsG);
 	double formtime = (clock() - start) / (double)(CLOCKS_PER_SEC / 1000);
 	rgrid * rcc = cc.solveModel(&is);
 	double time = (clock() - start) / (double)(CLOCKS_PER_SEC / 1000);
@@ -286,6 +311,12 @@ int main(int argc, char* argv[]){
 	double r = sum(z);
 	vec p1=gc.lineprob(f,sd);
 	IloCplex::CplexStatus s=rcc->getStatus();
+
+	vec fU(Nl);
+	for(int i=0;i<Nl;i++){
+	  double U = gr->getBranch(i).getRateA();
+	  fU(i) = abs(f(i))/U;
+	}
 	
 	running_stat<double> stats_risk;
 	for(int i=0;i<Nl;i++){
@@ -314,6 +345,7 @@ int main(int argc, char* argv[]){
 	time_cc(time);	
 	formtime_cc(formtime);	
 	//	costs(4) = o4;
+	flow_cc(fU);
 
 	results(trial,5)=o;
 	results(trial,6)=r;
@@ -335,7 +367,7 @@ int main(int argc, char* argv[]){
 
       try{
 	clock_t start = clock();	
-	isj sj(gr, &gc, SIG, indexM, L, p, pc, eps);
+	//	isj sj(gr, &gc, SIG, indexM, L, p, pc, eps);
 	double formtime = (clock() - start) / (double)(CLOCKS_PER_SEC / 1000);
 	rgrid * rsj = sj.solveModel(&is);
 	double time = (clock() - start) / (double)(CLOCKS_PER_SEC / 1000);
@@ -349,6 +381,12 @@ int main(int argc, char* argv[]){
 	double r4 = sum(z4);
 	vec p4=gc.lineprob(f4,sd4);
 	IloCplex::CplexStatus s4=rsj->getStatus();
+
+	vec fU(Nl);
+	for(int i=0;i<Nl;i++){
+	  double U = gr->getBranch(i).getRateA();
+	  fU(i) = abs(f4(i))/U;
+	}
 	
 	running_stat<double> stats_r4;
 	for(int i=0;i<Nl;i++){
@@ -377,6 +415,7 @@ int main(int argc, char* argv[]){
 	time_sjc(time);	
 	formtime_sjc(formtime);	
 	//	costs(4) = o4;
+	flow_sjc(fU);
 
 	results(trial,9)=o4;
 	results(trial,10)=r4;
@@ -395,9 +434,13 @@ int main(int argc, char* argv[]){
       }
 
 
-      for(int m=0;m<Nm;m++){
-	gr->addPd(indexM(m),-d2(m));
-      }      
+      nom.unmodGrid(dg);
+      cc.unmodGrid(dg);
+      sj.unmodGrid(dg);
+
+      //      for(int m=0;m<Nm;m++){
+      //	gr->addPd(indexM(m),-d2(m));
+      //      }      
       
     }
     
@@ -418,7 +461,7 @@ int main(int argc, char* argv[]){
     cout<<"Total Gen: "<<TG<<endl;
     cout<<"Total Variance: "<<TV<<" ( "<<sqrt(TV)<<" )"<<endl;
     cout<<"Total Random Cost: "<<randcost<<endl;
-    cout<<"G inv: "<<rv.ginv(eps,L,p,pc)<<endl;
+    cout<<"U eps: "<<rv.ginv(eps,L,p,pc)<<endl;
 
     cout<<"\n\n";
     cout<<" --- \t --- RISK --- \t ---\n"<<endl;
@@ -490,7 +533,7 @@ int main(int argc, char* argv[]){
     cout<<endl;
 
 
-    cout<<"SJ"<<endl;
+    /*    cout<<"SJ"<<endl;
     cout << "formtime: "<<endl;
     cout << "count = " << formtime_sjc.count() << endl;
     cout << "mean = " << formtime_sjc.mean() << endl;
@@ -498,7 +541,7 @@ int main(int argc, char* argv[]){
     cout << "min  = " << formtime_sjc.min()  << endl;
     cout << "max  = " << formtime_sjc.max()  << endl;
     cout<<endl;
-
+    */
 
 
     cout<<"\n\n";
@@ -545,6 +588,19 @@ int main(int argc, char* argv[]){
       cerr<<endl;
     }
 
+
+    ofstream myfile;
+    myfile.open("lineflow");
+    //    myfile << "Writing this to a file.\n";
+    myfile <<"line\topf\teopf\tcc\tecc\tsjc\tesjc"<<endl;
+    for(int i=0; i<Nl;i++){
+      myfile<<i<<"\t";
+      myfile<<flow_opf.mean()(i)<<"\t"<<flow_opf.stddev()(i)<<"\t";
+      myfile<<flow_cc.mean()(i)<<"\t"<<flow_cc.stddev()(i)<<"\t";
+      myfile<<flow_sjc.mean()(i)<<"\t"<<flow_sjc.stddev()(i)<<endl;
+    }
+
+    myfile.close();
 
   return 0;
 

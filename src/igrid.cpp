@@ -121,7 +121,7 @@ void igrid::modGrid( del_g mod ){
     int nB=_gr->numBuses();
     for(int i=0;i<nB; i++){
       if(mod.getDemand(i) != 0){
-	cout<<i<<": "<<_gr->getBus(i).getP()<<" + "<<mod.getDemand(i)<<endl;
+	//	cout<<i<<": "<<_gr->getBus(i).getP()<<" + "<<mod.getDemand(i)<<endl;
 	_gr->addPd(i,mod.getDemand(i));
       }
     }
@@ -193,7 +193,7 @@ void igrid::unmodGrid( del_g mod ){
     int nB=_gr->numBuses();
     for(int i=0;i<nB; i++){
       if(mod.getDemand(i) != 0){
-	cout<<i<<": "<<_gr->getBus(i).getP()<<" - "<<mod.getDemand(i)<<endl;
+	//	cout<<i<<": "<<_gr->getBus(i).getP()<<" - "<<mod.getDemand(i)<<endl;
 	_gr->addPd(i,-mod.getDemand(i));
       }
     }

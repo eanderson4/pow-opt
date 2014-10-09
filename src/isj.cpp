@@ -161,12 +161,13 @@ bool isj::postCC(vec y, vec z, vec beta, vec SIGy,IloCplex * cplex, int iteratio
 	}
 	//Add cuts for each line with positive risk
 	double y_i = abs(y(i));
+	double sd_i = sqrt(SIGy(i));
 	//	cout<<"z_"<<i<<": "<<z(i)<<", y_"<<i<<": "<<y_i<<endl;
 	double U=getGrid()->getBranch(i).getRateA();
-	double dmu=rv.deriveMu(_L,_p,_pc,y_i/U,sqrt(SIGy(i))/U);
-	double dsigma=rv.deriveSigma(_L,_p,_pc,y_i/U,sqrt(SIGy(i))/U);
+	double dmu=rv.deriveMu(_L,_p,_pc,y_i/U,sd_i/U);
+	double dsigma=rv.deriveSigma(_L,_p,_pc,y_i/U,sd_i/U);
 	IloRange cut(getEnv(),-IloInfinity,0);
-	cut.setExpr( dmu/U*(_yplus[i] - y_i) + dsigma/U*(_sd[i] - sqrt(SIGy(i))) + z(i) - _z[i]);
+	cut.setExpr( dmu/U*(_yplus[i] - y_i) + dsigma/U*(_sd[i] - sd_i) + z(i) - _z[i]);
 	//	cout<<cut<<endl;
 	getModel()->add(cut);
 	_addCut(i)=_addCut(i)+1;
@@ -176,11 +177,11 @@ bool isj::postCC(vec y, vec z, vec beta, vec SIGy,IloCplex * cplex, int iteratio
 
 	int Ng = getGrid()->numGens();
 
-	double pi_i = pi(i);
-	double sd_i = sqrt(SIGy(i));
+	//	double pi_i = pi(i);
+
 
 	cut_sd.setExpr( sd_i - _sd[i] );
-	double term = (pi_i*_sig_delta - _sig(i))/sd_i;
+	double term = (pi(i)*_sig_delta - _sig(i))/sd_i;
 	//	cout<<"\n";
 	for( int j=0; j<Ng;j++){
 	  //double pf_j = term;
